@@ -1,0 +1,94 @@
+- name: Do common setup
+  include_role:
+    name: common
+
+- name: Get cluster token
+  shell: /opt/yunion/bin/ocadm token list | cut -d  ' ' -f1 | sed -n '2p'
+  register: K8S_TOKEN
+
+- name: Pull ocadm images on node
+  command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}} --onecloud-version {{ onecloud_version | default('latest') }}"
+  register: command_result
+  changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
+  when: K8S_TOKEN.stdout|length == 0
+
+- name: Check node is init
+  shell: test -f /etc/kubernetes/kubelet.conf
+  register: kubelet_result
+  ignore_errors: yes
+
+- block:
+  - name: construct controlplane endpoint
+    set_fact:
+      controlplane_endpoint: "{{k8s_controlplane_host}}:{{ k8s_controlplane_port | default(6443) }}"
+
+  - name: construct init args
+    set_fact:
+      init_args: "init --mysql-host {{ db_host }} --mysql-user {{ db_user }} --mysql-password {{ db_password}} --control-plane-endpoint {{ controlplane_endpoint }}"
+
+  - name: construct image repository
+    set_fact:
+      init_args: "{{ init_args }} --image-repository {{ image_repository }}"
+    when:
+      image_repository is defined
+
+  - name: construct onecloud version
+    set_fact:
+      init_args: "{{ init_args }} --onecloud-version {{ onecloud_version }}"
+    when:
+      onecloud_version is defined
+
+  - name: init node as onecloud host agent
+    set_fact:
+      init_args: "{{ init_args }} --enable-host-agent"
+    when:
+    - k8s_node_as_oc_host|default(false)|bool == true
+
+- name: Use ocadm init first master node
+  command: "/opt/yunion/bin/ocadm {{ init_args }}"
+  when: kubelet_result.rc != 0
+
+- name: "Wait 500 seconds for primary master to response: {{ controlplane_endpoint }}"
+  wait_for:
+    host: "{{ k8s_controlplane_host }}"
+    port: "{{ k8s_controlplane_port | default(6443)}}"
+    delay: 1
+    timeout: 500
+  run_once: yes
+
+- name: Export KUBECONFIG in master's ~/.bashrc
+  lineinfile:
+    dest: ~/.bashrc
+    line: "export KUBECONFIG=/etc/kubernetes/admin.conf"
+    state: present
+    create: yes
+    regexp: '^export KUBECONFIG=.*'
+  when: shell is undefined or shell == 'bash'
+
+- name: Source kubectl bash completion in master' /etc/profile
+  lineinfile:
+    dest: /etc/profile
+    line: "source <(kubectl completion bash)"
+    state: present
+    create: yes
+    regexp: '.*kubectl completion bash.*'
+  when: shell is undefined or shell == 'bash'
+
+- name: Wait onecloud CRD created
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: 'kubectl get crd | grep onecloudcluster'
+  retries: 6
+  delay: 10
+  register: result
+  until: result.rc == 0
+
+- name: Check onecloud cluster exists
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: "kubectl get onecloudcluster -n onecloud | grep default | wc -l"
+  register: OC_CLUSTER_COUNT
+
+- name: Create onecloud controller services
+  shell: "/opt/yunion/bin/ocadm cluster create --wait"
+  when: OC_CLUSTER_COUNT.stdout|int == 0

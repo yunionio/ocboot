@@ -1,0 +1,11 @@
+- name: Install registry
+  yum: name={{ item }} state=present
+  with_items:
+  - yunion-registry
+
+- name: Config registry
+  template: src=registry.yml dest=/etc/yunion/registry.yml
+  notify: restart registry
+
+- name: Start registry service
+  service: name=yunion-registry state=started enabled=yes

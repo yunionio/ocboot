@@ -1,0 +1,35 @@
+mariadb_node:
+  use_local: true
+  db_user: root
+  db_password: sql-password
+registry_node:
+  host: 10.127.10.156
+  port: "5000"
+primary_master_node:
+  db_host: 10.127.10.156
+  db_user: root
+  db_password: sql-password
+  controlplane_host: 10.127.10.156
+  controlplane_port: "6443"
+  use_local: true
+  as_host: true
+  registry_mirrors:
+  - https://lje6zxpk.mirror.aliyuncs.com
+  insecure_registries:
+  - 10.127.10.156:5000
+master_nodes:
+  controlplane_host: 10.127.10.156
+  controlplane_port: "6443"
+  join_token: xxxx
+  join_certificate_key: xxx
+  hosts:
+  - host: 10.127.10.157
+    use_local: False
+worker_nodes:
+  controlplane_host: 10.127.10.156
+  controlplane_port: "6443"
+  join_token: xxxx
+  hosts:
+  - host: 10.127.10.159
+    use_local: true
+  - host: 10.127.10.160

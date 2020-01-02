@@ -1,0 +1,3 @@
+# Handlers for registry notifications
+- name: restart registry
+  service: name=yunion-registry state=restarted

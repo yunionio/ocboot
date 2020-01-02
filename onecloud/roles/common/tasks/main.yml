@@ -1,0 +1,163 @@
+---
+# This role contains common plays that will run on all nodes
+- name: Install yum utils
+  yum: name={{ item }} state=latest
+  with_items:
+  - yum-utils
+  - bash-completion
+  - epel-release
+
+- name: Add yunion rpm repository
+  get_url:
+    url: https://iso.yunion.cn/yumrepo-2.10/yunion.repo
+    dest: /etc/yum.repos.d/yunion.repo
+  become: yes
+
+- name: Install yunion common packages
+  yum: name={{ item }} state=present
+  with_items:
+  - epel-release
+  - libaio
+  - jq
+  - libusb
+  - lvm2
+  - nc
+  - oniguruma
+  - pciutils
+  - spice
+  - spice-protocol
+  - sysstat
+  - tcpdump
+  - telegraf
+  - usbredir
+  - yunion-qemu-2.12.1
+  - yunion-host-image
+  - yunion-ocadm
+  - yunion-climc
+  - yunion-sdnagent
+  - yunion-executor-server
+  - kernel-3.10.0-1062.4.3.el7.yn20191203
+  - kernel-devel-3.10.0-1062.4.3.el7.yn20191203
+  - kernel-headers-3.10.0-1062.4.3.el7.yn20191203
+  - kmod-openvswitch-2.9.6-1.el7
+  - openvswitch-2.9.6-1.el7
+
+- name: Turn off selinux
+  selinux:
+    state: disabled
+
+- name: Disable systemd services
+  service:
+    name: "{{ item }}"
+    enabled: no
+    state: stopped
+  loop:
+  - firewalld
+  - NetworkManager
+
+- name: Load br_netfilter
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Load br_netfilter at boot
+  copy:
+    owner: root
+    group: root
+    mode: "0644"
+    dest: /etc/modules-load.d/kubernetes.conf
+    content:
+      br_netfilter
+
+- name: Change sysctl setting
+  sysctl:
+    name: "{{ item }}"
+    value: "1"
+    state: present
+  loop:
+  - net.bridge.bridge-nf-call-iptables
+  - net.bridge.bridge-nf-call-ip6tables
+  - net.ipv4.ip_forward
+
+#  https://github.com/kubernetes-retired/contrib/blob/master/ansible/roles/node/tasks/swapoff.yml
+- name: Turn off swap mount
+  mount:
+    name: swap
+    fstype: swap
+    state: absent
+- name: Turn off swap now
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Config ipvs
+  copy:
+    owner: root
+    group: root
+    mode: "0755"
+    src: ipvs.modules
+    dest: /etc/sysconfig/modules/ipvs.modules
+- name: Load ipvs modules
+  shell:
+    /etc/sysconfig/modules/ipvs.modules
+
+# docker
+- block:
+  - name: Add docker rpm repository
+    get_url:
+      url: http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+      dest: /etc/yum.repos.d/docker-ce.repo
+    become: yes
+
+  - name: Install docker
+    yum: name={{ item }} state=present
+    with_items:
+    - docker-ce-18.09.1
+    - docker-ce-cli-18.09.1
+    - containerd.io
+
+  - name: Make /etc/docker dir
+    shell: mkdir -p /etc/docker
+
+  - name: Config docker file
+    template: src=daemon.json.j2 dest=/etc/docker/daemon.json
+    tags: docker
+    notify: restart docker
+
+  - name: Start docker service
+    service: name=docker state=started enabled=yes
+  when:
+    skip_docker_config is not defined or skip_docker_config|default(false)|bool == false
+
+# k8s packages
+- name: Add kubernetes rpm repository
+  copy:
+    owner: root
+    group: root
+    mode: "0755"
+    src: kubernetes.repo
+    dest: /etc/yum.repos.d/kubernetes.repo
+
+- name: Install k8s packages
+  yum: name={{ item }} state=present
+  with_items:
+  - bridge-utils
+  - ipvsadm
+  - conntrack-tools
+  - jq
+  - kubelet-1.14.3-0
+  - kubectl-1.14.3-0
+  - kubeadm-1.14.3-0
+  tags: k8s
+
+- name: Enable kubelet
+  service: name=kubelet enabled=yes
+  tags: k8s
+
+- name: Export yunion bin path in /etc/profile
+  lineinfile:
+    dest: /etc/profile
+    line: "export PATH=$PATH:/opt/yunion/bin"
+    state: present
+    create: yes
+    regexp: '^export PATH=.*/opt/yunion/bin'
+  when: shell is undefined or shell == 'bash'

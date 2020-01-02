@@ -1,0 +1,19 @@
+mariadb_node:
+  hostname: 10.127.10.158
+  user: root
+  db_user: root
+  db_password: your-sql-password
+primary_master_node:
+  hostname: 10.127.10.158
+  user: root
+  db_host: 10.127.10.158
+  db_user: root
+  db_password: your-sql-password
+  controlplane_host: 10.127.10.158
+  controlplane_port: "6443"
+  as_host: true
+  registry_mirrors:
+  - https://lje6zxpk.mirror.aliyuncs.com
+  - https://lms7sxqp.mirror.aliyuncs.com
+  insecure_registries:
+  - 192.168.222.172:3000

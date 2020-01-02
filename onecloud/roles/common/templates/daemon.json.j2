@@ -1,0 +1,19 @@
+{
+  "bridge": "none",
+  "iptables": false,
+  "exec-opts": [
+      "native.cgroupdriver=systemd"
+   ],
+  "data-root": "{{ docker_root | default('/opt/docker')}}",
+  "log-driver": "json-file",
+  "log-opts": {
+      "max-size": "100m"
+   },
+{% if docker_registry_mirrors|length > 0 %}
+  "registry-mirrors": {{ docker_registry_mirrors|to_json }},
+{% endif %}
+{% if docker_insecure_registries|length > 0 %}
+  "insecure-registries": {{ docker_insecure_registries|to_json }},
+{% endif %}
+  "live-restore": true
+}
