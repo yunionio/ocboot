@@ -161,3 +161,13 @@
     create: yes
     regexp: '^export PATH=.*/opt/yunion/bin'
   when: shell is undefined or shell == 'bash'
+
+- name: Enable yunion systemd services
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+  - yunion-host-sdnagent
+  - yunion-executor
+  - yunion-host-image
