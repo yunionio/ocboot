@@ -120,11 +120,9 @@
 
   - name: Config docker file
     template: src=daemon.json.j2 dest=/etc/docker/daemon.json
-    tags: docker
-    notify: restart docker
 
-  - name: Start docker service
-    service: name=docker state=started enabled=yes
+  - name: Restart docker service
+    service: name=docker state=restarted daemon_reload=yes enabled=yes
   when:
     skip_docker_config is not defined or skip_docker_config|default(false)|bool == false
 
