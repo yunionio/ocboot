@@ -90,6 +90,8 @@ def new_site_item_primary_master(
     onecloud_version="latest",
     operator_version="latest",
     skip_docker_config=False,
+    onecloud_user="admin",
+    onecloud_user_password="admin@123",
 ):
     vars = {
         "db_host": db_host,
@@ -102,6 +104,8 @@ def new_site_item_primary_master(
         "k8s_node_as_oc_host": as_host,
         "onecloud_version": onecloud_version,
         "operator_version": operator_version,
+        "onecloud_user": onecloud_user,
+        "onecloud_user_password": onecloud_user_password,
     }
     if image_repository is not None:
         vars["image_repository"] = image_repository
@@ -209,6 +213,8 @@ class PlaybookConfig(object):
         insecure_regs = self.get_default_val(config, "insecure_registries", [])
         image_repo = self.get_val(config, "image_repository")
         skip_docker_config = self.get_default_val(config, "skip_docker_config", False)
+        onecloud_user = self.get_default_val(config, "onecloud_user", "admin")
+        onecloud_user_password = self.get_default_val(config, "onecloud_user_password", "admin@123")
         self.primary_master_config = new_site_item_primary_master(
             db_host, db_user, db_passwd,
             chost, cport, as_host,
@@ -216,6 +222,8 @@ class PlaybookConfig(object):
             insecure_regs=insecure_regs,
             image_repository=image_repo,
             skip_docker_config=skip_docker_config,
+            onecloud_user=onecloud_user,
+            onecloud_user_password=onecloud_user_password,
         )
 
     def get_nodes(self, config):
@@ -299,6 +307,18 @@ class PlaybookConfig(object):
     def debug_str(self):
         return "hosts_file:\n%s\n\nsite.yml:\n%s\n" % (self.get_hosts_content(), self.get_site_content())
 
+    def get_login_info(self):
+        master_config = self.primary_master_config.get("vars", {})
+        frontend_ip = master_config.get("k8s_controlplane_host", None)
+        user = master_config.get("onecloud_user", None)
+        password = master_config.get("onecloud_user_password", None)
+        if frontend_ip is None:
+            raise Exception("Not found controlplane_host in config")
+        if user is None:
+            raise Exception("Not found onecloud_user in config")
+        if password is None:
+            raise Exception("Not found onecloud_user_password in config")
+        return (frontend_ip, user, password)
 
 if __name__ == "__main__":
     def p(data):

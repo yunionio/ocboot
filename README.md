@@ -72,6 +72,10 @@ primary_master_node:
   controlplane_host: 10.127.10.158
   # k8s 控制节点的端口
   controlplane_port: "6443"
+  # onecloud 登录用户
+  onecloud_user: demo
+  # onecloud 登录用户密码
+  onecloud_user_password: demo@123
   # 该节点作为 OneCloud 私有云计算节点
   as_host: true
   # docker registry 加速镜像
@@ -82,6 +86,14 @@ EOF
 
 # 开始部署
 $ ./run.py ./config-allinone.yml
+....
+# 部署完成后会有如下输出，表示运行成功
+# 浏览器打开 https://10.127.10.158
+# 使用 demo/demo@123 用户密码登录就能访问前端界面
+Initialized successfully!
+Web page: https://10.127.10.158
+User: demo
+Password: demo@123
 ```
 
 ### 多节点部署

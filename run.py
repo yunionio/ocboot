@@ -20,23 +20,34 @@ def run_cmd(cmds):
         if not line:
             break
         print(line.rstrip())
+    proc.wait()
+    return proc.returncode
 
 
 def ansible_playbook(hosts_f, playbook_f):
     cmd = ["ansible-playbook", "-e", "ANSIBLE_HOST_KEY_CHECKING=False",
            "-i", hosts_f, playbook_f]
-    run_cmd(cmd)
+    return run_cmd(cmd)
 
 
 def start(config_file):
-
     root = os.path.dirname(os.path.realpath(__file__))
     config = ansible.load_config(config_file)
     playbook_f = os.path.join( root, "onecloud/zz_generated.site.yml")
     hosts_f = os.path.join(root, "onecloud/zz_generated.hosts")
     config.generate_hosts_file(hosts_f)
     config.generate_site_file(playbook_f)
-    ansible_playbook(hosts_f, playbook_f)
+    returncode = ansible_playbook(hosts_f, playbook_f)
+    if returncode is not None and returncode != 0:
+        return returncode
+    login_info = config.get_login_info()
+    print("""Initialized successfully!
+Web page: https://%s
+User: %s
+Password: %s
+""" % (login_info[0], login_info[1], login_info[2])
+)
+    return 0
 
 
 def show_usage():
@@ -50,8 +61,8 @@ def main():
     if len(sys.argv) != 2:
         show_usage()
         sys.exit(1)
-    start(sys.argv[1])
+    return start(sys.argv[1])
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

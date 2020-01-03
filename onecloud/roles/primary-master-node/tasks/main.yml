@@ -92,3 +92,25 @@
 - name: Create onecloud controller services
   shell: "/opt/yunion/bin/ocadm cluster create --wait"
   when: OC_CLUSTER_COUNT.stdout|int == 0
+
+- name: "Check onecloud user {{ onecloud_user }} exists"
+  shell: |
+    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    /opt/yunion/bin/climc user-list | grep -w {{ onecloud_user }} | wc -l
+  register: OC_USER_COUNT
+
+- name: "Create onecloud web login user {{ onecloud_user }}"
+  shell: |
+   eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+   /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
+  when: OC_USER_COUNT.stdout|int == 0
+
+- name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
+  shell: |
+    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
+
+- name: "Make onecloud user {{ onecloud_user }} as system admin"
+  shell: |
+    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    /opt/yunion/bin/climc project-add-user system {{ onecloud_user }} admin
