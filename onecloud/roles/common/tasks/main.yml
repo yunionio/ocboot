@@ -28,7 +28,7 @@
   - spice-protocol
   - sysstat
   - tcpdump
-  - telegraf
+  - telegraf-1.5.18-1
   - usbredir
   - yunion-qemu-2.12.1
   - yunion-host-image
