@@ -215,6 +215,7 @@ class PlaybookConfig(object):
         skip_docker_config = self.get_default_val(config, "skip_docker_config", False)
         onecloud_user = self.get_default_val(config, "onecloud_user", "admin")
         onecloud_user_password = self.get_default_val(config, "onecloud_user_password", "admin@123")
+        onecloud_version = self.get_default_val(config, "onecloud_version", "latest")
         self.primary_master_config = new_site_item_primary_master(
             db_host, db_user, db_passwd,
             chost, cport, as_host,
@@ -224,6 +225,7 @@ class PlaybookConfig(object):
             skip_docker_config=skip_docker_config,
             onecloud_user=onecloud_user,
             onecloud_user_password=onecloud_user_password,
+            onecloud_version=onecloud_version,
         )
 
     def get_nodes(self, config):
