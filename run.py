@@ -41,6 +41,8 @@ def start(config_file):
     if returncode is not None and returncode != 0:
         return returncode
     login_info = config.get_login_info()
+    if login_info is None:
+        return 0
     print("""Initialized successfully!
 Web page: https://%s
 User: %s

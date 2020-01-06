@@ -12,6 +12,8 @@
   shell: test -f /etc/kubernetes/kubelet.conf
   register: kubelet_result
   ignore_errors: yes
+  changed_when: false
+  failed_when: false
 
 - name: Get join token
   shell: kubeadm token create --description "ocadm-playbook-node-joining-token" --ttl 15m --print-join-command | awk '{print $5}{print $7}'

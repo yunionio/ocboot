@@ -310,6 +310,8 @@ class PlaybookConfig(object):
         return "hosts_file:\n%s\n\nsite.yml:\n%s\n" % (self.get_hosts_content(), self.get_site_content())
 
     def get_login_info(self):
+        if self.primary_master_config is None:
+            return None
         master_config = self.primary_master_config.get("vars", {})
         frontend_ip = master_config.get("k8s_controlplane_host", None)
         user = master_config.get("onecloud_user", None)

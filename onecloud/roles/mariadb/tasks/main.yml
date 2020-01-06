@@ -24,6 +24,8 @@
     name: "{{ db_user }}"
     password: "{{ db_password }}"
   ignore_errors: yes
+  changed_when: false
+  failed_when: false
 
 - name:  Allow remote root access with grant priv
   mysql_user:

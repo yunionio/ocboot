@@ -9,7 +9,7 @@
 
 - name: Add yunion rpm repository
   get_url:
-    url: https://iso.yunion.cn/yumrepo-2.10/yunion.repo
+    url: https://iso.yunion.cn/yumrepo-2.13/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
   become: yes
 
@@ -31,7 +31,6 @@
   - telegraf-1.5.18-1
   - usbredir
   - yunion-qemu-2.12.1
-  - yunion-host-image
   - yunion-ocadm
   - yunion-climc
   - yunion-sdnagent
@@ -168,4 +167,3 @@
   loop:
   - yunion-host-sdnagent
   - yunion-executor
-  - yunion-host-image
