@@ -9,7 +9,7 @@
 
 - name: Add yunion rpm repository
   get_url:
-    url: https://iso.yunion.cn/yumrepo-2.13/yunion.repo
+    url: https://iso.yunion.cn/yumrepo-3.0/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
   become: yes
 

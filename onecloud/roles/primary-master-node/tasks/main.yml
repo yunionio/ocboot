@@ -117,6 +117,10 @@
 
 - name: Create essential services, wait for a few minutes...
   shell: "/opt/yunion/bin/ocadm cluster create --wait"
+  retries: 6
+  delay: 10
+  register: result
+  until: result.rc == 0
   when: OC_CLUSTER_COUNT.stdout|int == 0
 
 - name: "Check onecloud user {{ onecloud_user }} exists"
