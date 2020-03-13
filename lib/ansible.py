@@ -87,8 +87,8 @@ def new_site_item_primary_master(
     registry_mirrors=[],
     insecure_regs=[],
     image_repository=None,
-    onecloud_version="latest",
-    operator_version="latest",
+    onecloud_version=None,
+    operator_version=None,
     skip_docker_config=False,
     onecloud_user="admin",
     onecloud_user_password="admin@123",
@@ -102,8 +102,6 @@ def new_site_item_primary_master(
         "k8s_controlplane_host": controlplane_host,
         "k8s_controlplane_port": controlplane_port,
         "k8s_node_as_oc_host": as_host,
-        "onecloud_version": onecloud_version,
-        "operator_version": operator_version,
         "onecloud_user": onecloud_user,
         "onecloud_user_password": onecloud_user_password,
     }
@@ -111,6 +109,10 @@ def new_site_item_primary_master(
         vars["image_repository"] = image_repository
     if skip_docker_config:
         vars["skip_docker_config"] = True
+    if onecloud_version is not None:
+        vars["onecloud_version"] = onecloud_version
+    if operator_version is not None:
+        vars["operator_version"] = operator_version
     return new_site_item(
         PRIMARY_MASTER_NODE,
         "primary-master-node",
@@ -215,7 +217,7 @@ class PlaybookConfig(object):
         skip_docker_config = self.get_default_val(config, "skip_docker_config", False)
         onecloud_user = self.get_default_val(config, "onecloud_user", "admin")
         onecloud_user_password = self.get_default_val(config, "onecloud_user_password", "admin@123")
-        onecloud_version = self.get_default_val(config, "onecloud_version", "latest")
+        onecloud_version = self.get_default_val(config, "onecloud_version", None)
         self.primary_master_config = new_site_item_primary_master(
             db_host, db_user, db_passwd,
             chost, cport, as_host,
