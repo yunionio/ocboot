@@ -31,7 +31,7 @@
   register: K8S_TOKEN
 
 - name: Pull ocadm images on node
-  command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}} --onecloud-version {{ onecloud_version | default('latest') }}"
+  command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}}"
   register: command_result
   changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
   when: K8S_TOKEN.stdout|length == 0
@@ -104,7 +104,7 @@
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: 'kubectl get crd | grep onecloudcluster'
-  retries: 6
+  retries: 30
   delay: 10
   register: result
   until: result.rc == 0
