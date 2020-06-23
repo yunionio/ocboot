@@ -122,12 +122,6 @@
 
 # docker
 - block:
-  - name: Add docker rpm repository
-    get_url:
-      url: http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
-      dest: /etc/yum.repos.d/docker-ce.repo
-    become: yes
-
   - name: Install docker
     yum: name={{ item }} state=present
     with_items:
@@ -147,14 +141,6 @@
     skip_docker_config is not defined or skip_docker_config|default(false)|bool == false
 
 # k8s packages
-- name: Add kubernetes rpm repository
-  copy:
-    owner: root
-    group: root
-    mode: "0755"
-    src: kubernetes.repo
-    dest: /etc/yum.repos.d/kubernetes.repo
-
 - name: Install k8s packages
   yum: name={{ item }} state=present
   with_items:
