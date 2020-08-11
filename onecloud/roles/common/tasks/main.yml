@@ -45,8 +45,6 @@
       - kmod-openvswitch
       - openvswitch
       - net-tools
-    disablerepo: "*"
-    enablerepo: "yunion-*"
 
 - name: Turn off selinux
   selinux:
