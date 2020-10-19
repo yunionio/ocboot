@@ -23,7 +23,7 @@
       - lvm2
       - nc
       - ntp
-      - fetchclient
+      - yunion-fetcherfs
       - fuse
       - fuse-devel
       - fuse-libs
