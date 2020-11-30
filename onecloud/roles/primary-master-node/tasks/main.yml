@@ -123,31 +123,46 @@
   until: result.rc == 0
   when: OC_CLUSTER_COUNT.stdout|int == 0
 
+- name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin"
+  shell: |
+    /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin
+  retries: 6
+  delay: 10
+
+- name: "Source ~/.onecloud_rcadmin in ~/.bashrc"
+  lineinfile:
+    dest: ~/.bashrc
+    line: "source ~/.onecloud_rcadmin"
+    state: present
+    create: yes
+    regexp: '^source ~/.onecloud_rcadmin'
+  when: shell is undefined or shell == 'bash'
+
 - name: "Check onecloud user {{ onecloud_user }} exists"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-list | grep -w {{ onecloud_user }} | wc -l
   register: OC_USER_COUNT
 
 - name: "Create onecloud web login user {{ onecloud_user }}"
   shell: |
-   eval $(/opt/yunion/bin/ocadm cluster rcadmin)
-   /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
+    source ~/.onecloud_rcadmin
+    /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
   when: OC_USER_COUNT.stdout|int == 0
 
 - name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
 
 - name: "Make onecloud user {{ onecloud_user }} as system admin"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc project-add-user system {{ onecloud_user }} admin
 
 - name: Check if admin network adm0 exists
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc network-show adm0 > /dev/null 2>&1
   register: network_admin_exist
   ignore_errors: yes
@@ -156,7 +171,7 @@
 
 - name: "Check if network contains {{ default_ip }}"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc network-list --ip {{ default_ip }} | grep -v Total | wc -l
   register: network_count_ret
   ignore_errors: yes
@@ -167,7 +182,7 @@
 
 - name: "Register adm0 network for {{ default_ip }}/{{ default_masklen }}, gateway {{ default_gateway }}"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }}
     /opt/yunion/bin/climc network-private adm0
   when: network_admin_exist.rc != 0 and admin_network_count|int == 0
