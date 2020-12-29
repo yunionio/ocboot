@@ -1,0 +1,157 @@
+---
+# This role contains common plays that will run on all nodes
+
+- name: ensure group yunion exists
+  group:
+    name: yunion
+    state: present
+
+- name: ensure user yunion exists
+  user:
+    name: yunion
+    shell: /bin/bash
+    groups: yunion
+
+- name: ensure user yunion in sudoers list
+  shell: |
+    if [ ! -s /etc/sudoers.d/99yunion ]; then
+    cat >> /etc/sudoers.d/99yunion <<END
+    yunion ALL=(root) NOPASSWD:ALL
+    END
+    fi
+
+- name: Ensures remote rpm dir exists
+  file:
+    path: /opt/yunion/upgrade/rpms/packages/misc/
+    state: directory
+    owner: yunion
+    group: yunion
+
+- name: cp rsync rpm
+  copy:
+    src: /opt/yunion/upgrade/rpms/packages/misc/
+    dest: /opt/yunion/upgrade/rpms/packages/misc/
+
+# pre-install rsync and other rpms, before we can use ansible syncronize module
+- name: yum install rsync
+  shell: "yum localinstall --nogpgcheck -y /opt/yunion/upgrade/rpms/packages/misc/*.rpm"
+  args:
+    warn: no
+
+- name: Copy files to Node. It should take a couple of minutes...
+  synchronize:
+    src: /opt/yunion/upgrade
+    dest: /opt/yunion/
+    rsync_opts:
+      - "--delete"
+      - "--exclude=images"
+
+- name: init yunion-repo
+  copy:
+    src: yunion-local.repo
+    dest: /etc/yum.repos.d/yunion-local.repo
+
+- name: make cache
+  shell: "yum -y --disablerepo='*' --enablerepo='yunion*' makecache fast"
+  args:
+    warn: no
+
+- name: init dirs
+  shell: "mkdir -p /etc/docker"
+  args:
+    warn: no
+
+- name: init tmux
+  shell: |
+    yum localinstall -y /opt/yunion/upgrade/rpms/packages/tmux/*.rpm
+    if [ ! -f /usr/bin/tmux ]; then
+      cp -f /opt/yunion/upgrade/rpms/packages/tmux/tmux /usr/bin
+    fi
+  args:
+    warn: no
+
+- name: is systemd installed
+  command: "systemctl --version"
+  register: is_systemd_installed
+
+- name: ensure systemd installed
+  yum:
+    name: systemd
+    disablerepo: "*"
+    enablerepo: "yunion-*"
+  when: is_systemd_installed.rc != 0
+
+- name: yum install yunion packages; it should take a few minutes...
+  yum:
+    name: "{{ packages }}"
+    disablerepo: "*"
+    enablerepo: "yunion-*"
+  vars:
+    packages:
+      - ansible
+      - autogen-libopts
+      - bash-completion
+      - container-selinux
+      - containerd.io
+      - cri-tools
+      - docker-ce
+      - htop
+      - iscsi-initiator-utils
+      - jq
+      - kubeadm
+      - kubectl
+      - kubelet
+      - kubernetes-cni
+      - net-tools
+      - ntp
+      - ntpdate
+      - oniguruma
+      - pciutils
+      - rsync
+      - socat
+      - wget
+      - yunion-climc
+      - yunion-executor-server
+      - yunion-fetcherfs
+      - yunion-ocadm
+      - yunion-registry
+      - yunion-qemu-2.12.1
+
+- name: config ntpd service
+  template: src=ntp.conf dest=/etc/ntp.conf
+  when: ntpd_server is defined
+
+- name: sync with ntpd_server
+  shell: |
+    set -ex
+    echo "sync with ntpd {{ ntpd_server }}"
+    systemctl stop ntpd
+    ntpdate {{ ntpd_server }}; echo $?
+    echo "[PASS] sync with ntpd {{ ntpd_server }}"
+  when: ntpd_server is defined
+  args:
+    warn: no
+  ignore_errors: yes
+  changed_when: false
+  failed_when: false
+
+- name: enable services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - ntpd
+    - yunion-executor
+    - iscsid
+
+- name: Stop/Disable Depreciated Services If Any
+  shell: |
+    for service in yunion-host-image yunion-host-sdnagent
+    do
+      if [ -f /usr/lib/systemd/system/$service.service ]; then
+        systemctl stop $service
+      fi
+    done
+  args:
+    warn: no

@@ -1,0 +1,29 @@
+---
+# This role modifies tcp net ipv4 configuration
+# only for primary and controlplane
+
+
+- name: tcp_retries2
+  sysctl:
+    name: net.ipv4.tcp_retries2
+    value: "7"
+    reload: yes
+    state: present
+- name: keepalive time
+  sysctl:
+    name: net.ipv4.tcp_keepalive_time
+    value: "13"
+    reload: yes
+    state: present
+- name: keepalive intvl
+  sysctl:
+    name: net.ipv4.tcp_keepalive_intvl
+    value: "7"
+    reload: yes
+    state: present
+- name: keepalive probes
+  sysctl:
+    name: net.ipv4.tcp_keepalive_probes
+    value: "3"
+    reload: yes
+    state: present

@@ -2,6 +2,10 @@
   include_role:
     name: common
 
+- name: TCP Configuration
+  include_role:
+    name: tcp
+
 - name: Get default gateway
   shell: "ip route get 1 | head -n 1 | awk '{print $3}'"
   register: default_gateway_ret
@@ -31,7 +35,7 @@
   register: K8S_TOKEN
 
 - name: Pull ocadm images on node
-  command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}}"
+  command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}} --onecloud-version {{ onecloud_version | default('latest') }} --operator-version {{ onecloud_version | default('latest') }}"
   register: command_result
   changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
   when: K8S_TOKEN.stdout|length == 0
@@ -50,7 +54,13 @@
 
   - name: construct init args
     set_fact:
-      init_args: "init --mysql-host {{ db_host }} --mysql-user {{ db_user }} --mysql-password {{ db_password}} --control-plane-endpoint {{ controlplane_endpoint }}"
+      init_args: "init --control-plane-endpoint {{ controlplane_endpoint }} --mysql-host {{ db_host }} --mysql-user {{ db_user }} --mysql-password {{ db_password}}"
+
+  - name: construct init args with db_port config
+    set_fact:
+      init_args: "{{ init_args }} --mysql-port {{ db_port }}"
+    when:
+      db_port is defined
 
   - name: construct image repository
     set_fact:
@@ -58,16 +68,53 @@
     when:
       image_repository is defined
 
+  - name: construct init args apiserver_advertise_address
+    set_fact:
+      init_args: "{{ init_args }} --apiserver-advertise-address {{ apiserver_advertise_address }} "
+    when:
+      apiserver_advertise_address is defined
+
+  - name: construct init args node_ip
+    set_fact:
+      init_args: "{{ init_args }} --node-ip {{ node_ip }}"
+    when:
+      node_ip is defined
+
+  - name: construct init args host_networks
+    set_fact:
+      init_args: "{{ init_args }} --host-networks {{ host_networks }} "
+    when:
+      host_networks is defined
+
   - name: construct onecloud version
     set_fact:
-      init_args: "{{ init_args }} --onecloud-version {{ onecloud_version }}"
+      init_args: "{{ init_args }} --onecloud-version {{ onecloud_version }} --operator-version {{ onecloud_version }}"
     when:
       onecloud_version is defined
+
+  - name: construct onecloud version
+    set_fact:
+      init_args: "{{ init_args }} --addon-calico-ip-autodetection-method {{ ip_autodetection_method }}"
+    when:
+      ip_autodetection_method is defined
+
+  - name: init ha ip
+    set_fact:
+      init_args: "{{ init_args }} --high-availability-vip {{ high_availability_vip }}"
+    when:
+      high_availability_vip is defined
+
+  - name: init keepalived version tag
+    set_fact:
+      init_args: "{{ init_args }} --keepalived-version-tag {{ keepalived_version_tag }}"
+    when:
+      keepalived_version_tag is defined
 
   - name: init node as onecloud host agent
     set_fact:
       init_args: "{{ init_args }} --enable-host-agent"
     when:
+    - high_availability_vip is not defined
     - k8s_node_as_oc_host|default(false)|bool == true
 
 - name: Use ocadm init first master node
@@ -89,16 +136,20 @@
     state: present
     create: yes
     regexp: '^export KUBECONFIG=.*'
-  when: shell is undefined or shell == 'bash'
+  when:
+  - high_availability_vip is not defined
+  - shell is undefined or shell == 'bash'
 
-- name: Source kubectl bash completion in master' /etc/profile
+- name: Source kubectl bash completion in master's ~/.bashrc
   lineinfile:
-    dest: /etc/profile
+    dest: ~/.bashrc
     line: "source <(kubectl completion bash)"
     state: present
     create: yes
     regexp: '.*kubectl completion bash.*'
-  when: shell is undefined or shell == 'bash'
+  when:
+  - high_availability_vip is not defined
+  - shell is undefined or shell == 'bash'
 
 - name: Wait onecloud CRD created
   environment:
@@ -108,26 +159,43 @@
   delay: 10
   register: result
   until: result.rc == 0
+  when: high_availability_vip is not defined
 
 - name: Check onecloud cluster exists
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: "kubectl get onecloudcluster -n onecloud | grep default | wc -l"
   register: OC_CLUSTER_COUNT
+  when: high_availability_vip is not defined
+
+- name: init construct create cluster args
+  set_fact:
+    init_cluster_args: ""
+
+- name: construct create cluster args
+  set_fact:
+    init_cluster_args: "--use-ee"
+  when:
+  - use_ee is defined
+  - use_ee|default(false)|bool == true
 
 - name: Create essential services, wait for a few minutes...
-  shell: "/opt/yunion/bin/ocadm cluster create --wait"
+  shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait"
   retries: 6
   delay: 10
   register: result
   until: result.rc == 0
-  when: OC_CLUSTER_COUNT.stdout|int == 0
+  ignore_errors: yes
+  when:
+  - high_availability_vip is not defined
+  - OC_CLUSTER_COUNT.stdout|int == 0
 
 - name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin"
   shell: |
     /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin
   retries: 6
   delay: 10
+  ignore_errors: yes
 
 - name: "Source ~/.onecloud_rcadmin in ~/.bashrc"
   lineinfile:
@@ -136,29 +204,38 @@
     state: present
     create: yes
     regexp: '^source ~/.onecloud_rcadmin'
-  when: shell is undefined or shell == 'bash'
+  ignore_errors: yes
+  when:
+  - shell is undefined or shell == 'bash'
 
 - name: "Check onecloud user {{ onecloud_user }} exists"
   shell: |
-    source ~/.onecloud_rcadmin
+    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
     /opt/yunion/bin/climc user-list | grep -w {{ onecloud_user }} | wc -l
   register: OC_USER_COUNT
+  ignore_errors: yes
 
 - name: "Create onecloud web login user {{ onecloud_user }}"
   shell: |
-    source ~/.onecloud_rcadmin
-    /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
-  when: OC_USER_COUNT.stdout|int == 0
+   eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+   /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
+  ignore_errors: yes
+  when:
+  - OC_USER_COUNT.stdout|int == 0
 
 - name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
+  when:
+  - use_ee is not defined
 
 - name: "Make onecloud user {{ onecloud_user }} as system admin"
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc project-add-user system {{ onecloud_user }} admin
+  when:
+  - use_ee is not defined
 
 - name: Check if admin network adm0 exists
   shell: |
@@ -168,6 +245,7 @@
   ignore_errors: yes
   changed_when: false
   failed_when: false
+  when: high_availability_vip is not defined
 
 - name: "Check if network contains {{ default_ip }}"
   shell: |
@@ -175,14 +253,26 @@
     /opt/yunion/bin/climc network-list --ip {{ default_ip }} | grep -v Total | wc -l
   register: network_count_ret
   ignore_errors: yes
+  when: high_availability_vip is not defined
 
 - name: set admin network count
   set_fact:
     admin_network_count: "{{ network_count_ret.stdout }}"
+  when: high_availability_vip is not defined
 
 - name: "Register adm0 network for {{ default_ip }}/{{ default_masklen }}, gateway {{ default_gateway }}"
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }}
     /opt/yunion/bin/climc network-private adm0
-  when: network_admin_exist.rc != 0 and admin_network_count|int == 0
+  when: high_availability_vip is not defined and network_admin_exist.rc != 0 and admin_network_count|int == 0
+
+- name: "post install scripts"
+  shell: |
+    find /opt/yunion/upgrade/post-install -name '*.sh' -type f| while read line
+    do
+      echo "processing $line ... "
+      sh -c "$line" 2>&1 | tee -a /tmp/post-install.log
+      echo "[DONE ]processing $line OK"
+    done
+  when: high_availability_vip is not defined

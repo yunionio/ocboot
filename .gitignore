@@ -40,3 +40,5 @@ __pycache__/
 onecloud/hosts
 onecloud/site.yml
 onecloud/zz_generated.*
+onecloud/ansible.cfg
+onecloud/callback_plugins

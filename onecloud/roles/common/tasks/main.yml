@@ -129,7 +129,11 @@
     - containerd.io
 
   - name: Make /etc/docker dir
-    shell: mkdir -p /etc/docker
+    file:
+      path: /etc/docker
+      state: directory
+      owner: root
+      group: root
 
   - name: Config docker file
     template: src=daemon.json.j2 dest=/etc/docker/daemon.json
