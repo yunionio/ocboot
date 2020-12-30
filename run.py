@@ -25,8 +25,22 @@ def run_cmd(cmds):
 
 
 def ansible_playbook(hosts_f, playbook_f):
+    """
+    debug level support example:
+    VERBOSE_LEVEL=4 /opt/yunionboot/run.py /opt/yunion/upgrade/config.yml
+    """
+    debug_flag = ''
+    try:
+        debug_level = int(os.environ.get('VERBOSE_LEVEL', 0))
+        if debug_level > 0:
+            debug_flag = '-' + 'v' * debug_level
+    except ValueError:
+        pass
+
     cmd = ["ansible-playbook", "-e", "ANSIBLE_HOST_KEY_CHECKING=False",
            "-i", hosts_f, playbook_f]
+    if len(debug_flag) > 0:
+        cmd.append(debug_flag)
     return run_cmd(cmd)
 
 
@@ -43,7 +57,13 @@ def start(config_file):
     login_info = config.get_login_info()
     if login_info is None:
         return 0
-    print("""Initialized successfully!
+    if config.is_using_ee():
+        print("""Initialized successfully!\n
+Check Web Page: https://%s\n
+To start using the command line tools, you need to `source ~/.bashrc` profile or relogin.
+""" % (login_info[0]))
+    else:
+        print("""Initialized successfully!
 Web page: https://%s
 User: %s
 Password: %s

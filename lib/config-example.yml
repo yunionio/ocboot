@@ -33,3 +33,12 @@ worker_nodes:
   - host: 10.127.10.159
     use_local: true
   - host: 10.127.10.160
+
+longhorn_node:
+  use_local: true
+  node_count: 3
+
+reboot_node:
+  hosts:
+  - use_local: true
+    user: root

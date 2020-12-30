@@ -1,0 +1,140 @@
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: default-grafana
+  labels:
+    app: grafana
+subjects:
+- kind: ServiceAccount
+  name: default-grafana
+  namespace: onecloud
+roleRef:
+  kind: ClusterRole
+  name: default-grafana
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app: grafana
+  name: default-grafana
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: grafana
+  name: default-grafana
+  namespace: onecloud
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: default-grafana
+  namespace: onecloud
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+      annotations:
+        a: b
+    spec:
+      initContainers:
+      - name: default-grafana-sc-datasources
+        image: kiwigrid/k8s-sidecar:0.1.20
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: METHOD
+          value: LIST
+        - name: LABEL
+          value: grafana_datasource
+        - name: FOLDER
+          value: "/etc/grafana/provisioning/datasources"
+        - name: RESOURCE
+          value: "both"
+        volumeMounts:
+        - name: sc-datasources-volume
+          mountPath: "/etc/grafana/provisioning/datasources"
+      containers:
+      - name: grafana
+        image: grafana/grafana:6.5.2
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: GF_SECURITY_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              key: admin-user
+              name: default-grafana
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: admin-password
+              name: default-grafana
+        ports:
+        - name: service
+          containerPort: 80
+          protocol: TCP
+        - name: grafana
+          containerPort: 3000
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /etc/grafana/grafana.ini
+          name: config
+          subPath: grafana.ini
+        - mountPath: /etc/grafana/ldap.toml
+          name: ldap
+          subPath: ldap.toml
+        - mountPath: /var/lib/grafana
+          name: storage
+        - mountPath: /etc/grafana/provisioning/datasources
+          name: sc-datasources-volume
+      serviceAccountName: default-grafana
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 420
+          name: default-grafana
+      - name: ldap
+        secret:
+          defaultMode: 420
+          items:
+          - key: ldap-toml
+            path: ldap.toml
+          secretName: default-grafana
+      - name: storage
+        persistentVolumeClaim:
+          claimName: default-grafana-data
+      - name: sc-datasources-volume
+        emptyDir: {}
+        #persistentVolumeClaim:
+        #claimName: default-grafana-sc-datasources-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grafana
+  name: default-grafana
+  namespace: onecloud
+spec:
+  ports:
+  - name: service
+    port: 80
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: grafana
+  type: ClusterIP

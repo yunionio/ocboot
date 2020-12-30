@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-grafana
+  namespace: onecloud
+  labels:
+    app: grafana
+data:
+  grafana.ini: |
+    [paths]
+      data = /var/lib/grafana/data
+      logs = /var/log/grafana
+      plugins = /var/lib/grafana/plugins
+      provisioning = /etc/grafana/provisioning
+    [analytics]
+      check_for_updates = true
+    [log]
+      mode = console
+    [grafana_net]
+      url = https://grafana.net
+    # auth.ldap:
+    #   enabled: true
+    #   allow_sign_up: true
+    #   config_file: /etc/grafana/ldap.toml
