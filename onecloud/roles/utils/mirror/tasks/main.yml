@@ -1,0 +1,10 @@
+---
+- name: Set CentOS 7 yum mirror
+  include_tasks: centos7.yml
+  with_dict: "{{ centos7_repo_mirrors }}"
+  vars:
+    mirror: "{{ centos7_repo_mirror_defaults | combine(item.value) }}"
+  when:
+    - ansible_facts["distribution"] == "CentOS"
+    - ansible_facts["distribution_major_version"] == "7"
+    - enable_package_mirror|default(false)

@@ -1,11 +1,11 @@
 ---
 # This role contains common plays that will run on all nodes
 - name: Install yum utils
-  yum: name={{ item }} state=latest
-  with_items:
-  - yum-utils
-  - bash-completion
-  - epel-release
+  yum:
+    name:
+      - yum-utils
+      - bash-completion
+      - epel-release
 
 - name: Add yunion rpm repository
   get_url:
@@ -122,11 +122,11 @@
 # docker
 - block:
   - name: Install docker
-    yum: name={{ item }} state=present
-    with_items:
-    - docker-ce-19.03.9
-    - docker-ce-cli-19.03.9
-    - containerd.io
+    yum:
+      name:
+        - docker-ce-19.03.9
+        - docker-ce-cli-19.03.9
+        - containerd.io
 
   - name: Make /etc/docker dir
     file:
@@ -145,15 +145,15 @@
 
 # k8s packages
 - name: Install k8s packages
-  yum: name={{ item }} state=present
-  with_items:
-  - bridge-utils
-  - ipvsadm
-  - conntrack-tools
-  - jq
-  - kubelet-1.15.8-0
-  - kubectl-1.15.8-0
-  - kubeadm-1.15.8-0
+  yum:
+    name:
+      - bridge-utils
+      - ipvsadm
+      - conntrack-tools
+      - jq
+      - kubelet-1.15.8-0
+      - kubectl-1.15.8-0
+      - kubeadm-1.15.8-0
   tags: k8s
 
 - name: Enable kubelet

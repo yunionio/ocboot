@@ -1,0 +1,31 @@
+---
+- name: Setup repo mirrors
+  include_role:
+    name: utils/mirror
+
+- name: Add yunion rpm repository
+  get_url:
+    url: "{{ yunion_yum_repo }}"
+    dest: /etc/yum.repos.d/yunion.repo
+  become: yes
+
+- name: Remove the old yunion-executor-server package
+  yum:
+    name: yunion-executor-server
+    state: absent
+
+- name: Upgrade yunion common packages
+  yum:
+    name:
+      - yunion-ocadm
+      - yunion-climc
+      - yunion-executor
+    state: latest
+
+- name: Restart yunion executor service
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: restarted
+  loop:
+    - yunion-executor

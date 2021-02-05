@@ -1,0 +1,11 @@
+centos7_repo_mirror_defaults:
+  url: None
+  dest: None
+
+centos7_repo_mirrors:
+  base:
+    url: http://mirrors.aliyun.com/repo/Centos-7.repo
+    dest: /etc/yum.repos.d/CentOS-Base.repo
+  epel:
+    url: http://mirrors.aliyun.com/repo/epel-7.repo
+    dest: /etc/yum.repos.d/epel.repo

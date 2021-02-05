@@ -1,0 +1,46 @@
+import subprocess
+import os
+import json
+
+
+def _run_cmd(cmds):
+    shell_cmd = ' '.join(cmds)
+    print(shell_cmd)
+    os.environ['ANSIBLE_FORCE_COLOR'] = '1'
+    proc = subprocess.Popen(
+        shell_cmd,
+        shell=True,
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,)
+    while True:
+        line = proc.stdout.readline()
+        if not line:
+            break
+        print(line.rstrip())
+    proc.wait()
+    return proc.returncode
+
+
+def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
+    """
+    debug level support example:
+    VERBOSE_LEVEL=4 /opt/yunionboot/run.py /opt/yunion/upgrade/config.yml
+    """
+    debug_flag = ''
+    if debug_level == 0:
+        debug_level = int(os.environ.get('VERBOSE_LEVEL', 0))
+    if debug_level > 0:
+        if debug_level > 0:
+            debug_flag = '-' + 'v' * debug_level
+
+    cmd = ["ansible-playbook"]
+
+    if vars:
+        cmd.extend(["-e", "'%s'" % json.dumps(vars)])
+
+    cmd.extend(["-i", hosts_f, playbook_f])
+
+    if len(debug_flag) > 0:
+        cmd.append(debug_flag)
+    return _run_cmd(cmd)

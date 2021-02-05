@@ -1,0 +1,6 @@
+---
+- name: Setup CentOS 7 "{{ mirror.url }}" to "{{ mirror.dest }}"
+  get_url:
+    url: "{{ mirror.url }}"
+    dest: "{{ mirror.dest }}"
+  become: yes

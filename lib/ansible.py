@@ -1,7 +1,10 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
+import os
 import yaml
+
+from . import cmd
 
 
 MARIADB_NODE = "mariadb_node"
@@ -11,6 +14,19 @@ MASTER_NODES = "master_nodes"
 WORKER_NODES = "worker_nodes"
 LONGHORN_NODES = "longhorn_nodes"
 REBOOT_NODES = "reboot_nodes"
+
+
+def get_config_dir(config_file):
+    root = os.path.dirname(os.path.realpath(config_file))
+    return root
+
+
+def get_playbook_filepaths(config_file):
+    root = get_config_dir(config_file)
+    playbook_f = os.path.join(root, "onecloud/zz_generated.site.yml")
+    inventory_f = os.path.join(root, "onecloud/zz_generated.hosts")
+    return (playbook_f, inventory_f)
+
 
 def inventory_content_by_group(nodes, group):
     if nodes is None:
@@ -43,6 +59,7 @@ class Node(object):
         if self.host_networks is not None:
             ret = "%s host_networks=%s" % (ret, self.host_networks)
         return ret
+
 
 def new_inventory_content(db_node=None, reg_node=None, primary_master_node=None, master_nodes=None, worker_nodes=None, longhorn_nodes=None, reboot_nodes=None):
     ret = []
@@ -191,6 +208,7 @@ def load_config(config_file):
     with open(config_file) as f:
         config = yaml.load(f)
         return PlaybookConfig(config)
+
 
 class PlaybookConfig(object):
 
@@ -439,7 +457,7 @@ class PlaybookConfig(object):
         with open(path, "w") as f:
             f.write(content)
 
-    def generate_site_file(self, path):
+    def generate_playbook_file(self, path):
         content = self.get_site_content()
         with open(path, "w") as f:
             f.write(content)
@@ -465,6 +483,65 @@ class PlaybookConfig(object):
 
     def is_using_ee(self):
         return self.primary_master_config.get('vars', {}).get('use_ee')
+
+
+EE_INSTALLED_STR = """Initialized successfully!
+
+Check Web Page: https://%s
+
+To start using the command line tools, you need to `source ~/.bashrc` profile or relogin.
+"""
+
+CE_INSTALLED_STR = """Initialized successfully!
+Web page: https://%s
+User: %s
+Password: %s
+"""
+
+
+class AnsiblePlaybook(object):
+
+    def __init__(self, config_file):
+        self.config = load_config(config_file)
+        # get playbook and iventory file path
+        playbook_f, inventory_f = get_playbook_filepaths(config_file)
+
+        # inject config content to files
+        self.config.generate_hosts_file(inventory_f)
+        self.config.generate_playbook_file(playbook_f)
+
+        self.playbook_file = playbook_f
+        self.inventory_file = inventory_f
+
+    def run_install(self):
+        return_code = cmd.run_ansible_playbook(
+            self.inventory_file, self.playbook_file)
+        if return_code is not None and return_code != 0:
+            return return_code
+        login_info = self.config.get_login_info()
+        if login_info is None:
+            return 0
+        if self.config.is_using_ee():
+            print(EE_INSTALLED_STR % (login_info[0]))
+        else:
+            print(CE_INSTALLED_STR % (login_info[0],
+                                      login_info[1],
+                                      login_info[2]))
+        return 0
+
+
+class AnsibleBastionHost(object):
+
+    def __init__(self, host, user='root'):
+        self.host = host
+        self.user = user
+
+    def to_option(self):
+        val = '-o "ProxyCommand ssh -o StrictHostKeyChecking=no' \
+            ' -o UserKnownHostsFile=/dev/null' \
+            ' -W %h:%p -q {}@{}"'.format(self.user, self.host)
+        return val
+
 
 if __name__ == "__main__":
     def p(data):
