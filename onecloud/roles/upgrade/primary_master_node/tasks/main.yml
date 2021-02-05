@@ -1,0 +1,20 @@
+# use async task to upgrade, ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_async.html
+- name: primary master node | Use ocadm upgrade version "{{ current_onecloud_version }}" to "{{ upgrade_onecloud_version }}"
+  shell:
+    cmd: "pkill ocadm ; /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} --version {{ upgrade_onecloud_version }} --wait"
+  # 30 minutes timeout
+  async: 1800
+  poll: 0
+  register: ocadm_update_register
+
+- name: >
+    primary master node | Check ocadm upgrade async task.
+    To watch upgrade process,
+    SSH login host "{{ ansible_hostname }}" execute:
+      kubectl get pods -n onecloud -w
+  async_status:
+    jid: "{{ ocadm_update_register.ansible_job_id }}"
+  register: ocadm_update_result
+  until: ocadm_update_result.finished
+  retries: 30
+  delay: 60
