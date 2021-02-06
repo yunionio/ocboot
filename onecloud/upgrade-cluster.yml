@@ -1,0 +1,11 @@
+- hosts: all
+  roles:
+    - { role: upgrade/common }
+
+- hosts: primary_master_node
+  roles:
+    - { role: upgrade/primary_master_node }
+
+# - hosts: worker_nodes
+  # roles:
+    # - { role: worker-node/upgrade }

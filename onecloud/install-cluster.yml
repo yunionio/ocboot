@@ -1,0 +1,19 @@
+- hosts: mariadb_node
+  roles:
+    - mariadb
+
+- hosts: registry_node
+  roles:
+    - registry
+
+- hosts: primary_master_node
+  roles:
+    - primary-master-node
+
+- hosts: master_nodes
+  roles:
+    - master-node
+
+- hosts: worker_nodes
+  roles:
+    - worker-node
