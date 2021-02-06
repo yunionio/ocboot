@@ -7,7 +7,7 @@ ocboot 依赖 ansible-playbook 部署 onecloud 服务，可以在单节点使用
 # 依赖说明
 
 - 操作系统: Centos 7.x
-- 最低配置要求: 4核4G
+- 最低配置要求: 4核8G
 - 软件: ansible
 - 能够 ssh 免密登录待部署机器
 
@@ -37,13 +37,13 @@ $ cd ./ocboot
 
 ## 部署服务
 
-ocboot 的运行方式很简单，只需要按自己机器的规划写好 yaml 配置文件，然后执行 `./run.py` 脚本，便会调用 ansible-playbook 在对应的机器上部署服务。
+ocboot 的运行方式很简单，只需要按自己机器的规划写好 yaml 配置文件，然后执行 `./ocboot.py install` 脚本，便会调用 ansible-playbook 在对应的机器上部署服务。
 
 ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以同时在多台机器上部署大规模集群，以下举例说明使用方法和配置文件的编写。
 
 ### 单节点 all in one 部署
 
-假设已经准备好了 1 台 Centos 7 机器，它的 ip 是 `10.127.10.158`，我想在这台机器上 allinone 安装 OneCloud。
+假设已经准备好了 1 台 Centos 7 机器，它的 ip 是 `10.127.10.158`，我想在这台机器上 allinone 安装 OneCloud v3.4.15 版本。
 
 ```bash
 # 编写 config-allinone.yml 文件
@@ -62,6 +62,8 @@ mariadb_node:
 primary_master_node:
   hostname: 10.127.10.158
   user: root
+  # onecloud 版本
+  onecloud_version: v3.4.15
   # 数据库连接地址
   db_host: 10.127.10.158
   # 数据库用户
@@ -78,14 +80,10 @@ primary_master_node:
   onecloud_user_password: demo@123
   # 该节点作为 OneCloud 私有云计算节点
   as_host: true
-  # docker registry 加速镜像
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
-  - https://lms7sxqp.mirror.aliyuncs.com
 EOF
 
 # 开始部署
-$ ./run.py ./config-allinone.yml
+$ ./ocboot.py install ./config-allinone.yml
 ....
 # 部署完成后会有如下输出，表示运行成功
 # 浏览器打开 https://10.127.10.158
@@ -115,6 +113,7 @@ mariadb_node:
   db_user: root
   db_password: your-sql-password
 primary_master_node:
+  onecloud_version: v3.4.15
   hostname: 10.127.10.156
   user: root
   db_host: 10.127.10.156
@@ -122,8 +121,6 @@ primary_master_node:
   db_password: your-sql-password
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
 master_nodes:
   hosts:
   - hostname: 10.127.10.157
@@ -133,8 +130,6 @@ master_nodes:
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
   as_controller: true
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
 worker_nodes:
   hosts:
   - hostname: 10.127.10.159
@@ -144,14 +139,19 @@ worker_nodes:
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
   as_host: true
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
 EOF
 
 # 开始部署
-$ ./run.py ./config-nodes.yml
+$ ./ocboot.py install ./config-nodes.yml
 ```
 
 ## 添加节点
 
-添加节点也很简单，只需要按照自己的规划，在已有的 config 里面添加对应的节点 ssh 登录 ip 和用户，然后再重复执行 `./run.py config.yml` 即可。
+添加节点也很简单，只需要按照自己的规划，在已有的 config 里面添加对应的节点 ssh 登录 ip 和用户，然后再重复执行 `./ocboot.py install config.yml` 即可。
+
+## 升级节点
+
+```bash
+# 执行升级
+$ ./ocboot.py upgrade <PRIMARY_HOST> v3.6.13
+```

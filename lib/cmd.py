@@ -1,12 +1,21 @@
+# encoding: utf-8
 import subprocess
 import os
 import json
+
+
+def get_ansible_config_path():
+    return os.path.join(os.getcwd(), 'onecloud/ansible.cfg')
 
 
 def _run_cmd(cmds):
     shell_cmd = ' '.join(cmds)
     print(shell_cmd)
     os.environ['ANSIBLE_FORCE_COLOR'] = '1'
+    config_file = get_ansible_config_path()
+    if not os.path.exists(config_file):
+        raise Exception("Not found file %s")
+    os.environ['ANSIBLE_CONFIG'] = get_ansible_config_path()
     proc = subprocess.Popen(
         shell_cmd,
         shell=True,

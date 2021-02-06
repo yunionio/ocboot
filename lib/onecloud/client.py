@@ -382,4 +382,3 @@ if __name__ == '__main__':
 
     client = Client(*args, *kwargs)
     client.set_project(desc.get('project_name'))
-    import ipdb; ipdb.set_trace()
