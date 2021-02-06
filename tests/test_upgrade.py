@@ -1,8 +1,10 @@
+# encoding: utf-8
 import unittest
 import inspect
 
 from lib import upgrade
-from lib.ansible import PRIMARY_MASTER_NODE, MASTER_NODES, WORKER_NODES
+from lib.ocboot import \
+    GROUP_PRIMARY_MASTER_NODE, GROUP_MASTER_NODES, GROUP_WORKER_NODES
 
 
 class fakeAnsibleHost(object):
@@ -29,13 +31,13 @@ class fakeAnsibleHost(object):
 class TestAnsibleInventory(unittest.TestCase):
 
     def new_primary_master_node(self, hostname, ip):
-        return fakeAnsibleHost(hostname, ip, PRIMARY_MASTER_NODE)
+        return fakeAnsibleHost(hostname, ip, GROUP_PRIMARY_MASTER_NODE)
 
     def new_master_node(self, hostname, ip):
-        return fakeAnsibleHost(hostname, ip, MASTER_NODES)
+        return fakeAnsibleHost(hostname, ip, GROUP_MASTER_NODES)
 
     def new_worker_node(self, hostname, ip):
-        return fakeAnsibleHost(hostname, ip, WORKER_NODES)
+        return fakeAnsibleHost(hostname, ip, GROUP_WORKER_NODES)
 
     def test_generate_content(self):
         p_m_host = self.new_primary_master_node('p1', '192.168.0.1')

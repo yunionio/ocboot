@@ -1,3 +1,4 @@
+# encoding: utf-8
 from .utils import parse_k8s_time
 
 

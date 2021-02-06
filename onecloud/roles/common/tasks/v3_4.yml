@@ -1,0 +1,39 @@
+---
+- name: Add yunion rpm repository
+  get_url:
+    url: https://iso.yunion.cn/yumrepo-3.4/yunion.repo
+    dest: /etc/yum.repos.d/yunion.repo
+  become: yes
+
+- name: Install yunion common packages
+  yum:
+    state: latest
+    name:
+      - epel-release
+      - libaio
+      - jq
+      - libusb
+      - lvm2
+      - nc
+      - ntp
+      - yunion-fetcherfs
+      - fuse
+      - fuse-devel
+      - fuse-libs
+      - oniguruma
+      - pciutils
+      - spice
+      - spice-protocol
+      - sysstat
+      - tcpdump
+      - usbredir
+      - yunion-qemu-2.12.1
+      - yunion-ocadm
+      - yunion-climc
+      - yunion-executor-server
+      - kernel-3.10.0-1062.4.3.el7.yn20191203
+      - kernel-devel-3.10.0-1062.4.3.el7.yn20191203
+      - kernel-headers-3.10.0-1062.4.3.el7.yn20191203
+      - kmod-openvswitch
+      - openvswitch
+      - net-tools

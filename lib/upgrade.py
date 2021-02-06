@@ -3,9 +3,10 @@ import os
 import json
 
 from .ssh import SSHClient
-from .ansible import PRIMARY_MASTER_NODE, MASTER_NODES, WORKER_NODES
+from .ocboot import GROUP_PRIMARY_MASTER_NODE, GROUP_MASTER_NODES, GROUP_WORKER_NODES
 from .ansible import AnsibleBastionHost
 from .cmd import run_ansible_playbook
+from .utils import get_major_version
 from . import k8s
 
 
@@ -79,8 +80,7 @@ def do_upgrade(args):
         './onecloud/upgrade-cluster.yml',
         vars=config.to_ansible_vars(),
     )
-
-    #  cluster.set_current_version(args.version)
+    cluster.set_current_version(args.version)
 
 
 def construct_cluster(ssh_client):
@@ -92,15 +92,9 @@ class UpgradeConfig(object):
 
     def __init__(self, cur_ver, upgrade_ver):
         self.current_onecloud_version = cur_ver
-        self.current_onecloud_major_version = self.get_major_version(cur_ver)
+        self.current_onecloud_major_version = get_major_version(cur_ver)
         self.upgrade_onecloud_version = upgrade_ver
-        self.upgrade_onecloud_major_version = self.get_major_version(upgrade_ver)
-
-    def get_major_version(self, ver):
-        segs = ver.split('.')
-        if len(segs) < 3:
-            raise Exception("Invalid version %s", ver)
-        return '%s_%s' % (segs[0], segs[1])
+        self.upgrade_onecloud_major_version = get_major_version(upgrade_ver)
 
     def is_major_upgrade(self):
         return self.current_onecloud_major_version != self.upgrade_onecloud_major_version
@@ -206,11 +200,11 @@ class AnsibleInventory(object):
     def _add(self, host):
         self._append(self.all_hosts, host)
         role = host.get_role()
-        if role == PRIMARY_MASTER_NODE:
+        if role == GROUP_PRIMARY_MASTER_NODE:
             self.primary_master_host = host
-        elif role == MASTER_NODES:
+        elif role == GROUP_MASTER_NODES:
             self._append(self.master_hosts, host)
-        elif role == WORKER_NODES:
+        elif role == GROUP_WORKER_NODES:
             self._append(self.worker_hosts, host)
         else:
             raise Exception("Unsupported role %s" % role)
@@ -224,13 +218,13 @@ class AnsibleInventory(object):
         ret = ['[all]']
         ret.extend([host.get_content() for host in self.all_hosts])
 
-        ret.append('[%s]' % PRIMARY_MASTER_NODE)
+        ret.append('[%s]' % GROUP_PRIMARY_MASTER_NODE)
         ret.append(self.primary_master_host.get_hostname())
 
-        ret.append('[%s]' % MASTER_NODES)
+        ret.append('[%s]' % GROUP_MASTER_NODES)
         ret.extend([host.get_hostname() for host in self.master_hosts])
 
-        ret.append('[%s]' % WORKER_NODES)
+        ret.append('[%s]' % GROUP_WORKER_NODES)
         ret.extend([host.get_hostname() for host in self.worker_hosts])
 
         return '\n'.join(ret)
@@ -272,18 +266,18 @@ class AnsiblePrimaryMasterHost(ansibleHost):
 
     def __init__(self, node, user='root'):
         super(AnsiblePrimaryMasterHost, self).__init__(
-            node, PRIMARY_MASTER_NODE, user)
+            node, GROUP_PRIMARY_MASTER_NODE, user)
 
 
 class AnsibleMasterHost(ansibleHost):
 
     def __init__(self, node, user='root'):
         super(AnsibleMasterHost, self).__init__(
-            node, MASTER_NODES, user)
+            node, GROUP_MASTER_NODES, user)
 
 
 class AnsibleWorkerHost(ansibleHost):
 
     def __init__(self, node, user='root'):
-        super(AnsibleMasterHost, self).__init__(
-            node, WORKER_NODES, user)
+        super(AnsibleWorkerHost, self).__init__(
+            node, GROUP_WORKER_NODES, user)
