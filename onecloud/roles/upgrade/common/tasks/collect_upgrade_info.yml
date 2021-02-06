@@ -1,0 +1,4 @@
+---
+- name: set others
+  set_fact:
+    major_upgrade_task_file: "{{ current_onecloud_major_version }}-{{ upgrade_onecloud_major_version }}.yml"

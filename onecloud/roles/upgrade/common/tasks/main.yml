@@ -1,0 +1,8 @@
+---
+- name: collect upgrade info
+  import_tasks: collect_upgrade_info.yml
+
+- name: common upgrade | Import major version upgrade task
+  include_tasks: "{{ major_upgrade_task_file }}"
+  when:
+    - is_major_upgrade
