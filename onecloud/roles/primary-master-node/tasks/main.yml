@@ -228,14 +228,14 @@
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
   when:
-  - use_ee is not defined
+  - use_ee is not defined or not use_ee
 
 - name: "Make onecloud user {{ onecloud_user }} as system admin"
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc project-add-user system {{ onecloud_user }} admin
   when:
-  - use_ee is not defined
+  - use_ee is not defined or not use_ee
 
 - name: Check if admin network adm0 exists
   shell: |
