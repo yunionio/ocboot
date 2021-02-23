@@ -277,12 +277,12 @@ class PrimaryMasterConfig(OnecloudConfig):
         # set calico ip_autodetection_method only in primary master
         self.ip_autodetection_method = config.get('ip_autodetection_method', None)
         if not self.ip_autodetection_method:
-            self.ip_autodetection_method = "ip_autodetection_method='can-reach=%s'" % self.node.node_ip
+            self.ip_autodetection_method = "'can-reach=%s'" % self.node.node_ip
 
         self.onecloud_user = config.get('onecloud_user', 'admin')
         self.onecloud_user_password = config.get('onecloud_user_password', 'admin@123')
         self.use_ee = config.get('use_ee', False)
-        self.image_repository = config.get('image_repository', None)
+        self.image_repository = config.get('image_repository', 'registry.cn-beijing.aliyuncs.com/yunionio')
 
     @classmethod
     def get_group(cls):
