@@ -14,7 +14,7 @@ def _run_cmd(cmds):
     os.environ['ANSIBLE_FORCE_COLOR'] = '1'
     config_file = get_ansible_config_path()
     if not os.path.exists(config_file):
-        raise Exception("Not found file %s")
+        raise Exception("Not found file %s" % config_file)
     os.environ['ANSIBLE_CONFIG'] = get_ansible_config_path()
     proc = subprocess.Popen(
         shell_cmd,
