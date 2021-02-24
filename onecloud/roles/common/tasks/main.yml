@@ -6,6 +6,8 @@
       - yum-utils
       - bash-completion
       - epel-release
+  when:
+  - is_centos_x86 is defined
 
 - name: Set facts
   set_fact:
@@ -14,9 +16,68 @@
 - name: Import task "{{ major_version_task_file }}"
   include_tasks: "{{ major_version_task_file }}"
 
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}.yml"
+        - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_os_family|lower }}.yml"
+        - defaults.yml
+      paths:
+        - ../vars
+      skip: true
+  tags:
+    - facts
+
+- name: init apt source for arm64
+  copy:
+    src: apt.sources.list
+    dest: /etc/apt/sources.list
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+  - is_uos_arm64 is defined
+
+- name: init apt sourced.list for arm64
+  copy:
+    src: apt.yunion.list
+    dest: /etc/apt/sources.list.d/yunion.list
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+  - is_uos_arm64 is defined
+
+- name: update apt cache for arm64
+  shell: |
+    sudo apt-get update -y
+  when:
+  - is_uos_arm64 is defined
+
+- name: install packages via loop
+  package: name="{{ item }}"
+  with_items:
+  - "{{ common_packages }}"
+  when:
+  - common_packages is defined
+
+- name: Check that if selinux config exists
+  stat:
+    path: /etc/selinux/config
+  register: selinux_conf_exists
+
 - name: Turn off selinux
   selinux:
     state: disabled
+  when: selinux_conf_exists.stat.exists
 
 - name: Gather service facts
   service_facts:
@@ -77,6 +138,12 @@
   command: swapoff -a
   when: ansible_swaptotal_mb > 0
 
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: /etc/sysconfig/modules/
+    state: directory
+    mode: '0755'
+
 - name: Config ipvs
   copy:
     owner: root
@@ -84,6 +151,7 @@
     mode: "0755"
     src: ipvs.modules
     dest: /etc/sysconfig/modules/ipvs.modules
+
 - name: Load ipvs modules
   shell:
     /etc/sysconfig/modules/ipvs.modules
@@ -96,6 +164,8 @@
         - docker-ce-19.03.9
         - docker-ce-cli-19.03.9
         - containerd.io
+    when:
+    - is_centos_x86 is defined
 
   - name: Make /etc/docker dir
     file:
@@ -113,18 +183,6 @@
     skip_docker_config is not defined or skip_docker_config|default(false)|bool == false
 
 # k8s packages
-- name: Install k8s packages
-  yum:
-    name:
-      - bridge-utils
-      - ipvsadm
-      - conntrack-tools
-      - jq
-      - kubelet-1.15.8-0
-      - kubectl-1.15.8-0
-      - kubeadm-1.15.8-0
-  tags: k8s
-
 - name: Enable kubelet
   service: name=kubelet enabled=yes
   tags: k8s
