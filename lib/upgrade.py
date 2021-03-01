@@ -24,7 +24,8 @@ def add_command(subparsers):
                               e.g., 10.1.2.56")
     parser.add_argument("version",
                         metavar="VERSION",
-                        help="onecloud version to be upgrade")
+                        help="onecloud version to be upgrade, \
+                              e.g., v3.6.9")
 
     # optional options
     help_d = lambda help: help + " (default: %(default)s)"
