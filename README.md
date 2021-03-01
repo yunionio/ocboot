@@ -32,7 +32,7 @@ $ pip install ansible
 
 ```bash
 $ git clone https://github.com/yunionio/ocboot.git
-$ cd ./ocboot
+$ cd ./ocboot & pip install -r ./requirements.txt
 ```
 
 ## 部署服务
