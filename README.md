@@ -153,5 +153,24 @@ $ ./ocboot.py install ./config-nodes.yml
 
 ```bash
 # 执行升级
-$ ./ocboot.py upgrade <PRIMARY_HOST> v3.6.13
+$ ./ocboot.py upgrade <PRIMARY_HOST> v3.6.9
+
+# 查看升级可选参数
+$ ./ocboot.py upgrade -h
+usage: ocboot.py upgrade [-h] [--user SSH_USER] [--key-file SSH_PRIVATE_FILE] [--port SSH_PORT] [--as-bastion]
+                         FIRST_MASTER_HOST VERSION
+
+positional arguments:
+  FIRST_MASTER_HOST     onecloud cluster primary master host, e.g., 10.1.2.56
+  VERSION               onecloud version to be upgrade
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --user SSH_USER, -u SSH_USER
+                        primary master host ssh user (default: root)
+  --key-file SSH_PRIVATE_FILE, -k SSH_PRIVATE_FILE
+                        primary master ssh private key file (default: /home/lzx/.ssh/id_rsa)
+  --port SSH_PORT, -p SSH_PORT
+                        primary master host ssh port (default: 22)
+  --as-bastion, -B      use primary master node as ssh bastion host to run ansible
 ```
