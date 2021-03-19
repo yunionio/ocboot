@@ -234,7 +234,7 @@ class OnecloudConfig(object):
     def __init__(self, config):
         self.controlplane_host = config.ensure_get('controlplane_host')
         self.controlplane_port = config.get('controlplane_port', '6443')
-        self.as_host = config.get('as_host', False)
+        self.as_host = config.get('as_host', None)
 
         self.registry_mirrors = config.get('registry_mirrors', [])
         self.insecure_registries = config.get('insecure_registries', [])
@@ -314,7 +314,7 @@ class OnecloudJointConfig(OnecloudConfig):
     def __init__(self, config):
         super(OnecloudJointConfig, self).__init__(config)
 
-        self.as_controller = config.get('as_controller', False)
+        self.as_controller = config.get('as_controller', None)
         self.join_token = config.get('join_token', None)
         self.join_cert_key = config.get('join_certificate_key', None)
         self.ntpd_server = config.get('ntpd_server', None)
@@ -346,6 +346,8 @@ class MasterConfig(OnecloudJointConfig):
 
     def __init__(self, config, bastion_host=None):
         super(MasterConfig, self).__init__(config)
+        if self.as_controller is None:
+            self.as_controller = True
         self.nodes = get_nodes(config, bastion_host)
 
     @classmethod
@@ -360,6 +362,8 @@ class WorkerConfig(OnecloudJointConfig):
 
     def __init__(self, config, bastion_host=None):
         super(WorkerConfig, self).__init__(config)
+        if self.as_host is None:
+            self.as_host = True
         self.nodes = get_nodes(config, bastion_host)
 
     @classmethod
