@@ -13,6 +13,8 @@
   yum:
     name: yunion-executor-server
     state: absent
+  when:
+  - is_centos_x86 is defined
 
 - name: Upgrade yunion common packages
   yum:
@@ -21,6 +23,8 @@
       - yunion-climc
       - yunion-executor
     state: latest
+  when:
+  - is_centos_x86 is defined
 
 - name: Restart yunion executor service
   service:
