@@ -142,6 +142,7 @@ class Node(object):
         self.host = config.ensure_get('host', 'hostname')
         self.use_local = config.get('user_local', False)
         self.user = config.get('user', 'root')
+        self.port = config.get('port', 22)
         self.host_networks = config.get('host_networks', None)
         self.node_ip = config.get('node_ip', None)
         if not self.node_ip:
@@ -159,6 +160,7 @@ class Node(object):
         vars = {
             'ansible_host': self.host,
             'ansible_user': self.user,
+            'ansible_port': self.port,
         }
         if self.bastion_host:
             vars['ansible_ssh_common_args'] = self.bastion_host.to_option()

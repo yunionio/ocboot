@@ -1,0 +1,39 @@
+is_uos_arm64: true
+
+common_packages:
+  - apt-transport-https
+  - bash-completion
+  - bridge-utils
+  - ca-certificates
+  - chntpw
+  - conntrack
+  - conntrackd
+  - curl
+  - dkms
+  - docker-ce         #
+  - git
+  - glusterfs-common
+  - gnupg-agent
+  - gnupg2
+  - ipset
+  - ipvsadm
+  - jq
+  - kubeadm=1.15.8-00 #
+  - kubectl=1.15.8-00 #
+  - kubelet=1.15.8-00 #
+  - librbd1
+  - libspice-server1
+  - mariadb-server
+  - ntp 
+  - openvswitch-switch
+  - ovmf
+  - python-pymysql
+  - python-selinux  
+  - python-yaml
+  - python3-pip
+  - software-properties-common
+  - wget
+  - yunion-climc
+  - yunion-executor
+  - yunion-ocadm
+  - yunion-qemu-2.12.1

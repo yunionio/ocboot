@@ -1,0 +1,56 @@
+---
+
+is_centos_x86: true
+
+common_packages:
+  - boost-iostreams
+  - boost-random
+  - boost-system
+  - boost-thread
+  - celt051
+  - fuse
+  - fuse-devel
+  - fuse-libs
+  - gssproxy
+  - jq
+  - keyutils
+  - kmod
+  - kmod-openvswitch
+  - kubeadm
+  - kubectl
+  - kubelet
+  - libbasicobjects
+  - libcollection
+  - libini_config
+  - libjpeg-turbo
+  - libnfsidmap
+  - libogg
+  - libpath_utils
+  - libpcap
+  - librados2
+  - librbd1
+  - libref_array
+  - libtirpc
+  - libusb
+  - libusbx
+  - libverto-libevent
+  - lm_sensors-libs
+  - nfs-utils
+  - nmap-ncat
+  - openvswitch
+  - pixman
+  - quota
+  - quota-nls
+  - rpcbind
+  - spice
+  - spice-protocol
+  - sysstat
+  - tcp_wrappers
+  - tcpdump
+  - unbound
+  - unbound-libs
+  - usbredir
+  - yunion-climc
+  - yunion-executor
+  - yunion-ocadm
+  - yunion-ovmfrpm
