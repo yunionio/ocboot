@@ -2,6 +2,8 @@
   yum: name={{ item }} state=present
   with_items:
   - yunion-registry
+  when:
+  - is_centos_x86 is defined
 
 - name: Config registry
   template: src=registry.yml dest=/etc/yunion/registry.yml

@@ -79,7 +79,9 @@
     name: systemd
     disablerepo: "*"
     enablerepo: "yunion-*"
-  when: is_systemd_installed.rc != 0
+  when:
+  - is_systemd_installed.rc != 0
+  - is_centos_x86 is defined # for uos TODO
 
 - name: yum install yunion packages; it should take a few minutes...
   yum:
@@ -91,31 +93,50 @@
       - ansible
       - autogen-libopts
       - bash-completion
+      - bridge-utils
+      - conntrack-tools
       - container-selinux
       - containerd.io
       - cri-tools
       - docker-ce
+      - epel-release
+      - fuse
+      - fuse-devel
+      - fuse-libs
       - htop
+      - ipvsadm
       - iscsi-initiator-utils
       - jq
-      - kubeadm
-      - kubectl
-      - kubelet
+      - kmod-openvswitch
+      - kubeadm-1.15.8-0
+      - kubectl-1.15.8-0
+      - kubelet-1.15.8-0
       - kubernetes-cni
+      - libaio
+      - libusb
+      - lvm2
+      - nc
       - net-tools
       - ntp
       - ntpdate
       - oniguruma
+      - openvswitch
       - pciutils
       - rsync
       - socat
+      - spice
+      - spice-protocol
+      - sysstat
+      - tcpdump
+      - usbredir
       - wget
       - yunion-climc
-      - yunion-executor-server
       - yunion-fetcherfs
       - yunion-ocadm
-      - yunion-registry
       - yunion-qemu-2.12.1
+      - yunion-registry
+  when:
+  - is_centos_x86 is defined
 
 - name: config ntpd service
   template: src=ntp.conf dest=/etc/ntp.conf
