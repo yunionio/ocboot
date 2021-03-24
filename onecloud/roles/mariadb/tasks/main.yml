@@ -1,12 +1,21 @@
 - name: Install mariadb
-  yum:
+  package:
     name: mariadb-server
-    state: installed
+    state: present
 
-- name: Install MySQL-python
+- name: Install mariadb on centos
   package:
     name: MySQL-python
     state: installed
+  when:
+  - ansible_facts['distribution'] == "CentOS"
+  - ansible_facts['distribution_major_version'] == "7"
+
+- name: Install mariadb
+  package:
+    name: python-mysqldb
+    state: present
+  when: ansible_os_family == "Uniontech OS Server 20 Enterprise" or ansible_os_family == "Debian"
 
 - name: Copy my.cnf
   copy:
@@ -19,6 +28,20 @@
     enabled: yes
     state: started
 
+
+- name: mariadb hack for uos
+  shell: |
+    if [ ! -d /etc/my.cnf.d ] && [ -d /etc/mysql ]; then
+      ln -sf /etc/mysql /etc/my.cnf.d
+    fi
+    if [ -f /etc/mysql/mariadb.conf.d/50-server.cnf ] && grep -qP 'bind-address *= *127.0.0.1' /etc/mysql/mariadb.conf.d/50-server.cnf; then
+      cp -vf /etc/mysql/mariadb.conf.d/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf.$(date +"%Y%m%d-%H%M%S").bak
+      sed -i 's#bind-address *= *127.0.0.1#bind-address = 0.0.0.0#' /etc/mysql/mariadb.conf.d/50-server.cnf
+    fi
+    systemctl restart mariadb
+  args:
+    executable: /bin/bash
+
 - name: Change root password
   mysql_user:
     name: "{{ db_user }}"
@@ -27,15 +50,17 @@
   changed_when: false
   failed_when: false
 
-- name:  Allow remote root access with grant priv
-  mysql_user:
-    name: "{{ db_user }}"
-    host: "%"
-    password: "{{ db_password }}"
-    priv: "*.*:ALL,GRANT"
-    state: present
-    login_user: "{{ db_user }}"
-    login_password: "{{ db_password }}"
+- name: Allow remote root access with grant priv with raw mysql
+  shell: |
+    default_ip=$(ip route get 1 | head -n 1 | awk '{print $7}')
+    given_ip="{{ db_host }}"
+    if [[ "$given_ip" == "$default_ip" ]] || [[ "$given_ip" == 127.* ]]; then
+      mysql -u "{{ db_user }}" -p"{{ db_password }}" -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;'
+    else
+      mysql -u "{{ db_user }}" -p"{{ db_password }}" -h "{{ db_host }}" -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;'
+    fi
+  args:
+    executable: /bin/bash
 
 - name: Remove all anonymous user accounts
   mysql_user:

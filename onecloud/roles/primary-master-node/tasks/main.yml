@@ -38,7 +38,21 @@
   command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}} --onecloud-version {{ onecloud_version | default('latest') }} --operator-version {{ onecloud_version | default('latest') }}"
   register: command_result
   changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
-  when: K8S_TOKEN.stdout|length == 0
+  when:
+  - K8S_TOKEN.stdout|length == 0
+  - is_centos_x86 is defined
+
+- name: Pull ocadm images on node for arm64
+  shell: |
+    for i in registry.cn-beijing.aliyuncs.com/yunionio/host-image:v1.0.1 registry.cn-beijing.aliyuncs.com/yunionio/traefik:v1.7 registry.cn-beijing.aliyuncs.com/yunionio/openvswitch:2.10.5-1 registry.cn-beijing.aliyuncs.com/yunionio/telegraf:release-1.5.3 registry.cn-beijing.aliyuncs.com/yunionio/telegraf-init:release-1.5.2 registry.cn-beijing.aliyuncs.com/yunionio/local-path-provisioner:v0.0.11 registry.cn-beijing.aliyuncs.com/yunionio/k8s-sidecar:0.1.275 registry.cn-beijing.aliyuncs.com/yunionio/etcd:v3.4.6 registry.cn-beijing.aliyuncs.com/yunionio/etcd:3.4.6 registry.cn-beijing.aliyuncs.com/yunionio/calico-node:v3.12.1 registry.cn-beijing.aliyuncs.com/yunionio/calico-cni:v3.12.1 registry.cn-beijing.aliyuncs.com/yunionio/calico-kube-controllers:v3.12.1 registry.cn-beijing.aliyuncs.com/yunionio/kube-apiserver:v1.15.8 registry.cn-beijing.aliyuncs.com/yunionio/kube-controller-manager:v1.15.8 registry.cn-beijing.aliyuncs.com/yunionio/kube-proxy:v1.15.8 registry.cn-beijing.aliyuncs.com/yunionio/kube-scheduler:v1.15.8 registry.cn-beijing.aliyuncs.com/yunionio/promtail:v1.2.0 registry.cn-beijing.aliyuncs.com/yunionio/loki:v1.2.0 registry.cn-beijing.aliyuncs.com/yunionio/metrics-server:v0.3.6 registry.cn-beijing.aliyuncs.com/yunionio/influxdb:1.7.7 registry.cn-beijing.aliyuncs.com/yunionio/coredns:1.3.1 registry.cn-beijing.aliyuncs.com/yunionio/busybox:1.28.0-glibc registry.cn-beijing.aliyuncs.com/yunionio/pause:3.1
+    do
+      docker pull $i --platform arm64
+    done
+  register: command_result
+  changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
+  when:
+  - K8S_TOKEN.stdout|length == 0
+  - is_uos_arm64 is defined or is_debian_arm64 is defined
 
 - name: Check node is init
   shell: test -f /etc/kubernetes/kubelet.conf
