@@ -28,9 +28,9 @@ common_packages:
   - ntp
   - python-selinux
   - software-properties-common
-  - openvswitch-switch
   - wget
   - ovmf
+  - openvswitch-switch
   - yunion-climc
   - yunion-executor
   - yunion-ocadm
