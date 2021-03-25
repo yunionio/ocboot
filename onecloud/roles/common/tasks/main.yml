@@ -13,9 +13,6 @@
   set_fact:
     major_version_task_file: "{{ onecloud_major_version }}.yml"
 
-- name: Import task "{{ major_version_task_file }}"
-  include_tasks: "{{ major_version_task_file }}"
-
 - name: gather os specific variables
   include_vars: "{{ item }}"
   with_first_found:
@@ -68,6 +65,9 @@
   - is_uos_arm64 is defined
   args:
     executable: /bin/bash
+
+- name: Import task "{{ major_version_task_file }}"
+  include_tasks: "{{ major_version_task_file }}"
 
 - name: install packages via loop
   package: name="{{ item }}"
