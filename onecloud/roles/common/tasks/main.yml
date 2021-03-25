@@ -135,6 +135,30 @@
     value: "8192"
     state: present
 
+- name: Disable systemd swap service
+  shell: |
+    dev=$(cat /proc/swaps |grep -v 'Filename' |wc -l)
+    if [ "$dev" -eq 0 ]; then
+      exit 0
+    fi
+
+    for i in $(systemctl --type swap --all|grep 'dev'|grep active |awk '{print $1}' ); do
+        if [ -z "$i" ]; then
+            continue
+        fi
+        systemctl stop "$i"
+        systemctl mask "$i"
+    done
+    systemctl daemon-reload
+
+    cp -fv /etc/fstab /etc/fstab.$(date +"%Y%m%d-%H%M%S").bak
+    sed -i '/swap/ s/^#*/#/' -i /etc/fstab
+
+  args:
+    executable: /bin/bash
+  when:
+  - is_uos_arm64 is defined or is_debian_arm64 is defined
+
 #  https://github.com/kubernetes-retired/contrib/blob/master/ansible/roles/node/tasks/swapoff.yml
 - name: Turn off swap mount
   mount:
