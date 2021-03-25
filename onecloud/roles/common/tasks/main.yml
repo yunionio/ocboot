@@ -43,13 +43,13 @@
   when:
   - is_uos_arm64 is defined or is_debian_arm64 is defined
 
-- name: update apt cache for arm64
+- name: update apt cache for debian likely OS
   shell: |
     sudo apt-get update -y
   when:
   - is_uos_arm64 is defined or is_debian_arm64 is defined
 
-- name: config iptables for UOS
+- name: config iptables for debian likely OS
   shell: |
     if iptables -V |grep -wq nf_tables && ls -l /usr/sbin/iptables |grep -wq alternatives; then
       update-alternatives --set iptables /usr/sbin/iptables-legacy
@@ -62,7 +62,7 @@
       fi
     fi
   when:
-  - is_uos_arm64 is defined
+  - is_uos_arm64 is defined or is_debian_arm64 is defined
   args:
     executable: /bin/bash
 

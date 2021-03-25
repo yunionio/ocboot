@@ -21,18 +21,19 @@ common_packages:
   - kubeadm=1.15.8-00 #
   - kubectl=1.15.8-00 #
   - kubelet=1.15.8-00 #
+  - libusb-1.0-0
+  - libusbredirparser1
   - librbd1
   - libspice-server1
-  - mariadb-server
-  - ntp 
-  - openvswitch-switch
-  - ovmf
+  - ntp
   - python-pymysql
-  - python-selinux  
+  - python-selinux
   - python-yaml
   - python3-pip
   - software-properties-common
   - wget
+  - ovmf
+  - openvswitch-switch
   - yunion-climc
   - yunion-executor
   - yunion-ocadm

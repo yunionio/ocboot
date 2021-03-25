@@ -11,6 +11,11 @@
   - ansible_facts['distribution'] == "CentOS"
   - ansible_facts['distribution_major_version'] == "7"
 
+- name: Set discovered Ansible Python interpreter.
+  set_fact:
+    ansible_python_interpreter: "{{ ansible_facts.python.executable }}"
+  when: ansible_python_interpreter is not defined
+
 - name: Install mariadb
   package:
     name: python-mysqldb
@@ -28,8 +33,7 @@
     enabled: yes
     state: started
 
-
-- name: mariadb hack for uos
+- name: mariadb config hack
   shell: |
     if [ ! -d /etc/my.cnf.d ] && [ -d /etc/mysql ]; then
       ln -sf /etc/mysql /etc/my.cnf.d
