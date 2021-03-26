@@ -16,9 +16,11 @@
     ansible_python_interpreter: "{{ ansible_facts.python.executable }}"
   when: ansible_python_interpreter is not defined
 
-- name: Install mariadb
+- name: Install mariadb python libs
   package:
-    name: python-mysqldb
+    name:
+    - python-mysqldb
+    - python-pymysql
     state: present
   when: ansible_os_family == "Uniontech OS Server 20 Enterprise" or ansible_os_family == "Debian"
 
