@@ -27,12 +27,6 @@
     src: my.cnf
     dest: /etc/my.cnf
 
-- name: Enable mariadb
-  service:
-    name: mariadb
-    enabled: yes
-    state: started
-
 - name: mariadb config hack
   shell: |
     if [ ! -d /etc/my.cnf.d ] && [ -d /etc/mysql ]; then
@@ -45,6 +39,12 @@
     systemctl restart mariadb
   args:
     executable: /bin/bash
+
+- name: Enable mariadb
+  service:
+    name: mariadb
+    enabled: yes
+    state: started
 
 - name: Change root password
   mysql_user:
