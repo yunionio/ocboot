@@ -22,7 +22,7 @@
     - python-mysqldb
     - python-pymysql
     state: present
-  when: ansible_os_family == "Uniontech OS Server 20 Enterprise" or ansible_os_family == "Debian"
+  when: ansible_os_family == "UnionTech OS Server 20 Enterprise" or ansible_os_family == "Debian"
 
 - name: Copy my.cnf
   copy:
