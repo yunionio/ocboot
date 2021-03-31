@@ -275,6 +275,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.db_host = config.ensure_get('db_host')
         self.db_password = config.ensure_get('db_password')
         self.onecloud_version = config.ensure_get('onecloud_version')
+        self.operator_version = config.get('operator_version', self.onecloud_version)
 
         # set calico ip_autodetection_method only in primary master
         self.ip_autodetection_method = config.get('ip_autodetection_method', None)
@@ -297,7 +298,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['db_user'] = self.db_user
         vars['db_password'] = self.db_password
         vars['onecloud_version'] = self.onecloud_version
-        vars['operator_version'] = self.onecloud_version
+        vars['operator_version'] = self.operator_version
         vars['onecloud_user'] = self.onecloud_user
         vars['onecloud_user_password'] = self.onecloud_user_password
         vars['use_ee'] = self.use_ee
