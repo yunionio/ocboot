@@ -1,18 +1,5 @@
 ---
 # This role contains common plays that will run on all nodes
-- name: Install yum utils
-  yum:
-    name:
-      - yum-utils
-      - bash-completion
-      - epel-release
-  when:
-  - is_centos_x86 is defined
-
-- name: Set facts
-  set_fact:
-    major_version_task_file: "{{ onecloud_major_version }}.yml"
-
 - name: gather os specific variables
   include_vars: "{{ item }}"
   with_first_found:
@@ -32,6 +19,19 @@
       skip: true
   tags:
     - facts
+
+- name: Install yum utils
+  yum:
+    name:
+      - yum-utils
+      - bash-completion
+      - epel-release
+  when:
+  - is_centos_x86 is defined
+
+- name: Set facts
+  set_fact:
+    major_version_task_file: "{{ onecloud_major_version }}.yml"
 
 - name: init apt sourced.list for arm64
   copy:
@@ -170,7 +170,7 @@
   when: ansible_swaptotal_mb > 0
 
 - name: Create a directory if it does not exist
-  ansible.builtin.file:
+  file:
     path: /etc/sysconfig/modules/
     state: directory
     mode: '0755'
