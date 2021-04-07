@@ -48,6 +48,20 @@
     enabled: yes
     state: started
 
+
+- name: mariadb hack for uos
+  shell: |
+    if [ ! -d /etc/my.cnf.d ] && [ -d /etc/mysql ]; then
+      ln -sf /etc/mysql /etc/my.cnf.d
+    fi
+    if [ -f /etc/mysql/mariadb.conf.d/50-server.cnf ] && grep -qP 'bind-address *= *127.0.0.1' /etc/mysql/mariadb.conf.d/50-server.cnf; then
+      cp -vf /etc/mysql/mariadb.conf.d/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf.$(date +"%Y%m%d-%H%M%S").bak
+      sed -i 's#bind-address *= *127.0.0.1#bind-address = 0.0.0.0#' /etc/mysql/mariadb.conf.d/50-server.cnf
+    fi
+    systemctl restart mariadb
+  args:
+    executable: /bin/bash
+
 - name: Change root password
   mysql_user:
     name: "{{ db_user }}"
