@@ -33,21 +33,8 @@
   set_fact:
     major_version_task_file: "{{ onecloud_major_version }}.yml"
 
-- name: init apt sourced.list for arm64
-  copy:
-    src: apt.yunion.list
-    dest: /etc/apt/sources.list.d/yunion.list
-    owner: root
-    group: root
-    mode: "0644"
-  when:
-  - is_uos_arm64 is defined or is_debian_arm64 is defined
-
-- name: update apt cache for debian likely OS
-  shell: |
-    sudo apt-get update -y
-  when:
-  - is_uos_arm64 is defined or is_debian_arm64 is defined
+- name: Import task "{{ major_version_task_file }}"
+  include_tasks: "{{ major_version_task_file }}"
 
 - name: config iptables for debian likely OS
   shell: |
@@ -62,12 +49,42 @@
       fi
     fi
   when:
-  - is_uos_arm64 is defined or is_debian_arm64 is defined
+  - is_debian_based is defined
   args:
     executable: /bin/bash
 
-- name: Import task "{{ major_version_task_file }}"
-  include_tasks: "{{ major_version_task_file }}"
+- name: reset iptables for UOS
+  shell: |
+    # backup iptable ruleset
+    fn=/etc/iptables.backup.$(date +"%Y%m%d-%H%M%S")
+    iptables-save > "$fn"
+
+    # reset iptable rules
+    iptables -t nat -F
+    iptables -t nat -X
+    iptables -t nat -P PREROUTING ACCEPT
+    iptables -t nat -P POSTROUTING ACCEPT
+    iptables -t nat -P OUTPUT ACCEPT
+    iptables -t mangle -F
+    iptables -t mangle -X
+    iptables -t mangle -P PREROUTING ACCEPT
+    iptables -t mangle -P INPUT ACCEPT
+    iptables -t mangle -P FORWARD ACCEPT
+    iptables -t mangle -P OUTPUT ACCEPT
+    iptables -t mangle -P POSTROUTING ACCEPT
+    iptables -F
+    iptables -X
+    iptables -P FORWARD ACCEPT
+    iptables -P INPUT ACCEPT
+    iptables -P OUTPUT ACCEPT
+    iptables -t raw -F
+    iptables -t raw -X
+    iptables -t raw -P PREROUTING ACCEPT
+    iptables -t raw -P OUTPUT ACCEPT
+    service iptables save || :
+    service iptables restart || :
+  args:
+    executable: /bin/bash
 
 - name: install packages via loop
   package: name="{{ item }}"
@@ -157,7 +174,7 @@
   args:
     executable: /bin/bash
   when:
-  - is_uos_arm64 is defined or is_debian_arm64 is defined
+  - is_debian_based is defined
 
 #  https://github.com/kubernetes-retired/contrib/blob/master/ansible/roles/node/tasks/swapoff.yml
 - name: Turn off swap mount
