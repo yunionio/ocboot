@@ -1,4 +1,5 @@
-is_uos_arm64: true
+debian_based_arch: arm64
+is_debian_based: true
 
 common_packages:
   - apt-transport-https
