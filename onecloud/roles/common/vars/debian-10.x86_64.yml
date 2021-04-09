@@ -1,0 +1,38 @@
+is_debian_based: true
+debian_based_arch: amd64
+
+common_packages:
+  - apt-transport-https
+  - bash-completion
+  - bridge-utils
+  - ca-certificates
+  - chntpw
+  - conntrack
+  - conntrackd
+  - curl
+  - dkms
+  - docker-ce         #
+  - git
+  - glusterfs-common
+  - gnupg-agent
+  - gnupg2
+  - ipset
+  - ipvsadm
+  - jq
+  - kubeadm=1.15.8-00 #
+  - kubectl=1.15.8-00 #
+  - kubelet=1.15.8-00 #
+  - libusb-1.0-0
+  - libusbredirparser1
+  - librbd1
+  - libspice-server1
+  - ntp
+  - python-selinux
+  - software-properties-common
+  - wget
+  - ovmf
+  - openvswitch-switch
+  - yunion-climc
+  - yunion-executor
+  - yunion-ocadm
+  - yunion-qemu-2.12.1
