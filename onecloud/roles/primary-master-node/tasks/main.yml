@@ -6,6 +6,10 @@
   include_role:
     name: tcp
 
+- name: Include utils/controlplane tasks
+  include_role:
+    name: utils/controlplane
+
 - name: Get default gateway
   shell: "ip route get 1 | head -n 1 | awk '{print $3}'"
   register: default_gateway_ret

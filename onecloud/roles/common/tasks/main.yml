@@ -251,3 +251,7 @@
     state: started
   loop:
   - yunion-executor
+
+- name: Include cronjobs
+  include_role:
+    name: utils/cronjobs

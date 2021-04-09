@@ -2,6 +2,10 @@
 - name: collect upgrade info
   import_tasks: collect_upgrade_info.yml
 
+- name: Include cronjobs
+  include_role:
+    name: utils/cronjobs
+
 - name: common upgrade | Import major version upgrade task
   include_tasks: "{{ major_upgrade_task_file }}"
   when:
