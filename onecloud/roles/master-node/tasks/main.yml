@@ -13,6 +13,10 @@
   include_role:
     name: tcp
 
+- name: Include utils/controlplane tasks
+  include_role:
+    name: utils/controlplane
+
 - name: construct k8s_controlplane_host
   set_fact:
     k8s_controlplane_host: "{{groups['primary_master_node'][0]}}"
