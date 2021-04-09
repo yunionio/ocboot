@@ -6,6 +6,10 @@
   roles:
     - { role: upgrade/primary_master_node }
 
-# - hosts: worker_nodes
-  # roles:
-    # - { role: worker-node/upgrade }
+- hosts: master_nodes
+  roles:
+    - { role: upgrade/master_nodes }
+
+- hosts: worker_nodes
+  roles:
+    - { role: upgrade/worker_nodes }
