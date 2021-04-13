@@ -1,20 +1,8 @@
-- name: Do common setup
-  include_role:
-    name: common
-
-- name: TCP Configuration
-  include_role:
-    name: tcp
-
-- name: Include utils/controlplane tasks
-  include_role:
-    name: utils/controlplane
-
 - name: Get default gateway
   shell: "ip route get 1 | head -n 1 | awk '{print $3}'"
   register: default_gateway_ret
 
-- name: set default gateway var
+- name: Set default gateway var
   set_fact:
     default_gateway: "{{ default_gateway_ret.stdout }}"
 
@@ -22,7 +10,7 @@
   shell: "ip route get 1 | head -n 1 | awk '{print $7}'"
   register: default_ip_ret
 
-- name: set default ip var
+- name: Set default ip var
   set_fact:
     default_ip: "{{ default_ip_ret.stdout }}"
 
@@ -30,131 +18,9 @@
   shell: "ip route list | grep {{ default_ip }} | head -n 1 | awk '{print $1}' | cut -d '/' -f 2"
   register: default_masklen_ret
 
-- name: set default ip masklen
+- name: Set default ip masklen
   set_fact:
     default_masklen: "{{ default_masklen_ret.stdout }}"
-
-- name: Get cluster token
-  shell: /opt/yunion/bin/ocadm token list | cut -d  ' ' -f1 | sed -n '2p'
-  register: K8S_TOKEN
-
-- name: Pull ocadm images on node
-  command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}} --onecloud-version {{ onecloud_version | default('latest') }} --operator-version {{ onecloud_version | default('latest') }}"
-  register: command_result
-  changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
-  when:
-  - K8S_TOKEN.stdout|length == 0
-
-- name: Check node is init
-  shell: test -f /etc/kubernetes/kubelet.conf
-  register: kubelet_result
-  ignore_errors: yes
-  changed_when: false
-  failed_when: false
-
-- block:
-  - name: construct controlplane endpoint
-    set_fact:
-      controlplane_endpoint: "{{k8s_controlplane_host}}:{{ k8s_controlplane_port | default(6443) }}"
-
-  - name: construct init args
-    set_fact:
-      init_args: "init --control-plane-endpoint {{ controlplane_endpoint }} --mysql-host {{ db_host }} --mysql-user {{ db_user }} --mysql-password {{ db_password}}"
-
-  - name: construct init args with db_port config
-    set_fact:
-      init_args: "{{ init_args }} --mysql-port {{ db_port }}"
-    when:
-      db_port is defined
-
-  - name: construct image repository
-    set_fact:
-      init_args: "{{ init_args }} --image-repository {{ image_repository }}"
-    when:
-      image_repository is defined
-
-  - name: construct init args apiserver_advertise_address
-    set_fact:
-      init_args: "{{ init_args }} --apiserver-advertise-address {{ apiserver_advertise_address }} "
-    when:
-      apiserver_advertise_address is defined
-
-  - name: construct init args node_ip
-    set_fact:
-      init_args: "{{ init_args }} --node-ip {{ node_ip }}"
-    when:
-      node_ip is defined
-
-  - name: construct init args host_networks
-    set_fact:
-      init_args: "{{ init_args }} --host-networks {{ host_networks }} "
-    when:
-      host_networks is defined
-
-  - name: construct onecloud version
-    set_fact:
-      init_args: "{{ init_args }} --onecloud-version {{ onecloud_version }} --operator-version {{ onecloud_version }}"
-    when:
-      onecloud_version is defined
-
-  - name: construct onecloud version
-    set_fact:
-      init_args: "{{ init_args }} --addon-calico-ip-autodetection-method {{ ip_autodetection_method }}"
-    when:
-      ip_autodetection_method is defined
-
-  - name: init ha ip
-    set_fact:
-      init_args: "{{ init_args }} --high-availability-vip {{ high_availability_vip }}"
-    when:
-      high_availability_vip is defined
-
-  - name: init keepalived version tag
-    set_fact:
-      init_args: "{{ init_args }} --keepalived-version-tag {{ keepalived_version_tag }}"
-    when:
-      keepalived_version_tag is defined
-
-  - name: init node as onecloud host agent
-    set_fact:
-      init_args: "{{ init_args }} --enable-host-agent"
-    when:
-    - high_availability_vip is not defined
-    - k8s_node_as_oc_host|default(false)|bool == true
-
-- name: Use ocadm init first master node
-  command: "/opt/yunion/bin/ocadm {{ init_args }}"
-  when: kubelet_result.rc != 0
-
-- name: "Wait 500 seconds for primary master to response: {{ controlplane_endpoint }}"
-  wait_for:
-    host: "{{ k8s_controlplane_host }}"
-    port: "{{ k8s_controlplane_port | default(6443)}}"
-    delay: 1
-    timeout: 500
-  run_once: yes
-
-- name: Export KUBECONFIG in master's ~/.bashrc
-  lineinfile:
-    dest: ~/.bashrc
-    line: "export KUBECONFIG=/etc/kubernetes/admin.conf"
-    state: present
-    create: yes
-    regexp: '^export KUBECONFIG=.*'
-  when:
-  - high_availability_vip is not defined
-  - shell is undefined or shell == 'bash'
-
-- name: Source kubectl bash completion in master's ~/.bashrc
-  lineinfile:
-    dest: ~/.bashrc
-    line: "source <(kubectl completion bash)"
-    state: present
-    create: yes
-    regexp: '.*kubectl completion bash.*'
-  when:
-  - high_availability_vip is not defined
-  - shell is undefined or shell == 'bash'
 
 - name: Wait onecloud CRD created
   environment:
@@ -173,7 +39,7 @@
   register: OC_CLUSTER_COUNT
   when: high_availability_vip is not defined
 
-- name: init construct create cluster args
+- name: Init construct create cluster args
   set_fact:
     init_cluster_args: ""
 
@@ -194,6 +60,16 @@
   when:
   - high_availability_vip is not defined
   - OC_CLUSTER_COUNT.stdout|int == 0
+
+- name: Enable minio S3 object storage for services
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/minio/enable", "value": true}]'
+    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/glance/switchToS3", "value": true}]'
+  when:
+  - enable_minio is defined
+  - enable_minio|default(false)|bool == true
 
 - name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin"
   shell: |
