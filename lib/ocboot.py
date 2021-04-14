@@ -286,6 +286,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.onecloud_user_password = config.get('onecloud_user_password', 'admin@123')
         self.use_ee = config.get('use_ee', False)
         self.image_repository = config.get('image_repository', 'registry.cn-beijing.aliyuncs.com/yunionio')
+        self.enable_minio = config.get('enable_minio', False)
 
     @classmethod
     def get_group(cls):
@@ -305,6 +306,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['apiserver_advertise_address'] = self.node.node_ip
         vars['ip_autodetection_method'] = self.ip_autodetection_method
         vars['image_repository'] = self.image_repository
+        vars['enable_minio'] = self.enable_minio
 
         return vars
 

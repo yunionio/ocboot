@@ -8,11 +8,15 @@
 
 - hosts: primary_master_node
   roles:
-    - primary-master-node
+    - primary-master-node/setup_k8s
 
 - hosts: master_nodes
   roles:
     - master-node
+
+- hosts: primary_master_node
+  roles:
+    - primary-master-node/setup_cloud
 
 - hosts: worker_nodes
   roles:
