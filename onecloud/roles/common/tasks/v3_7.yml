@@ -1,13 +1,13 @@
 ---
 - name: Add yunion rpm repository
   get_url:
-    url: https://iso.yunion.io/nightly/3.7/yunion.repo
+    url: https://iso.yunion.cn/nightly/3.7/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
   become: yes
 
 - name: Change nightly yunion.repo url
   shell: |
-    sed -i 's|baseurl=https://iso.yunion.cn/3.7|baseurl=https://iso.yunion.io/nightly/3.7|g' /etc/yum.repos.d/yunion.repo
+    sed -i 's|baseurl=https://iso.yunion.cn/3.7|baseurl=https://iso.yunion.cn/nightly/3.7|g' /etc/yum.repos.d/yunion.repo
 
 - name: Install yunion common packages
   yum:
