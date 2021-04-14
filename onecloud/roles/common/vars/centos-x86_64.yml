@@ -55,3 +55,4 @@ common_packages:
   - yunion-ocadm
   - yunion-ovmfrpm
   - yunion-qemu-2.12.1
+  - yunion-fetcherfs
