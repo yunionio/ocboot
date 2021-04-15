@@ -39,3 +39,4 @@ common_packages:
   - yunion-executor
   - yunion-ocadm
   - yunion-qemu-2.12.1
+  - yunion-fetcherfs
