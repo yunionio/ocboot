@@ -12,8 +12,6 @@ GROUP_REGISTRY_NODE="registry_node"
 GROUP_PRIMARY_MASTER_NODE = "primary_master_node"
 GROUP_MASTER_NODES = "master_nodes"
 GROUP_WORKER_NODES = "worker_nodes"
-GROUP_LONGHORN_NODES = "longhorn_nodes"
-GROUP_REBOOT_NODES = "reboot_nodes"
 
 
 def load_config(config_file):
@@ -34,8 +32,6 @@ class OcbootConfig(object):
         self.primary_master_config = self._fetch_conf(PrimaryMasterConfig)
         self.master_config = self._fetch_conf(MasterConfig)
         self.worker_config = self._fetch_conf(WorkerConfig)
-        self.longhorn_config = self._fetch_conf(LonghornConfig)
-        self.reboot_config = self._fetch_conf(RebootConfig)
 
     def load_bastion_host(self, config):
         bastion_config = config.get('bastion_host', None)
@@ -68,9 +64,7 @@ class OcbootConfig(object):
             self.registry_config,
             self.primary_master_config,
             self.master_config,
-            self.worker_config,
-            self.longhorn_config,
-            self.reboot_config)
+            self.worker_config)
 
     def generate_inventory_file(self):
         content = self.get_ansible_inventory()
@@ -139,8 +133,8 @@ class Config(object):
 class Node(object):
 
     def __init__(self, config):
-        self.host = config.ensure_get('host', 'hostname')
-        self.use_local = config.get('user_local', False)
+        self.use_local = config.get('use_local', False)
+        self.host = '127.0.0.1' if self.use_local else config.ensure_get('host', 'hostname')
         self.user = config.get('user', 'root')
         self.port = config.get('port', 22)
         self.host_networks = config.get('host_networks', None)
@@ -206,6 +200,7 @@ class MariadbConfig(object):
             "db_user": self.db_user,
             "db_password": self.db_password,
             "db_port": self.db_port,
+            "db_host": self.node.host,
         }
 
 
@@ -374,57 +369,6 @@ class WorkerConfig(OnecloudJointConfig):
     @classmethod
     def get_group(cls):
         return GROUP_WORKER_NODES
-
-    def get_nodes(self):
-        return self.nodes
-
-
-class LonghornConfig(object):
-
-    def __init__(self, config, bastion_host=None):
-        self.nodes = get_nodes(config, bastion_host)
-        self.k8s_host_node_ips = config.get('k8s_host_node_ips', None)
-        self.longhorn_image_repository = config.get('longhorn_image_repository', None)
-        self.longhorn_data_path = config.get('longhorn_data_path', None)
-        self.longhorn_over_provisioning_percentage = config.get('longhorn_over_provisioning_percentage', None)
-        self.high_availability_controlplane_as_host = config.get('high_availability_controlplane_as_host', None)
-
-    @classmethod
-    def get_group(cls):
-        return GROUP_LONGHORN_NODES
-
-    def ansible_vars(self):
-        vars = {}
-        if self.k8s_host_node_ips:
-            vars['k8s_host_node_ips'] = self.k8s_host_node_ips
-        if self.longhorn_image_repository:
-            vars['longhorn_image_repository'] = self.longhorn_image_repository
-        if self.longhorn_data_path:
-            vars['longhorn_data_path'] = self.longhorn_data_path
-        if self.longhorn_over_provisioning_percentage:
-            vars['longhorn_over_provisioning_percentage'] = self.longhorn_over_provisioning_percentage
-        if self.high_availability_controlplane_as_host:
-            vars['high_availability_controlplane_as_host'] = self.high_availability_controlplane_as_host
-
-    def get_nodes(self):
-        return self.nodes
-
-
-class RebootConfig(object):
-
-    def __init__(self, config, bastion_host=None):
-        self.nodes = get_nodes(config, bastion_host)
-        self.availability_controlplane_as_host = config.get('availability_controlplane_as_host', None)
-
-    @classmethod
-    def get_group(cls):
-        return GROUP_REBOOT_NODES
-
-    def ansible_vars(self):
-        vars = {}
-        if self.availability_controlplane_as_host:
-            vars['availability_controlplane_as_host'] = self.availability_controlplane_as_host
-        return vars
 
     def get_nodes(self):
         return self.nodes

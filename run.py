@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 
 from lib import install
@@ -13,6 +14,8 @@ Usage: %s <config_file>.yml
 
 
 def main():
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
     if len(sys.argv) != 2:
         show_usage()
         sys.exit(1)
