@@ -1,20 +1,20 @@
-# - name: pre-install-common
-  # include_role:
-    # name: pre-install-common
-  # when:
-  # - ansible_connection is defined
-  # - ansible_connection == "ssh"
-
-# - name: pre-install-host
-  # include_role:
-    # name: pre-install-host
-  # when:
-  # - ansible_connection is defined
-  # - ansible_connection == "ssh"
-
 - name: Do common setup
   include_role:
     name: common
+
+- name: pre-install-common
+  include_role:
+    name: pre-install-common
+  when:
+  - ansible_connection is defined
+  - ansible_connection == "ssh"
+
+- name: pre-install-host
+  include_role:
+    name: pre-install-host
+  when:
+  - ansible_connection is defined
+  - ansible_connection == "ssh"
 
 - name: TCP Configuration
   include_role:

@@ -1,13 +1,13 @@
+- name: Do common setup
+  include_role:
+    name: common
+
 - name: pre-install-common
   include_role:
     name: pre-install-common
   when:
     - ansible_connection is defined
     - ansible_connection == "ssh"
-
-- name: Do common setup
-  include_role:
-    name: common
 
 - name: TCP Configuration
   include_role:
@@ -104,8 +104,6 @@
       join_args: "{{ join_args }} --enable-host-agent"
     when:
     - k8s_node_as_oc_host|default(false)|bool == true
-    - ansible_connection is defined
-    - ansible_connection == "local"
 
   - name: join with high availibility ip option
     set_fact:

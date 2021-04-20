@@ -1,2 +1,5 @@
 - name: init GPU
-  shell: /opt/yunion/upgrade/gpu_init/gpu_sutup.sh
+  shell: |
+    if [ -f /opt/yunion/upgrade/gpu_init/gpu_sutup.sh ]; then
+      /opt/yunion/upgrade/gpu_init/gpu_sutup.sh
+    fi
