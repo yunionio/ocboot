@@ -27,7 +27,7 @@
     default_ip: "{{ default_ip_ret.stdout }}"
 
 - name: "Get default ip address {{ default_ip }} masklen"
-  shell: "ip route list | grep {{ default_ip }} | head -n 1 | awk '{print $1}' | cut -d '/' -f 2"
+  shell: "ip route list | grep -w {{ default_ip }} | head -n 1 | awk '{print $1}' | cut -d '/' -f 2"
   register: default_masklen_ret
 
 - name: set default ip masklen
