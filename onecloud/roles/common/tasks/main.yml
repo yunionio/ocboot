@@ -23,7 +23,6 @@
 - name: Install yum utils
   yum:
     name:
-      - yum-utils
       - bash-completion
       - epel-release
   when:
