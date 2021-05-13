@@ -209,8 +209,8 @@
   - name: Install docker
     yum:
       name:
-        - docker-ce-19.03.9
-        - docker-ce-cli-19.03.9
+        - docker-ce
+        - docker-ce-cli
         - containerd.io
     when:
     - is_centos_x86 is defined
