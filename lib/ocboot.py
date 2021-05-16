@@ -139,8 +139,8 @@ class Config(object):
 class Node(object):
 
     def __init__(self, config):
-        self.host = config.ensure_get('host', 'hostname')
-        self.use_local = config.get('user_local', False)
+        self.use_local = config.get('use_local', False)
+        self.host = '127.0.0.1' if self.use_local else config.ensure_get('host', 'hostname')
         self.user = config.get('user', 'root')
         self.port = config.get('port', 22)
         self.host_networks = config.get('host_networks', None)
@@ -206,6 +206,7 @@ class MariadbConfig(object):
             "db_user": self.db_user,
             "db_password": self.db_password,
             "db_port": self.db_port,
+            "db_host": self.node.host,
         }
 
 
