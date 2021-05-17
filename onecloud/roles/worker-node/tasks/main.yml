@@ -22,6 +22,13 @@
   when:
     k8s_node_as_oc_controller|default(false)|bool == true
 
+- name: Include utils/kernel-check tasks
+  include_role:
+    name: utils/kernel-check
+  when:
+  - k8s_node_as_oc_host|default(false)|bool == true
+  - is_centos_x86 is defined
+
 - name: construct k8s_controlplane_host
   set_fact:
     k8s_controlplane_host: "{{groups['primary_master_node'][0]}}"
