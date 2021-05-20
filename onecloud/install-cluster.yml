@@ -21,3 +21,7 @@
 - hosts: worker_nodes
   roles:
     - worker-node
+
+- hosts: primary_master_node
+  roles:
+    - primary-master-node/reboot
