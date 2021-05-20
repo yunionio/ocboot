@@ -23,8 +23,10 @@
 
 - name: Reboot system if not yunion kernel, it should take a few minutes...
   reboot:
-    reboot_timeout:  900  # 15 mins
+    reboot_timeout:  900 # 15 mins
     connect_timeout: 900 # 15 mins
     msg: "rebooting host to enable yunion kernel ... please wait... "
     test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
-  when: is_yunion_kernel_running.rc != 0
+  when:
+  - is_yunion_kernel_running.rc != 0
+  - ansible_connection == "ssh"
