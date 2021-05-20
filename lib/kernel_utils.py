@@ -4,6 +4,35 @@ import fcntl
 import struct
 import os
 import platform
+import subprocess
+
+
+def _run_cmd_with_output(cmds):
+
+    output = []
+    shell_cmd = ' '.join(cmds)
+    proc = subprocess.Popen(
+        shell_cmd,
+        shell=True,
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,)
+    while True:
+        line = proc.stdout.readline()
+        if not line:
+            break
+        output.append(line.strip())
+        proc.wait()
+    return output
+
+
+def get_macos_interfaces():
+    bashCmd = '''networksetup -listallhardwareports| grep Device: |sed -e "s#Device: ##"'''
+    return _run_cmd_with_output([bashCmd])
+
+
+def get_linux_interfaces():
+    return os.listdir('/sys/class/net/')
 
 
 def get_ip_address(ifname):
@@ -13,9 +42,20 @@ def get_ip_address(ifname):
     return ret
 
 
+def get_all_interfaces():
+    os = platform.uname()
+    if not len(os):
+        return []
+    if os[0] == 'Darwin':
+        return get_macos_interfaces()
+    elif os[0] == 'Linux':
+        return get_linux_interfaces()
+    return []
+
+
 def get_all_ips():
     ips = []
-    for interface in os.listdir('/sys/class/net/'):
+    for interface in get_all_interfaces():
         try:
             ip = get_ip_address(interface)
             ips.append(ip)
@@ -23,8 +63,10 @@ def get_all_ips():
             pass
     return ips
 
+
 def is_local_ip(ip):
     return ip in get_all_ips()
+
 
 def is_yunion_kernel():
     kernel_str = platform.platform()
