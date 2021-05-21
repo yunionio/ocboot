@@ -100,6 +100,8 @@
    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
    /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
   ignore_errors: yes
+  args:
+    executable: /bin/bash
   when:
   - OC_USER_COUNT.stdout|int == 0
 
@@ -107,6 +109,8 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
+  args:
+    executable: /bin/bash
   when:
   - use_ee is not defined or not use_ee
 
@@ -114,6 +118,8 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc project-add-user system {{ onecloud_user }} admin
+  args:
+    executable: /bin/bash
   when:
   - use_ee is not defined or not use_ee
 
@@ -125,7 +131,8 @@
   ignore_errors: yes
   changed_when: false
   failed_when: false
-
+  args:
+    executable: /bin/bash
 
 - name: "Check if network contains {{ default_ip }}"
   shell: |
@@ -133,6 +140,8 @@
     /opt/yunion/bin/climc network-list --ip {{ default_ip }} | grep -v Total | wc -l
   register: network_count_ret
   ignore_errors: yes
+  args:
+    executable: /bin/bash
 
 
 - name: set admin network count
@@ -145,6 +154,8 @@
     /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }}
     /opt/yunion/bin/climc network-private adm0
   when: network_admin_exist.rc != 0 and admin_network_count|int == 0
+  args:
+    executable: /bin/bash
 
 - name: "post install scripts"
   shell: |
@@ -154,3 +165,5 @@
       sh -c "$line" 2>&1 | tee -a /tmp/post-install.log
       echo "[DONE ]processing $line OK"
     done
+  args:
+    executable: /bin/bash
