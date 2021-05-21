@@ -1,6 +1,19 @@
 ---
 # This role contains common plays that will run on all nodes
 
+- name: is_debian_based IS defined
+  shell: echo "is_debian_based  == TRUE:"
+  when:
+  - is_debian_based is defined
+
+- name: is_debian_based NOT defined
+  shell: echo "is_debian_based  == FALSE"
+  when:
+  - is_debian_based is not defined
+
+- name: exit 1
+  shell: exit 1
+
 - name: ensure group yunion exists
   group:
     name: yunion
@@ -34,54 +47,79 @@
 
 # pre-install rsync and other rpms, before we can use ansible syncronize module
 - name: yum install rsync
-  shell: "yum localinstall --nogpgcheck -y /opt/yunion/upgrade/rpms/packages/misc/*.rpm"
+  shell: |
+     if [ -d /opt/yunion/upgrade/rpms/packages/misc/ ] && [ -x /usr/bin/yum ];  then
+       yum localinstall --nogpgcheck -y /opt/yunion/upgrade/rpms/packages/misc/*.rpm
+     fi
   args:
     warn: no
-
-- name: Copy files to Node. It should take a couple of minutes...
-  synchronize:
-    src: /opt/yunion/upgrade
-    dest: /opt/yunion/
-    rsync_opts:
-      - "--delete"
-      - "--exclude=images"
-
-- name: init yunion-repo
-  copy:
-    src: yunion-local.repo
-    dest: /etc/yum.repos.d/yunion-local.repo
+    executable: /bin/bash
+  when:
+  - is_centos_x86 is defined
 
 - name: make cache
   shell: "yum -y --disablerepo='*' --enablerepo='yunion*' makecache fast"
   args:
     warn: no
+    src: /etc/apt/sources.list.d/yunion.list
+    dest: /etc/apt/sources.list.d/yunion.list
+  when:
+  - is_centos_x86 is defined
+
+- name: update repo
+  shell: apt-get update
+  when:
+  - is_debian_based is defined
+
+- name: install packages via loop
+  package: name="{{ item }}"
+  with_items:
+  - yunion-executor
+
+# - name: Copy files to Node. It should take a couple of minutes...
+#  synchronize:
+#    src: /opt/yunion/upgrade
+#    dest: /opt/yunion/
+#    rsync_opts:
+#      - "--delete"
+#      - "--exclude=images"
+
+#- name: init yunion-repo
+#  copy:
+#    src: yunion-local.repo
+#    dest: /etc/yum.repos.d/yunion-local.repo
+#
+#- name: make cache
+#  shell: "yum -y --disablerepo='*' --enablerepo='yunion*' makecache fast"
+#  args:
+#    warn: no
 
 - name: init dirs
   shell: "mkdir -p /etc/docker"
   args:
     warn: no
 
-- name: init tmux
-  shell: |
-    yum localinstall -y /opt/yunion/upgrade/rpms/packages/tmux/*.rpm
-    if [ ! -f /usr/bin/tmux ]; then
-      cp -f /opt/yunion/upgrade/rpms/packages/tmux/tmux /usr/bin
-    fi
-  args:
-    warn: no
+#- name: init tmux
+#  shell: |
+#    yum localinstall -y /opt/yunion/upgrade/rpms/packages/tmux/*.rpm
+#    if [ ! -f /usr/bin/tmux ]; then
+#      cp -f /opt/yunion/upgrade/rpms/packages/tmux/tmux /usr/bin
+#    fi
+#  args:
+#    warn: no
 
 - name: is systemd installed
   command: "systemctl --version"
   register: is_systemd_installed
 
-- name: ensure systemd installed
-  yum:
-    name: systemd
-    disablerepo: "*"
-    enablerepo: "yunion-*"
-  when:
-  - is_systemd_installed.rc != 0
-  - is_centos_x86 is defined # for uos TODO
+#- name: ensure systemd installed
+#  yum:
+#    name: systemd
+#    disablerepo: "*"
+#    enablerepo: "yunion-*"
+#  when:
+#  - is_systemd_installed.rc != 0
+#  - is_centos_x86 is defined # for uos TODO
 
 - name: yum install yunion packages; it should take a few minutes...
   package: name="{{ item }}" state="present"
@@ -159,7 +197,7 @@
     state: started
     enabled: yes
   with_items:
-    - ntpd
+#    - ntpd
     - yunion-executor
 
 - name: Stop/Disable Depreciated Services If Any
