@@ -60,3 +60,7 @@ common_packages:
   - yunion-ovmfrpm
   - yunion-qemu-2.12.1
   - yunion-fetcherfs
+
+common_services:
+    - ntpd
+    - yunion-executor
