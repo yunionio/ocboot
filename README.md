@@ -145,6 +145,83 @@ EOF
 $ ./ocboot.py install ./config-nodes.yml
 ```
 
+### 高可用部署
+假设准备好了 3 台 CentOS7 机器，以及 1 台 Mariadb/MySQL 的机器，规划如下：
+
+role          | ip            | interface    |  note
+------------  | ------------- | ------------ | ------------------------------
+k8s primary   | 10.127.90.101 | eth0         | -                             |
+k8s master 1  | 10.127.90.102 | eth0         | -                             |
+k8s master 2  | 10.127.90.103 | eth0         | -                             |
+k8s VIP       | 10.127.190.10 | -            | -                             |
+DB            | 10.127.190.11 | -            | pswd="0neC1oudDB#",  port=3306|
+
+```bash
+# 填充变量，生成配置
+DB_IP="10.127.190.11"
+DB_PORT=3306
+DB_PSWD="0neC1oudDB#"
+DB_USER=root
+
+K8S_VIP=10.127.190.10
+PRIMARY_INTERFACE="eth0"
+PRIMARY_IP=10.127.90.101
+
+MASTER_1_INTERFACE="eth0"
+MASTER_1_IP=10.127.90.102
+MASTER_2_INTERFACE="eth0"
+MASTER_2_IP=10.127.90.103
+
+cat > config-k8s-ha.yml <<EOF
+primary_master_node:
+  use_local: true
+  user: root
+  onecloud_version: "v3.6.16"
+  db_host: $DB_IP
+  db_user: "$DB_USER"
+  db_password: "$DB_PSWD"
+  db_port: "$DB_PORT"
+  skip_docker_config: true
+  image_repository: registry.cn-beijing.aliyuncs.com/yunionio
+  ha_using_local_registry: false
+  node_ip: "$PRIMARY_IP"
+  ip_autodetection_method: "can-reach=$PRIMARY_IP"
+  controlplane_host: $K8S_VIP
+  controlplane_port: "6443"
+  as_host: true
+  high_availability: true
+  keepalived_version_tag: "v2.0.25"
+  use_ee: false
+  enable_minio: true
+  registry_mirrors:
+  - https://lje6zxpk.mirror.aliyuncs.com
+  insecure_registries:
+  - $PRIMARY_IP:5000
+  host_networks: "$PRIMARY_INTERFACE/br0/$PRIMARY_IP"
+
+master_nodes:
+  controlplane_host: $K8S_VIP
+  controlplane_port: "6443"
+  as_controller: true
+  as_host: true
+  ntpd_server: "$PRIMARY_IP"
+  registry_mirrors:
+  - https://lje6zxpk.mirror.aliyuncs.com
+  high_availability: true
+  keepalived_version_tag: "v2.0.25"
+  hosts:
+  - user: root
+    hostname: "$MASTER_1_IP"
+    host_networks: "$MASTER_1_INTERFACE/br0/$MASTER_1_IP"
+  - user: root
+    hostname: "$MASTER_2_IP"
+    host_networks: "$MASTER_2_INTERFACE/br0/$MASTER_2_IP"
+EOF
+
+# 开始部署
+$ ./ocboot.py install ./config-k8s-ha.yml
+```
+
 ## 添加节点
 
 添加节点也很简单，只需要按照自己的规划，在已有的 config 里面添加对应的节点 ssh 登录 ip 和用户，然后再重复执行 `./ocboot.py install config.yml` 即可。
