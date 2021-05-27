@@ -31,12 +31,17 @@
   copy:
     src: /opt/yunion/upgrade/rpms/packages/misc/
     dest: /opt/yunion/upgrade/rpms/packages/misc/
+  when:
+  - is_centos_x86 is defined
 
 # pre-install rsync and other rpms, before we can use ansible syncronize module
 - name: yum install rsync
-  shell: "yum localinstall --nogpgcheck -y /opt/yunion/upgrade/rpms/packages/misc/*.rpm"
+  shell: |
+    yum localinstall --nogpgcheck -y /opt/yunion/upgrade/rpms/packages/misc/*.rpm
   args:
     warn: no
+  when:
+  - is_centos_x86 is defined
 
 - name: Copy files to Node. It should take a couple of minutes...
   synchronize:
@@ -45,28 +50,32 @@
     rsync_opts:
       - "--delete"
       - "--exclude=images"
+  when:
+  - is_centos_x86 is defined
 
 - name: init yunion-repo
   copy:
     src: yunion-local.repo
     dest: /etc/yum.repos.d/yunion-local.repo
+  when:
+  - is_centos_x86 is defined
 
-- name: make cache
+- name: make cache for centos x86
   shell: "yum -y --disablerepo='*' --enablerepo='yunion*' makecache fast"
   args:
     warn: no
+  when:
+  - is_centos_x86 is defined
+
+- name: make cache for debian like os
+  shell: "apt-get update"
+  args:
+    warn: no
+  when:
+  - is_debian_based is defined
 
 - name: init dirs
   shell: "mkdir -p /etc/docker"
-  args:
-    warn: no
-
-- name: init tmux
-  shell: |
-    yum localinstall -y /opt/yunion/upgrade/rpms/packages/tmux/*.rpm
-    if [ ! -f /usr/bin/tmux ]; then
-      cp -f /opt/yunion/upgrade/rpms/packages/tmux/tmux /usr/bin
-    fi
   args:
     warn: no
 
@@ -81,7 +90,7 @@
     enablerepo: "yunion-*"
   when:
   - is_systemd_installed.rc != 0
-  - is_centos_x86 is defined # for uos TODO
+  - is_centos_x86 is defined
 
 - name: yum install yunion packages; it should take a few minutes...
   yum:
@@ -162,9 +171,9 @@
     state: started
     enabled: yes
   with_items:
-    - ntpd
-    - yunion-executor
-    - iscsid
+  - "{{ common_services }}"
+  when:
+  - common_services is defined
 
 - name: Stop/Disable Depreciated Services If Any
   shell: |
