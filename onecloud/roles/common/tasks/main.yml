@@ -1,24 +1,7 @@
 ---
-# This role contains common plays that will run on all nodes
-- name: gather os specific variables
-  include_vars: "{{ item }}"
-  with_first_found:
-    - files:
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_version|lower|replace('/', '_') }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_architecture }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}.yml"
-        - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
-        - "{{ ansible_os_family|lower }}.yml"
-        - defaults.yml
-      paths:
-        - ../vars
-      skip: true
-  tags:
-    - facts
+- name: Include utils/detect-os tasks
+  include_role:
+    name: utils/detect-os
 
 - name: Install yum utils
   yum:

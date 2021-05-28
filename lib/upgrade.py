@@ -76,11 +76,13 @@ def do_upgrade(args):
     with open(inventory_f, 'w') as f:
         f.write(inventory_content)
     # start run upgrade playbook
-    run_ansible_playbook(
+    return_code = run_ansible_playbook(
         inventory_f,
         './onecloud/upgrade-cluster.yml',
         vars=config.to_ansible_vars(),
     )
+    if return_code is not None and return_code != 0:
+        return return_code
     cluster.set_current_version(args.version)
 
 
