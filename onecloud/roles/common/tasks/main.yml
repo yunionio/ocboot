@@ -1,8 +1,4 @@
 ---
-- name: Include utils/detect-os tasks
-  include_role:
-    name: utils/detect-os
-
 - name: Install yum utils
   yum:
     name:
@@ -35,7 +31,7 @@
   args:
     executable: /bin/bash
 
-- name: reset iptables for UOS
+- name: reset iptables rules
   shell: |
     # backup iptable ruleset
     fn=/etc/iptables.backup.$(date +"%Y%m%d-%H%M%S")
