@@ -2,6 +2,10 @@
 - name: collect upgrade info
   import_tasks: collect_upgrade_info.yml
 
+- name: Include utils/detect-os tasks
+  include_role:
+    name: utils/detect-os
+
 - name: Include cronjobs
   include_role:
     name: utils/cronjobs

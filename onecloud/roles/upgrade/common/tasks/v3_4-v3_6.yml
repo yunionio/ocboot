@@ -8,6 +8,8 @@
     url: "{{ yunion_yum_repo }}"
     dest: /etc/yum.repos.d/yunion.repo
   become: yes
+  when:
+  - is_centos_x86 is defined
 
 - name: Remove the old yunion-executor-server package
   yum:
