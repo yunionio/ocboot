@@ -239,10 +239,10 @@ class OnecloudConfig(object):
 
         self.high_availability = config.get('high_availability', False)
         self.high_availability_vip = None
+        self.keepalived_version_tag = None
         if self.high_availability:
             self.high_availability_vip = self.controlplane_host
-
-        self.keepalived_version_tag = config.get('keepalived_version_tag', None)
+            self.keepalived_version_tag = config.get('keepalived_version_tag', 'v2.0.25')
 
     def ansible_vars(self):
         vars = {
@@ -254,7 +254,6 @@ class OnecloudConfig(object):
         }
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip
-        if self.keepalived_version_tag:
             vars['keepalived_version_tag'] = self.keepalived_version_tag
         return vars
 

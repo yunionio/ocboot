@@ -190,7 +190,6 @@ primary_master_node:
   controlplane_port: "6443"
   as_host: true
   high_availability: true
-  keepalived_version_tag: "v2.0.25"
   use_ee: false
   enable_minio: true
   registry_mirrors:
@@ -208,7 +207,6 @@ master_nodes:
   registry_mirrors:
   - https://lje6zxpk.mirror.aliyuncs.com
   high_availability: true
-  keepalived_version_tag: "v2.0.25"
   hosts:
   - user: root
     hostname: "$MASTER_1_IP"
