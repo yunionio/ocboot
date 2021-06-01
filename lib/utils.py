@@ -39,6 +39,9 @@ def parse_k8s_time(time_str):
 def get_major_version(ver):
     segs = ver.split('.')
     # 对于 master 版本，不做校验；对于 v3.6.x、v3.7.x这样的格式，做版本校验
+    if ver.startswith('master-'):
+        return 'master'
+
     if (not ver.startswith('master-')) and len(segs) < 3:
         raise Exception("Invalid version %s", ver)
     return '%s_%s' % (segs[0], segs[1])
