@@ -12,56 +12,8 @@
     shell: /bin/bash
     groups: yunion
 
-- name: ensure user yunion in sudoers list
-  shell: |
-    if [ ! -s /etc/sudoers.d/99yunion ]; then
-    cat >> /etc/sudoers.d/99yunion <<END
-    yunion ALL=(root) NOPASSWD:ALL
-    END
-    fi
-
-- name: Ensures remote rpm dir exists
-  file:
-    path: /opt/yunion/upgrade/rpms/packages/misc/
-    state: directory
-    owner: yunion
-    group: yunion
-
-- name: cp rsync rpm
-  copy:
-    src: /opt/yunion/upgrade/rpms/packages/misc/
-    dest: /opt/yunion/upgrade/rpms/packages/misc/
-  when:
-  - is_centos_x86 is defined
-
-# pre-install rsync and other rpms, before we can use ansible syncronize module
-- name: yum install rsync
-  shell: |
-    yum localinstall --nogpgcheck -y /opt/yunion/upgrade/rpms/packages/misc/*.rpm
-  args:
-    warn: no
-  when:
-  - is_centos_x86 is defined
-
-- name: Copy files to Node. It should take a couple of minutes...
-  synchronize:
-    src: /opt/yunion/upgrade
-    dest: /opt/yunion/
-    rsync_opts:
-      - "--delete"
-      - "--exclude=images"
-  when:
-  - is_centos_x86 is defined
-
-- name: init yunion-repo
-  copy:
-    src: yunion-local.repo
-    dest: /etc/yum.repos.d/yunion-local.repo
-  when:
-  - is_centos_x86 is defined
-
 - name: make cache for centos x86
-  shell: "yum -y --disablerepo='*' --enablerepo='yunion*' makecache fast"
+  shell: "yum makecache fast"
   args:
     warn: no
   when:
@@ -85,9 +37,7 @@
 
 - name: ensure systemd installed
   yum:
-    name: systemd
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    name: systemd    
   when:
   - is_systemd_installed.rc != 0
   - is_centos_x86 is defined
@@ -150,7 +100,6 @@
 
 - name: sync with ntpd_server
   shell: |
-    set -ex
     echo "sync with ntpd {{ ntpd_server }}"
     systemctl stop ntpd
     ntpdate {{ ntpd_server }}; echo $?
