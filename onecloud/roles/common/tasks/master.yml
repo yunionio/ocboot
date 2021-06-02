@@ -5,7 +5,7 @@
     dest: /etc/yum.repos.d/yunion.repo
   become: yes
 
-  - name: Install yunion common packages
+- name: Install yunion common packages
   yum:
     state: latest
     name:
