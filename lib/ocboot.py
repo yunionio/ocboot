@@ -281,6 +281,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.use_ee = config.get('use_ee', False)
         self.image_repository = config.get('image_repository', 'registry.cn-beijing.aliyuncs.com/yunionio')
         self.enable_minio = config.get('enable_minio', False)
+        self.offline_nodes = config.get('offline_nodes', '')
 
     @classmethod
     def get_group(cls):
@@ -301,7 +302,8 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['ip_autodetection_method'] = self.ip_autodetection_method
         vars['image_repository'] = self.image_repository
         vars['enable_minio'] = self.enable_minio
-
+        if len(self.offline_nodes) > 0:
+            vars['offline_nodes'] = self.offline_nodes
         return vars
 
     def get_nodes(self):

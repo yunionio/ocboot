@@ -1,0 +1,20 @@
+- name: rsync rpms
+  shell: |
+    rpm_path=/opt/yunion/upgrade
+    for item in $(echo "{{ offline_nodes }}")
+    do
+      ssh $item "
+        [ -d $rpm_path ] || mkdir -p $rpm_path
+        [ -x /usr/bin/rsync ] || yum install -y rsync
+        "
+      rsync -Par $rpm_path/rpms $rpm_path/repodata $item:$rpm_path/
+      if [ -f /etc/yum.repos.d/yunion-local.repo ]; then
+        rsync /etc/yum.repos.d/yunion-local.repo $item:/etc/yum.repos.d/
+        ssh "$item" "yum makecache fast"
+      fi
+    done
+  args:
+    executable: /bin/bash
+  when:
+  - offline_nodes is defined
+  - offline_nodes != ""
