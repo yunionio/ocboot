@@ -303,7 +303,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['image_repository'] = self.image_repository
         vars['enable_minio'] = self.enable_minio
         if len(self.offline_nodes) > 0:
-            vars['offline_nodes'] = self.offline_nodes
+            vars['offline_nodes'] = ' '.join(self.offline_nodes)
         return vars
 
     def get_nodes(self):
