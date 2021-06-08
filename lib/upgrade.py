@@ -1,3 +1,6 @@
+# encoding: utf-8
+from __future__ import unicode_literals
+
 import argparse
 import os
 import json
@@ -11,6 +14,16 @@ from . import k8s
 
 
 A_OCBOOT_UPGRADE_CURRENT_VERSION = 'upgrade.ocboot.yunion.io/current-version'
+
+UPGRADE_MSG = """
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│   The system has been upgraded to the latest version.                      │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+"""
+
 
 
 def add_command(subparsers):
@@ -84,6 +97,7 @@ def do_upgrade(args):
     if return_code is not None and return_code != 0:
         return return_code
     cluster.set_current_version(args.version)
+    print(UPGRADE_MSG)
 
 
 def construct_cluster(ssh_client):

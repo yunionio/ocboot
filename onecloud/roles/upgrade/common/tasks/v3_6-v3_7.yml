@@ -12,6 +12,23 @@
   when:
   - is_centos_x86 is defined
 
+- name: "update repo"
+  shell: |
+    yum --disablerepo='*' --enablerepo='yunion*' makecache fast
+  when:
+  - is_centos_x86 is defined
+
+- name: "uninstall old rpms"
+  shell: |
+    rpms=$(rpm -qa |grep yunion|grep -v fetcherfs |grep 3.6| xargs)
+    if [ -n "$rpms" ]; then
+      yum remove -y $rpms
+    fi
+  when:
+  - is_centos_x86 is defined
+  args:
+    executable: /bin/bash
+
 - name: Upgrade yunion common packages
   yum:
     name:
@@ -21,6 +38,8 @@
       - kernel-3.10.0-1160.6.1.el7.yn20201125
       - kernel-devel-3.10.0-1160.6.1.el7.yn20201125
       - kernel-headers-3.10.0-1160.6.1.el7.yn20201125
+    disablerepo: "*"
+    enablerepo: "yunion-*"
     state: latest
   when:
   - is_centos_x86 is defined
