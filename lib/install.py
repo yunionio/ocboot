@@ -53,6 +53,9 @@ def do_install(args):
         raise e
 
 def try_reboot_primary(ip):
+    if os.environ.get('NO_REBOOT', ''):
+        print("NO_REBOOT flag passed, ignore rebooting")
+        return
     if not ip:
         return
     if not kernel_utils.is_local_ip(ip):
