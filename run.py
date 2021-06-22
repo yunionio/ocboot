@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+import yaml
 
 from lib import install
 
@@ -91,6 +92,18 @@ def gen_config(ipaddr):
     verf = os.path.join(cur_path, "VERSION")
     with open(verf, 'r') as f:
         ver = f.read().strip()
+
+    if os.path.exists(temp):
+        with open(temp, 'r') as stream:
+            try:
+                data = (yaml.safe_load(stream))
+                if data.get('primary_master_node', {}).get('hostname', '') == ipaddr and \
+                   data.get('primary_master_node', {}).get('onecloud_version', '') == ver:
+                    print("reuse current yaml: %s" % temp)
+                    return temp
+            except yaml.YAMLError as exc:
+                raise Exception("paring %s error: %s" % (temp, exc))
+
     mypass = random_password(12)
     with open(temp, 'w') as f:
         f.write(conf.replace('10.127.10.158', ipaddr).replace('your-sql-password', mypass).replace('v3.4.12', ver))
