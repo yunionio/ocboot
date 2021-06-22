@@ -42,3 +42,4 @@ onecloud/site.yml
 onecloud/zz_generated.*
 #onecloud/ansible.cfg
 #onecloud/callback_plugins
+config-allinone-current.yml
