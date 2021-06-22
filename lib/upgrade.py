@@ -18,7 +18,7 @@ A_OCBOOT_UPGRADE_CURRENT_VERSION = 'upgrade.ocboot.yunion.io/current-version'
 UPGRADE_MSG = """
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │                                                                               │
-│   The system has been upgraded to the latest version.                      │
+│      The system has been upgraded to the latest version.                      │
 │                                                                               │
 └───────────────────────────────────────────────────────────────────────────────┘
 
