@@ -1,7 +1,7 @@
 ---
-- name: checking ports
-  include_role:
-    name: utils/port-check
+# - name: checking ports
+#   include_role:
+#     name: utils/port-check
 
 - name: Install yum utils
   yum:
