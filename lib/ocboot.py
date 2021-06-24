@@ -1,8 +1,6 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
-import yaml
-
 from . import ansible
 from . import utils
 
@@ -15,6 +13,7 @@ GROUP_WORKER_NODES = "worker_nodes"
 
 
 def load_config(config_file):
+    import yaml
     with open(config_file) as f:
         config = Config(yaml.load(f))
         return OcbootConfig(config)
