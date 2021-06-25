@@ -52,15 +52,21 @@ def do_install(args):
     except Exception as e:
         raise e
 
-def try_reboot_primary(ip):
+def need_reboot(ip, inside):
     if os.environ.get('NO_REBOOT', ''):
         print("NO_REBOOT flag passed, ignore rebooting")
-        return
+        return False
     if not ip:
-        return
-    if not kernel_utils.is_local_ip(ip):
-        return
+        return False
+    if kernel_utils.is_local_ip(ip) and inside == True:
+        return False
     if kernel_utils.is_yunion_kernel():
+        return False
+    return True
+
+
+def try_reboot_primary(ip):
+    if not need_reboot(ip, inside=False):
         return
 
     print(REBOOT_MSG)
@@ -75,11 +81,13 @@ def start(config_file):
     config = ocboot.load_config(config_file)
 
     inventory_f = config.generate_inventory_file()
-
+    ip = config.primary_master_config.node.node_ip
+    vars = config.ansible_global_vars()
+    vars['no_reboot'] = 'false' if need_reboot(ip, inside=True) else 'true'
     return_code = cmd.run_ansible_playbook(
         inventory_f,
         './onecloud/install-cluster.yml',
-        vars=config.ansible_global_vars(),
+        vars=vars,
     )
     if return_code is not None and return_code != 0:
         return return_code
