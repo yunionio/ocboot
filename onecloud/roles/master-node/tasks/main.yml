@@ -123,6 +123,10 @@
   when:
     kubelet_result.rc != 0
 
+- name: Include utils/k8s/kubelet/extra-args tasks
+  include_role:
+    name: utils/k8s/kubelet/extra-args
+
 - name: Include utils/kernel-check tasks
   include_role:
     name: utils/kernel-check
