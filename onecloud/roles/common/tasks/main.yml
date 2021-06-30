@@ -158,9 +158,13 @@
 #  https://github.com/kubernetes-retired/contrib/blob/master/ansible/roles/node/tasks/swapoff.yml
 - name: Turn off swap mount
   mount:
-    name: swap
+    name: "{{ item }}"
     fstype: swap
     state: absent
+  with_items:
+  - swap
+  - none
+
 - name: Turn off swap now
   command: swapoff -a
   when: ansible_swaptotal_mb > 0
