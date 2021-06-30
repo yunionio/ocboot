@@ -1,0 +1,1 @@
+KUBELET_EXTRA_ARGS="--pod-max-pids=1024 --feature-gates=\"SupportPodPidsLimit=true\""
