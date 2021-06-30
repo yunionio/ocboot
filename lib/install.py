@@ -58,7 +58,9 @@ def need_reboot(ip, inside):
         return False
     if not ip:
         return False
-    if kernel_utils.is_local_ip(ip) and inside == True:
+    if (inside is False) and (not kernel_utils.is_local_ip(ip)):
+        return False
+    if kernel_utils.is_local_ip(ip) and inside is True:
         return False
     if kernel_utils.is_yunion_kernel():
         return False
