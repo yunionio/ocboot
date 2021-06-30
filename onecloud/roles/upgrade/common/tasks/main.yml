@@ -6,6 +6,10 @@
   include_role:
     name: utils/cronjobs
 
+- name: Include utils/k8s/kubelet/extra-args tasks
+  include_role:
+    name: utils/k8s/kubelet/extra-args
+
 - name: common upgrade | Import major version upgrade task
   include_tasks: "{{ major_upgrade_task_file }}"
   when:
