@@ -156,6 +156,10 @@
   - high_availability_vip is not defined
   - shell is undefined or shell == 'bash'
 
+- name: Include utils/k8s/kubelet/extra-args tasks
+  include_role:
+    name: utils/k8s/kubelet/extra-args
+
 - name: Wait onecloud CRD created
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf

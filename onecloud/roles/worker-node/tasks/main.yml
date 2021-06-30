@@ -87,3 +87,7 @@
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
   when:
     kubelet_result.rc != 0
+
+- name: Include utils/k8s/kubelet/extra-args tasks
+  include_role:
+    name: utils/k8s/kubelet/extra-args
