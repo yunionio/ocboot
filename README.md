@@ -1,12 +1,12 @@
 # 介绍
 
-ocboot 是 OneCloud bootstrap 的简写，能够快速的在 Centos7 机器上搭建部署 OneCloud 服务。
+ocboot 能够快速的在 CentOS 7 或者 Debian 10 机器上搭建部署 [Cloudpods](https://github.com/yunionio/cloudpods) 服务。
 
-ocboot 依赖 ansible-playbook 部署 onecloud 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
+ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
 
 # 依赖说明
 
-- 操作系统: Centos 7.x
+- 操作系统: Centos 7.x 或者 Debian 10
 - 最低配置要求: 4核8G
 - 软件: ansible
 - 能够 ssh 免密登录待部署机器
