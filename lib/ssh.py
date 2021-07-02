@@ -32,7 +32,6 @@ class SSHClient(object):
             username=self.user,
             pkey=k,
             banner_timeout=60,
-            auth_timeout=60,
             timeout=60)
         return c
 
