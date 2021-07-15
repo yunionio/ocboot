@@ -22,6 +22,10 @@
   roles:
     - master-node
 
+- hosts: primary_master_node:master_nodes:worker_nodes
+  roles:
+    - utils/update-pciids
+
 - hosts: primary_master_node
   roles:
     - primary-master-node/setup_cloud
