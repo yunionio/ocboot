@@ -30,4 +30,3 @@
   when:
   - is_yunion_kernel_running.rc != 0
   - ansible_connection == "ssh"
-  - no_reboot is not defined or no_reboot|default(false)|bool == false
