@@ -4,3 +4,4 @@
   when:
   - k8s_node_as_oc_host|default(false)|bool == true
   - is_centos_x86 is defined
+  - no_reboot is not defined or no_reboot|default(false)|bool == false
