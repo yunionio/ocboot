@@ -22,17 +22,17 @@
   roles:
     - master-node
 
+- hosts: worker_nodes
+  roles:
+    - worker-node
+
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:
-    - utils/update-pciids
+    - utils/gpu-init
 
 - hosts: primary_master_node
   roles:
     - primary-master-node/setup_cloud
-
-- hosts: worker_nodes
-  roles:
-    - worker-node
 
 - hosts: primary_master_node
   roles:
