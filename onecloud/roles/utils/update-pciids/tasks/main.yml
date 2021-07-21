@@ -1,9 +1,0 @@
----
-- name: Update pciids
-  become: yes
-  copy:
-    src: pci.ids
-    dest: /usr/share/hwdata/pci.ids
-    owner: root
-    group: root
-    mode: 0644

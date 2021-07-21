@@ -83,7 +83,11 @@ def start(config_file):
     config = ocboot.load_config(config_file)
 
     inventory_f = config.generate_inventory_file()
-    ip = config.primary_master_config.node.node_ip
+    ip = None
+    try:
+        ip = config.primary_master_config.node.node_ip
+    except AttributeError:
+        pass
     vars = config.ansible_global_vars()
     vars['no_reboot'] = 'false' if need_reboot(ip, inside=True) else 'true'
     return_code = cmd.run_ansible_playbook(
@@ -104,6 +108,6 @@ def start(config_file):
                                   login_info[1],
                                   login_info[2]))
 
-    try_reboot_primary(config.primary_master_config.node.node_ip)
+    try_reboot_primary(ip)
 
     return 0

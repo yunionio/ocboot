@@ -1,0 +1,30 @@
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+YELLOW="\033[1;33m"
+UCYAN="\033[4;36m"
+NOCOLOR="\033[0m"
+REVERSECOLOR="\e[7m"
+
+function error_exit() {
+	error "$@"
+	exit 1
+}
+
+function info() {
+	echo
+	echo -e "${GREEN}$@${NOCOLOR}"
+	echo
+}
+
+function warn() {
+	echo
+	echo -e "${YELLOW}$@${NOCOLOR}"
+	echo
+}
+
+function error() {
+	echo
+	echo -e "${RED}$@${NOCOLOR}"
+	echo
+}
+
