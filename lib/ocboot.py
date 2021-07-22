@@ -49,7 +49,13 @@ class OcbootConfig(object):
         return config_cls(Config(group_config), self.bastion_host)
 
     def get_onecloud_version(self):
-        return self.primary_master_config.onecloud_version
+        for node in [self.mariadb_config, self.registry_config, self.primary_master_config, self.master_config, self.worker_config]:
+            if not node:
+                continue
+            version = getattr(node, 'onecloud_version', None)
+            if version:
+                return version
+        raise Exception("get attr onecloud_version error")
 
     def ansible_global_vars(self):
         return {
@@ -236,6 +242,8 @@ class OnecloudConfig(object):
         self.insecure_registries = config.get('insecure_registries', [])
         self.skip_docker_config = config.get('skip_docker_config', False)
 
+        self.node_ip = config.get('node_ip', None)
+        self.onecloud_version = config.get('onecloud_version', None)
         self.high_availability = config.get('high_availability', False)
         self.high_availability_vip = None
         self.keepalived_version_tag = None
@@ -254,6 +262,10 @@ class OnecloudConfig(object):
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip
             vars['keepalived_version_tag'] = self.keepalived_version_tag
+        if self.onecloud_version:
+            vars['onecloud_version'] = self.onecloud_version
+        if self.node_ip:
+            vars['node_ip'] = self.node_ip
         return vars
 
 
