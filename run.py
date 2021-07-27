@@ -35,7 +35,7 @@ def check_ansible():
 
 def install_packages(pkgs):
     if os.exists("/etc/redhat-release"):
-        return os.system("yum install -y %s" % (" ".join(pkgs)))
+        return os.system("yum install -y epel-release %s" % (" ".join(pkgs)))
     elif os.exists("/etc/lsb-release"):
         return os.system("apt install -y %s" % (" ".join(pkgs)))
     else:
