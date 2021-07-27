@@ -104,6 +104,7 @@
     executable: /bin/bash
   when:
   - OC_USER_COUNT.stdout|int == 0
+  - use_ee is not defined or not use_ee
 
 - name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
   shell: |
