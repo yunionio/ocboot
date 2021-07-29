@@ -96,7 +96,11 @@
   when: "item + '.service' in ansible_facts.services"
   loop:
   - firewalld
-  - NetworkManager
+  #  - NetworkManager
+
+- name: Config NetworkManager
+  include_role:
+    name: utils/config-network-manager
 
 - name: Load br_netfilter
   modprobe:
