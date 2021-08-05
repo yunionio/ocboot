@@ -24,7 +24,7 @@
     - gpu_setup.sh
 
 - name: init gpus
-  shell: /usr/local/gpu-init/gpu_setup.sh
+  shell: bash /usr/local/gpu-init/gpu_setup.sh
   args:
     executable: /bin/bash
     chdir: /usr/local/gpu-init/
