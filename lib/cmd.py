@@ -53,3 +53,12 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
     if len(debug_flag) > 0:
         cmd.append(debug_flag)
     return _run_cmd(cmd)
+
+def run_bash_cmd(cmd):
+    import sys
+    if str(sys.version_info[0]).startswith('3'):
+        import subprocess
+        return subprocess.getoutput(cmd)
+    else:
+        import commands
+        return commands.getoutput(cmd)
