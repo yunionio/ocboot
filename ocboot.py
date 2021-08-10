@@ -4,6 +4,7 @@ import sys
 import argparse
 
 from lib import install, upgrade
+from lib import backup, restore
 from lib import ansible
 
 
@@ -14,6 +15,8 @@ def main():
                                        help='sub-command help')
     install.add_command(subparsers)
     upgrade.add_command(subparsers)
+    backup.add_command(subparsers)
+    restore.add_command(subparsers)
     args = parser.parse_args()
     args.func(args)
 
