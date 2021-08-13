@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import os.path
 import sys
 import re
 
@@ -34,9 +35,9 @@ def check_ansible():
 
 
 def install_packages(pkgs):
-    if os.exists("/etc/redhat-release"):
+    if os.path.exists("/etc/redhat-release"):
         return os.system("yum install -y epel-release %s" % (" ".join(pkgs)))
-    elif os.exists("/etc/lsb-release"):
+    elif os.path.exists("/etc/lsb-release"):
         return os.system("apt install -y %s" % (" ".join(pkgs)))
     else:
         print("Unsupported OS")
