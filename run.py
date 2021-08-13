@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import os
+import os.path
 import sys
 import re
-import yaml
 
 from lib import install
 
@@ -20,6 +20,73 @@ IPADDR_REG = re.compile(IPADDR_REG_PATTERN)
 def match_ip4addr(string):
     global IPADDR_REG
     return IPADDR_REG.match(string) is not None
+
+
+def check_ansible():
+    ret = os.system("ansible-playbook --version")
+    if ret == 0:
+        return
+    print("Ansible not installed, to install ansible...")
+    try:
+        install_ansible()
+    except Exception as e:
+        print("Install ansible failed, please try to install ansible manually")
+        raise e
+
+
+def install_packages(pkgs):
+    if os.path.exists("/etc/redhat-release"):
+        return os.system("yum install -y epel-release %s" % (" ".join(pkgs)))
+    elif os.path.exists("/etc/lsb-release"):
+        return os.system("apt install -y %s" % (" ".join(pkgs)))
+    else:
+        print("Unsupported OS")
+        return 255
+
+
+def install_ansible():
+    ret = install_packages(["ansible"])
+    if ret != 0:
+        raise Exception("install_ansible failed")
+
+
+def check_passless_ssh(ipaddr):
+    cmd = "ssh -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr)
+    ret = os.system(cmd)
+    if ret == 0:
+        return
+    else:
+        raise Exception("Passwordless ssh failed, please configure passwordless ssh to root@%s" % (ipaddr))
+    try:
+        install_passless_ssh(ipaddr)
+    except Exception as e:
+        print("Configure passwordless ssh failed, please try to configure it manually")
+        raise e
+
+
+def install_passless_ssh(ipaddr):
+    rsa_path = os.path.join(os.environ.get("HOME"), ".ssh/id_rsa")
+    if not os.path.exists(rsa_path):
+        ret = os.system("ssh-keygen -f %s -P '' -N ''" % (rsa_path))
+        if ret != 0:
+            raise Exception("ssh-keygen")
+    print("We are going to run the following command to enable passwordless SSH login:")
+    print("")
+    print("    ssh-copy-id -i ~/.ssh/id_rsa.pub root@%s" % (ipaddr))
+    print("")
+    print("Press any key to continue and then input root password to %s" % (ipaddr))
+    os.system("read")
+    ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub root@%s" % (ipaddr))
+    if ret != 0:
+        raise Exception("ssh-copy-id")
+    ret = os.system("ssh -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr))
+    if ret != 0:
+        raise Exception("check passwordless ssh login failed")
+
+
+def check_env(ipaddr):
+    check_ansible()
+    check_passless_ssh(ipaddr)
 
 
 def random_password(num):
@@ -87,6 +154,7 @@ primary_master_node:
 def gen_config(ipaddr):
     global conf
     import os.path
+    import yaml
     cur_path = os.path.abspath(os.path.dirname(__file__))
     temp = os.path.join(cur_path, "config-allinone-current.yml")
     verf = os.path.join(cur_path, "VERSION")
@@ -118,6 +186,7 @@ def main():
         sys.exit(1)
 
     if match_ip4addr(sys.argv[1]):
+        check_env(sys.argv[1])
         conf = gen_config(sys.argv[1])
     else:
         conf = sys.argv[1]
