@@ -1,0 +1,12 @@
+- name: remove sync-user option
+  shell: |
+    tmp=$(mktemp).yaml
+    kubectl get deployment onecloud-operator -n onecloud -o yaml > $tmp
+    sed -i '/sync-user$/d' $tmp
+    kubectl replace -f $tmp
+    rm -f $tmp
+  args:
+    executable: /bin/bash
+  when:
+  - restore_mode is defined
+  - restore_mode | default(false) | bool == true

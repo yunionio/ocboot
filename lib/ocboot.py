@@ -282,6 +282,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.db_password = config.ensure_get('db_password')
         self.onecloud_version = config.ensure_get('onecloud_version')
         self.operator_version = config.get('operator_version', self.onecloud_version)
+        self.restore_mode = config.get('restore_mode', False)
 
         # set calico ip_autodetection_method only in primary master
         self.ip_autodetection_method = config.get('ip_autodetection_method', None)
@@ -314,6 +315,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['ip_autodetection_method'] = self.ip_autodetection_method
         vars['image_repository'] = self.image_repository
         vars['enable_minio'] = self.enable_minio
+        vars['restore_mode'] = self.restore_mode
         if len(self.offline_nodes) > 0:
             vars['offline_nodes'] = ' '.join(self.offline_nodes)
         return vars
