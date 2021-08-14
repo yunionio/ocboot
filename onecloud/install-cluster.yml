@@ -13,6 +13,7 @@
 - hosts: primary_master_node
   roles:
     - primary-master-node/setup_k8s
+    - restore/add-sync-user
 
 - hosts: primary_master_node
   roles:

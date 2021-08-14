@@ -258,3 +258,110 @@ optional arguments:
                         primary master host ssh port (default: 22)
   --as-bastion, -B      use primary master node as ssh bastion host to run ansible
 ```
+
+## 备份节点
+
+### 原理
+
+备份流程会备份当前系统的配置文件（`config.yml`） 以及使用`mysqldump` 来备份数据库。
+
+### 命令行参数
+
+```bash
+usage: ocboot.py backup [-h] [--backup-path BACKUP_PATH] config
+
+positional arguments:
+  config                config yaml file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --backup-path BACKUP_PATH
+                        backup path
+```
+
+### 注意事项
+
+下面详细介绍各个参数的作用和注意事项。
+
+* `config`是必选参数，即，需要备份的配置文件名称，例如`config-allinone.yml, config-nodes.yml, config-k8s-ha.yml，`以及使用快速安装时会生成的`config-allinone-current.yml`，因此备份命令不对配置文件名称作假设，**需由使用者自行输入配置文件名称**。
+* `--backup-path` 这个参数记录备份的目标目录。备份的内容包括配置文件（几 `k` 级别），以及`mysqldump`命令备份的数据库文件临时文件：`onecloud.sql`，然后会将该文件压缩为`onecloud.sql.tgz`，并删除临时文件。用户需确保 `/opt/backup` 目录存在且可写且磁盘空间足够。
+* 备份后的配置文件名称为`config.yml`。
+* 备份的流程全部采用命令行参数接受输入，备份过程中无交互。因此支持 `crontab`方式自动备份。但备份程序本身不支持版本 `rotate`，用户可以使用 `logrotate` 之类的工具来做备份管理。
+
+## 恢复节点
+
+### 原理
+
+恢复是备份的逆操作，流程包括：
+
+* 解压备份好的数据库文件；
+* 依照用户输入，或者在本机安装` mariadb-server`，并导入数据库；或者将备份的数据库 source 到指定的数据库中。
+* 根据之前备份好的` config.yml`，结合用户输入（当前机器 `ip`、`worker node ips`、`master node ips`），来重新生成 config.yml，然后提示用户重新安装云管系统。
+
+### 命令行参数
+
+```bash 
+usage: ocboot.py restore [-h] [--backup-path BACKUP_PATH]
+                         [--install-db-to-localhost]
+                         [--master-node-ips MASTER_NODE_IPS]
+                         [--master-node-as-host]
+                         [--worker-node-ips WORKER_NODE_IPS]
+                         [--worker-node-as-host] [--mysql-host MYSQL_HOST]
+                         [--mysql-user MYSQL_USER]
+                         [--mysql-password MYSQL_PASSWORD]
+                         [--mysql-port MYSQL_PORT]
+                         primary_ip
+
+positional arguments:
+  primary_ip            primary node ip
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --backup-path BACKUP_PATH
+                        backup path, default=/opt/backup
+  --install-db-to-localhost
+                        use this option when install local db
+  --master-node-ips MASTER_NODE_IPS
+                        master nodes ips, seperated by comma ','
+  --master-node-as-host
+                        use this option when use master nodes as host
+  --worker-node-ips WORKER_NODE_IPS
+                        worker nodes ips, seperated by comma ','
+  --worker-node-as-host
+                        use this option when use worker nodes as host
+  --mysql-host MYSQL_HOST
+                        mysql host; not needed if set --install-db-to-
+                        localhost
+  --mysql-user MYSQL_USER
+                        mysql user, default: root; not needed if set
+                        --install-db-to-localhost
+  --mysql-password MYSQL_PASSWORD
+                        mysql password; not needed if set --install-db-to-
+                        localhost
+  --mysql-port MYSQL_PORT
+                        mysql port, default: 3306; not needed if set
+                        --install-db-to-localhost
+```
+
+### 注意事项
+
+* `primary_ip` 为必填项，作为位置参数传入。
+
+* `--backup-path`，默认值为`/opt/backup`。
+
+* `--install-db-to-localhost`，是否在本机（`primary`节点） 安装数据库。默认为否。如果选择了`--install-db-to-localhost`，则会在本机安装数据(`mariadb-server` 的稳定版)，并自动赋予下列参数以默认值：
+
+  * ```bash 
+    --mysql-host=127.0.0.1
+    --mysql-user=root
+    --mysql-password=<继承备份文件里 mysql 的密码>
+    --mysql-port=3306
+    ```
+
+* `--mysql-host` 以及其他同类选项：不安装数据库，直接复用给定数据库。注意：`--install-db-to-localhost`参数与`--mysql-*`系列参数互斥，只能选择其中一种，要么本机安装数据库，要么给定具体参数。
+
+* `--master-node-ips`同时安装`master ` 节点。该参数是以半角逗号分隔的 `ip` 列表。适用于多节点模式。
+
+* `--master-node-as-host`安装`master`节点时，将其作为`host` 节点。
+
+* `--worker-node-ips`、`--worker-node-as-host`，作用同上，如其名。
