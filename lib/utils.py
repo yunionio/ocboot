@@ -48,27 +48,9 @@ def get_major_version(ver):
 def to_yaml(data):
     return yaml.dump(data, default_flow_style=False)
 
-def animated_waiting(func_name, *args, **kwargs):
-    import itertools
-    import threading
-    import time
-    import sys
-    done = False
-
-    def animate():
-        for c in itertools.cycle(['|', '/', '-', '\\']):
-            if done:
-                break
-            sys.stdout.write('\rPlease wait... ' + c)
-            sys.stdout.flush()
-            time.sleep(0.1)
-        sys.stdout.flush()
-        sys.stdout.write('\rDone!            \n')
-
-    t = threading.Thread(target=animate)
-    t.start()
-
-    func_name(*args, **kwargs)
-
-    done = True
+def print_title(title):
     print('\n')
+    print('=' * 80)
+    print(title)
+    print('=' * 80)
+

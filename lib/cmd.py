@@ -54,11 +54,22 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
         cmd.append(debug_flag)
     return _run_cmd(cmd)
 
+
 def run_bash_cmd(cmd):
-    import sys
-    if str(sys.version_info[0]).startswith('3'):
-        import subprocess
-        return subprocess.getoutput(cmd)
-    else:
-        import commands
-        return commands.getoutput(cmd)
+    import os
+    os.system(cmd)
+
+
+def ensure_pv():
+    if not os.path.isfile('/usr/bin/pv'):
+        run_bash_cmd('yum install -y pv >/dev/null')
+
+
+def archive_with_pv(fn, output):
+    cmd = '''tar cf - %(fn)s | pv --name ' Archiving %(fn)s' -s $(($(du -sk %(fn)s | awk '{print $1}') * 1024)) | gzip > %(output)s''' % locals()
+    run_bash_cmd(cmd)
+
+
+def extract_with_pv(archive):
+    cmd = '''pv %(archive)s --name %(archive)s | tar -zx''' % locals()
+    run_bash_cmd(cmd)
