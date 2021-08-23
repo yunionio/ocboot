@@ -65,11 +65,6 @@ def ensure_pv():
         run_bash_cmd('yum install -y pv >/dev/null')
 
 
-def archive_with_pv(fn, output):
-    cmd = '''tar cf - %(fn)s | pv --name ' Archiving %(fn)s' -s $(($(du -sk %(fn)s | awk '{print $1}') * 1024)) | gzip > %(output)s''' % locals()
-    run_bash_cmd(cmd)
-
-
 def extract_with_pv(archive):
     cmd = '''pv %(archive)s --name %(archive)s | tar -zx''' % locals()
     run_bash_cmd(cmd)

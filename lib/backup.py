@@ -14,6 +14,7 @@ def add_command(subparsers):
         "backup", help="backup onecloud cluster")
     parser.add_argument('config', help="config yaml file")
     parser.add_argument('--backup-path', help="backup path, default: /opt/backup", default="/opt/backup")
+    parser.add_argument('--light', action='store_true', help="ignore opslog_tbl and split yunionmeter, notify databases")
     parser.set_defaults(func=do_backup)
 
 
