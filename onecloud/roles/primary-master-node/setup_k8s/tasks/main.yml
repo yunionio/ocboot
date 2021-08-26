@@ -95,7 +95,6 @@
     set_fact:
       init_args: "{{ init_args }} --enable-host-agent"
     when:
-    - high_availability_vip is not defined
     - k8s_node_as_oc_host|default(false)|bool == true
 
 - name: Use ocadm init first master node
@@ -118,7 +117,6 @@
     create: yes
     regexp: '^export KUBECONFIG=.*'
   when:
-  - high_availability_vip is not defined
   - shell is undefined or shell == 'bash'
 
 - name: Source kubectl bash completion in master's ~/.bashrc
@@ -129,5 +127,8 @@
     create: yes
     regexp: '.*kubectl completion bash.*'
   when:
-  - high_availability_vip is not defined
   - shell is undefined or shell == 'bash'
+
+- name: Include utils/k8s/kubelet/extra-args tasks
+  include_role:
+    name: utils/k8s/kubelet/extra-args

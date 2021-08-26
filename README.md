@@ -1,12 +1,12 @@
 # 介绍
 
-ocboot 是 OneCloud bootstrap 的简写，能够快速的在 Centos7 机器上搭建部署 OneCloud 服务。
+ocboot 能够快速的在 CentOS 7 或者 Debian 10 机器上搭建部署 [Cloudpods](https://github.com/yunionio/cloudpods) 服务。
 
-ocboot 依赖 ansible-playbook 部署 onecloud 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
+ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
 
 # 依赖说明
 
-- 操作系统: Centos 7.x
+- 操作系统: Centos 7.x 或者 Debian 10
 - 最低配置要求: 4核8G
 - 软件: ansible
 - 能够 ssh 免密登录待部署机器
@@ -40,6 +40,15 @@ $ cd ./ocboot & pip install -r ./requirements.txt
 ocboot 的运行方式很简单，只需要按自己机器的规划写好 yaml 配置文件，然后执行 `./ocboot.py install` 脚本，便会调用 ansible-playbook 在对应的机器上部署服务。
 
 ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以同时在多台机器上部署大规模集群，以下举例说明使用方法和配置文件的编写。
+
+
+### 快速开始
+
+如果只想在一个节点上部署一个当前最新版本的AllInOne demo，可以用如下命令快速开始。其中ip为待部署节点的用于通信的IP地址。
+
+```bash
+./run.py <ip>
+```
 
 ### 单节点 all in one 部署
 
@@ -145,6 +154,81 @@ EOF
 $ ./ocboot.py install ./config-nodes.yml
 ```
 
+### 高可用部署
+假设准备好了 3 台 CentOS7 机器，以及 1 台 Mariadb/MySQL 的机器，规划如下：
+
+role          | ip            | interface    |  note
+------------  | ------------- | ------------ | ------------------------------
+k8s primary   | 10.127.90.101 | eth0         | -                             |
+k8s master 1  | 10.127.90.102 | eth0         | -                             |
+k8s master 2  | 10.127.90.103 | eth0         | -                             |
+k8s VIP       | 10.127.190.10 | -            | -                             |
+DB            | 10.127.190.11 | -            | pswd="0neC1oudDB#",  port=3306|
+
+```bash
+# 填充变量，生成配置
+DB_IP="10.127.190.11"
+DB_PORT=3306
+DB_PSWD="0neC1oudDB#"
+DB_USER=root
+
+K8S_VIP=10.127.190.10
+PRIMARY_INTERFACE="eth0"
+PRIMARY_IP=10.127.90.101
+
+MASTER_1_INTERFACE="eth0"
+MASTER_1_IP=10.127.90.102
+MASTER_2_INTERFACE="eth0"
+MASTER_2_IP=10.127.90.103
+
+cat > config-k8s-ha.yml <<EOF
+primary_master_node:
+  use_local: true
+  user: root
+  onecloud_version: "v3.6.16"
+  db_host: $DB_IP
+  db_user: "$DB_USER"
+  db_password: "$DB_PSWD"
+  db_port: "$DB_PORT"
+  skip_docker_config: true
+  image_repository: registry.cn-beijing.aliyuncs.com/yunionio
+  ha_using_local_registry: false
+  node_ip: "$PRIMARY_IP"
+  ip_autodetection_method: "can-reach=$PRIMARY_IP"
+  controlplane_host: $K8S_VIP
+  controlplane_port: "6443"
+  as_host: true
+  high_availability: true
+  use_ee: false
+  enable_minio: true
+  registry_mirrors:
+  - https://lje6zxpk.mirror.aliyuncs.com
+  insecure_registries:
+  - $PRIMARY_IP:5000
+  host_networks: "$PRIMARY_INTERFACE/br0/$PRIMARY_IP"
+
+master_nodes:
+  controlplane_host: $K8S_VIP
+  controlplane_port: "6443"
+  as_controller: true
+  as_host: true
+  ntpd_server: "$PRIMARY_IP"
+  registry_mirrors:
+  - https://lje6zxpk.mirror.aliyuncs.com
+  high_availability: true
+  hosts:
+  - user: root
+    hostname: "$MASTER_1_IP"
+    host_networks: "$MASTER_1_INTERFACE/br0/$MASTER_1_IP"
+  - user: root
+    hostname: "$MASTER_2_IP"
+    host_networks: "$MASTER_2_INTERFACE/br0/$MASTER_2_IP"
+EOF
+
+# 开始部署
+$ ./ocboot.py install ./config-k8s-ha.yml
+```
+
 ## 添加节点
 
 添加节点也很简单，只需要按照自己的规划，在已有的 config 里面添加对应的节点 ssh 登录 ip 和用户，然后再重复执行 `./ocboot.py install config.yml` 即可。
@@ -174,3 +258,110 @@ optional arguments:
                         primary master host ssh port (default: 22)
   --as-bastion, -B      use primary master node as ssh bastion host to run ansible
 ```
+
+## 备份节点
+
+### 原理
+
+备份流程会备份当前系统的配置文件（`config.yml`） 以及使用`mysqldump` 来备份数据库。
+
+### 命令行参数
+
+```bash
+usage: ocboot.py backup [-h] [--backup-path BACKUP_PATH] config
+
+positional arguments:
+  config                config yaml file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --backup-path BACKUP_PATH
+                        backup path
+```
+
+### 注意事项
+
+下面详细介绍各个参数的作用和注意事项。
+
+* `config`是必选参数，即，需要备份的配置文件名称，例如`config-allinone.yml, config-nodes.yml, config-k8s-ha.yml，`以及使用快速安装时会生成的`config-allinone-current.yml`，因此备份命令不对配置文件名称作假设，**需由使用者自行输入配置文件名称**。
+* `--backup-path` 这个参数记录备份的目标目录。备份的内容包括配置文件（几 `k` 级别），以及`mysqldump`命令备份的数据库文件临时文件：`onecloud.sql`，然后会将该文件压缩为`onecloud.sql.tgz`，并删除临时文件。用户需确保 `/opt/backup` 目录存在且可写且磁盘空间足够。
+* 备份后的配置文件名称为`config.yml`。
+* 备份的流程全部采用命令行参数接受输入，备份过程中无交互。因此支持 `crontab`方式自动备份。但备份程序本身不支持版本 `rotate`，用户可以使用 `logrotate` 之类的工具来做备份管理。
+
+## 恢复节点
+
+### 原理
+
+恢复是备份的逆操作，流程包括：
+
+* 解压备份好的数据库文件；
+* 依照用户输入，或者在本机安装` mariadb-server`，并导入数据库；或者将备份的数据库 source 到指定的数据库中。
+* 根据之前备份好的` config.yml`，结合用户输入（当前机器 `ip`、`worker node ips`、`master node ips`），来重新生成 config.yml，然后提示用户重新安装云管系统。
+
+### 命令行参数
+
+```bash 
+usage: ocboot.py restore [-h] [--backup-path BACKUP_PATH]
+                         [--install-db-to-localhost]
+                         [--master-node-ips MASTER_NODE_IPS]
+                         [--master-node-as-host]
+                         [--worker-node-ips WORKER_NODE_IPS]
+                         [--worker-node-as-host] [--mysql-host MYSQL_HOST]
+                         [--mysql-user MYSQL_USER]
+                         [--mysql-password MYSQL_PASSWORD]
+                         [--mysql-port MYSQL_PORT]
+                         primary_ip
+
+positional arguments:
+  primary_ip            primary node ip
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --backup-path BACKUP_PATH
+                        backup path, default=/opt/backup
+  --install-db-to-localhost
+                        use this option when install local db
+  --master-node-ips MASTER_NODE_IPS
+                        master nodes ips, seperated by comma ','
+  --master-node-as-host
+                        use this option when use master nodes as host
+  --worker-node-ips WORKER_NODE_IPS
+                        worker nodes ips, seperated by comma ','
+  --worker-node-as-host
+                        use this option when use worker nodes as host
+  --mysql-host MYSQL_HOST
+                        mysql host; not needed if set --install-db-to-
+                        localhost
+  --mysql-user MYSQL_USER
+                        mysql user, default: root; not needed if set
+                        --install-db-to-localhost
+  --mysql-password MYSQL_PASSWORD
+                        mysql password; not needed if set --install-db-to-
+                        localhost
+  --mysql-port MYSQL_PORT
+                        mysql port, default: 3306; not needed if set
+                        --install-db-to-localhost
+```
+
+### 注意事项
+
+* `primary_ip` 为必填项，作为位置参数传入。
+
+* `--backup-path`，默认值为`/opt/backup`。
+
+* `--install-db-to-localhost`，是否在本机（`primary`节点） 安装数据库。默认为否。如果选择了`--install-db-to-localhost`，则会在本机安装数据(`mariadb-server` 的稳定版)，并自动赋予下列参数以默认值：
+
+  * ```bash 
+    --mysql-host=127.0.0.1
+    --mysql-user=root
+    --mysql-password=<继承备份文件里 mysql 的密码>
+    --mysql-port=3306
+    ```
+
+* `--mysql-host` 以及其他同类选项：不安装数据库，直接复用给定数据库。注意：`--install-db-to-localhost`参数与`--mysql-*`系列参数互斥，只能选择其中一种，要么本机安装数据库，要么给定具体参数。
+
+* `--master-node-ips`同时安装`master ` 节点。该参数是以半角逗号分隔的 `ip` 列表。适用于多节点模式。
+
+* `--master-node-as-host`安装`master`节点时，将其作为`host` 节点。
+
+* `--worker-node-ips`、`--worker-node-as-host`，作用同上，如其名。

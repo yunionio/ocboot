@@ -3,11 +3,14 @@
   include_role:
     name: utils/mirror
 
-- name: Add yunion rpm repository
+- name: "Add yunion rpm repository {{ yunion_yum_repo }}"
   get_url:
     url: "{{ yunion_yum_repo }}"
     dest: /etc/yum.repos.d/yunion.repo
+    force: yes
   become: yes
+  when:
+  - is_centos_x86 is defined
 
 - name: Remove the old yunion-executor-server package
   yum:

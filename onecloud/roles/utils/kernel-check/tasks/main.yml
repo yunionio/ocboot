@@ -1,0 +1,32 @@
+---
+- name: Define kernel regex
+  set_fact: kernel_regex="el[0-9]+.yn[0-9]{8}."
+
+- name: Is yunion kernel running
+  shell: |
+    uname -r | grep -E "{{ kernel_regex }}"
+  register: is_yunion_kernel_running
+  changed_when: false
+  failed_when: false
+  args:
+    warn: no
+
+- name: Is yunion kernel installed
+  shell: |
+    count=$(rpm -qa |grep kernel |grep -E "{{ kernel_regex }}" |wc -l)
+    [[ "$count" -ge 3 ]]
+  register: is_yunion_kernel_installed
+  changed_when: false
+  failed_when: false
+  args:
+    warn: no
+
+- name: Reboot system if not yunion kernel, it should take a few minutes...
+  reboot:
+    reboot_timeout:  900 # 15 mins
+    connect_timeout: 900 # 15 mins
+    msg: "rebooting host to enable yunion kernel ... please wait... "
+    test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
+  when:
+  - is_yunion_kernel_running.rc != 0
+  - ansible_connection == "ssh"

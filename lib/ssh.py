@@ -30,7 +30,9 @@ class SSHClient(object):
             hostname=self.host,
             port=self.port,
             username=self.user,
-            pkey=k)
+            pkey=k,
+            banner_timeout=60,
+            timeout=60)
         return c
 
     def exec_command(self, command):

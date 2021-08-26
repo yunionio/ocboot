@@ -12,61 +12,22 @@
     shell: /bin/bash
     groups: yunion
 
-- name: ensure user yunion in sudoers list
-  shell: |
-    if [ ! -s /etc/sudoers.d/99yunion ]; then
-    cat >> /etc/sudoers.d/99yunion <<END
-    yunion ALL=(root) NOPASSWD:ALL
-    END
-    fi
-
-- name: Ensures remote rpm dir exists
-  file:
-    path: /opt/yunion/upgrade/rpms/packages/misc/
-    state: directory
-    owner: yunion
-    group: yunion
-
-- name: cp rsync rpm
-  copy:
-    src: /opt/yunion/upgrade/rpms/packages/misc/
-    dest: /opt/yunion/upgrade/rpms/packages/misc/
-
-# pre-install rsync and other rpms, before we can use ansible syncronize module
-- name: yum install rsync
-  shell: "yum localinstall --nogpgcheck -y /opt/yunion/upgrade/rpms/packages/misc/*.rpm"
+- name: make cache for centos x86
+  shell: "yum makecache fast"
   args:
     warn: no
+  when:
+  - is_centos_x86 is defined
 
-- name: Copy files to Node. It should take a couple of minutes...
-  synchronize:
-    src: /opt/yunion/upgrade
-    dest: /opt/yunion/
-    rsync_opts:
-      - "--delete"
-      - "--exclude=images"
-
-- name: init yunion-repo
-  copy:
-    src: yunion-local.repo
-    dest: /etc/yum.repos.d/yunion-local.repo
-
-- name: make cache
-  shell: "yum -y --disablerepo='*' --enablerepo='yunion*' makecache fast"
+- name: make cache for debian like os
+  shell: "apt-get update"
   args:
     warn: no
+  when:
+  - is_debian_based is defined
 
 - name: init dirs
   shell: "mkdir -p /etc/docker"
-  args:
-    warn: no
-
-- name: init tmux
-  shell: |
-    yum localinstall -y /opt/yunion/upgrade/rpms/packages/tmux/*.rpm
-    if [ ! -f /usr/bin/tmux ]; then
-      cp -f /opt/yunion/upgrade/rpms/packages/tmux/tmux /usr/bin
-    fi
   args:
     warn: no
 
@@ -76,65 +37,60 @@
 
 - name: ensure systemd installed
   yum:
-    name: systemd
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    name: systemd    
   when:
   - is_systemd_installed.rc != 0
-  - is_centos_x86 is defined # for uos TODO
+  - is_centos_x86 is defined
 
 - name: yum install yunion packages; it should take a few minutes...
-  yum:
-    name: "{{ packages }}"
-    disablerepo: "*"
-    enablerepo: "yunion-*"
-  vars:
-    packages:
-      - ansible
-      - autogen-libopts
-      - bash-completion
-      - bridge-utils
-      - conntrack-tools
-      - container-selinux
-      - containerd.io
-      - cri-tools
-      - docker-ce
-      - epel-release
-      - fuse
-      - fuse-devel
-      - fuse-libs
-      - htop
-      - ipvsadm
-      - iscsi-initiator-utils
-      - jq
-      - kmod-openvswitch
-      - kubeadm-1.15.8-0
-      - kubectl-1.15.8-0
-      - kubelet-1.15.8-0
-      - kubernetes-cni
-      - libaio
-      - libusb
-      - lvm2
-      - nc
-      - net-tools
-      - ntp
-      - ntpdate
-      - oniguruma
-      - openvswitch
-      - pciutils
-      - rsync
-      - socat
-      - spice
-      - spice-protocol
-      - sysstat
-      - tcpdump
-      - usbredir
-      - wget
-      - yunion-climc
-      - yunion-fetcherfs
-      - yunion-ocadm
-      - yunion-qemu-2.12.1
-      - yunion-registry
+  package: name="{{ item }}" state="present"
+  with_items:
+    - ansible
+    - autogen-libopts
+    - bash-completion
+    - bridge-utils
+    - conntrack-tools
+    - container-selinux
+    - containerd.io
+    - cri-tools
+    - docker-ce
+    - epel-release
+    - fuse
+    - fuse-devel
+    - fuse-libs
+    - htop
+    - ipvsadm
+    - iscsi-initiator-utils
+    - jq
+    - kmod-openvswitch
+    - kubeadm-1.15.8-0
+    - kubectl-1.15.8-0
+    - kubelet-1.15.8-0
+    - kubernetes-cni
+    - libaio
+    - libusb
+    - lvm2
+    - nc
+    - net-tools
+    - ntp
+    - ntpdate
+    - oniguruma
+    - openvswitch
+    - pciutils
+    - rsync
+    - socat
+    - spice
+    - spice-protocol
+    - sysstat
+    - tcpdump
+    - usbredir
+    - wget
+    - yunion-climc
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
+    - yunion-qemu-2.12.1
+    - yunion-registry
   when:
   - is_centos_x86 is defined
 
@@ -143,8 +99,7 @@
   when: ntpd_server is defined
 
 - name: sync with ntpd_server
-  shell: |
-    set -ex
+  shell: |    
     echo "sync with ntpd {{ ntpd_server }}"
     systemctl stop ntpd
     ntpdate {{ ntpd_server }}; echo $?
@@ -162,9 +117,9 @@
     state: started
     enabled: yes
   with_items:
-    - ntpd
-    - yunion-executor
-    - iscsid
+  - "{{ common_services }}"
+  when:
+  - common_services is defined
 
 - name: Stop/Disable Depreciated Services If Any
   shell: |

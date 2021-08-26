@@ -1,29 +1,11 @@
 ---
-# This role contains common plays that will run on all nodes
-- name: gather os specific variables
-  include_vars: "{{ item }}"
-  with_first_found:
-    - files:
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_version|lower|replace('/', '_') }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_architecture }}.yml"
-        - "{{ ansible_distribution|lower | replace(' ', '_') }}.yml"
-        - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
-        - "{{ ansible_os_family|lower }}.yml"
-        - defaults.yml
-      paths:
-        - ../vars
-      skip: true
-  tags:
-    - facts
+# - name: checking ports
+#   include_role:
+#     name: utils/port-check
 
 - name: Install yum utils
   yum:
     name:
-      - yum-utils
       - bash-completion
       - epel-release
   when:
@@ -53,7 +35,7 @@
   args:
     executable: /bin/bash
 
-- name: reset iptables for UOS
+- name: reset iptables rules
   shell: |
     # backup iptable ruleset
     fn=/etc/iptables.backup.$(date +"%Y%m%d-%H%M%S")
@@ -114,7 +96,11 @@
   when: "item + '.service' in ansible_facts.services"
   loop:
   - firewalld
-  - NetworkManager
+  #  - NetworkManager
+
+- name: Config NetworkManager
+  include_role:
+    name: utils/config-network-manager
 
 - name: Load br_netfilter
   modprobe:
@@ -179,9 +165,13 @@
 #  https://github.com/kubernetes-retired/contrib/blob/master/ansible/roles/node/tasks/swapoff.yml
 - name: Turn off swap mount
   mount:
-    name: swap
+    name: "{{ item }}"
     fstype: swap
     state: absent
+  with_items:
+  - swap
+  - none
+
 - name: Turn off swap now
   command: swapoff -a
   when: ansible_swaptotal_mb > 0
@@ -209,8 +199,8 @@
   - name: Install docker
     yum:
       name:
-        - docker-ce-19.03.9
-        - docker-ce-cli-19.03.9
+        - docker-ce
+        - docker-ce-cli
         - containerd.io
     when:
     - is_centos_x86 is defined

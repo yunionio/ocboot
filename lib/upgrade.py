@@ -1,3 +1,6 @@
+# encoding: utf-8
+from __future__ import unicode_literals
+
 import argparse
 import os
 import json
@@ -11,6 +14,16 @@ from . import k8s
 
 
 A_OCBOOT_UPGRADE_CURRENT_VERSION = 'upgrade.ocboot.yunion.io/current-version'
+
+UPGRADE_MSG = """
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│      The system has been upgraded to the latest version.                      │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+"""
+
 
 
 def add_command(subparsers):
@@ -76,12 +89,15 @@ def do_upgrade(args):
     with open(inventory_f, 'w') as f:
         f.write(inventory_content)
     # start run upgrade playbook
-    run_ansible_playbook(
+    return_code = run_ansible_playbook(
         inventory_f,
         './onecloud/upgrade-cluster.yml',
         vars=config.to_ansible_vars(),
     )
+    if return_code is not None and return_code != 0:
+        return return_code
     cluster.set_current_version(args.version)
+    print(UPGRADE_MSG.encode('utf-8'))
 
 
 def construct_cluster(ssh_client):

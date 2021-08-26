@@ -53,3 +53,18 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
     if len(debug_flag) > 0:
         cmd.append(debug_flag)
     return _run_cmd(cmd)
+
+
+def run_bash_cmd(cmd):
+    import os
+    os.system(cmd)
+
+
+def ensure_pv():
+    if not os.path.isfile('/usr/bin/pv'):
+        run_bash_cmd('yum install -y pv >/dev/null')
+
+
+def extract_with_pv(archive):
+    cmd = '''pv %(archive)s --name %(archive)s | tar -zx''' % locals()
+    run_bash_cmd(cmd)

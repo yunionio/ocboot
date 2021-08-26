@@ -1,8 +1,6 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
-import yaml
-
 from . import ansible
 from . import utils
 
@@ -12,11 +10,10 @@ GROUP_REGISTRY_NODE="registry_node"
 GROUP_PRIMARY_MASTER_NODE = "primary_master_node"
 GROUP_MASTER_NODES = "master_nodes"
 GROUP_WORKER_NODES = "worker_nodes"
-GROUP_LONGHORN_NODES = "longhorn_nodes"
-GROUP_REBOOT_NODES = "reboot_nodes"
 
 
 def load_config(config_file):
+    import yaml
     with open(config_file) as f:
         config = Config(yaml.load(f))
         return OcbootConfig(config)
@@ -34,8 +31,6 @@ class OcbootConfig(object):
         self.primary_master_config = self._fetch_conf(PrimaryMasterConfig)
         self.master_config = self._fetch_conf(MasterConfig)
         self.worker_config = self._fetch_conf(WorkerConfig)
-        self.longhorn_config = self._fetch_conf(LonghornConfig)
-        self.reboot_config = self._fetch_conf(RebootConfig)
 
     def load_bastion_host(self, config):
         bastion_config = config.get('bastion_host', None)
@@ -54,7 +49,13 @@ class OcbootConfig(object):
         return config_cls(Config(group_config), self.bastion_host)
 
     def get_onecloud_version(self):
-        return self.primary_master_config.onecloud_version
+        for node in [self.mariadb_config, self.registry_config, self.primary_master_config, self.master_config, self.worker_config]:
+            if not node:
+                continue
+            version = getattr(node, 'onecloud_version', None)
+            if version:
+                return version
+        raise Exception("get attr onecloud_version error")
 
     def ansible_global_vars(self):
         return {
@@ -68,9 +69,7 @@ class OcbootConfig(object):
             self.registry_config,
             self.primary_master_config,
             self.master_config,
-            self.worker_config,
-            self.longhorn_config,
-            self.reboot_config)
+            self.worker_config)
 
     def generate_inventory_file(self):
         content = self.get_ansible_inventory()
@@ -139,8 +138,8 @@ class Config(object):
 class Node(object):
 
     def __init__(self, config):
-        self.host = config.ensure_get('host', 'hostname')
-        self.use_local = config.get('user_local', False)
+        self.use_local = config.get('use_local', False)
+        self.host = '127.0.0.1' if self.use_local else config.ensure_get('host', 'hostname')
         self.user = config.get('user', 'root')
         self.port = config.get('port', 22)
         self.host_networks = config.get('host_networks', None)
@@ -206,6 +205,7 @@ class MariadbConfig(object):
             "db_user": self.db_user,
             "db_password": self.db_password,
             "db_port": self.db_port,
+            "db_host": self.node.host,
         }
 
 
@@ -242,12 +242,14 @@ class OnecloudConfig(object):
         self.insecure_registries = config.get('insecure_registries', [])
         self.skip_docker_config = config.get('skip_docker_config', False)
 
+        self.node_ip = config.get('node_ip', None)
+        self.onecloud_version = config.get('onecloud_version', None)
         self.high_availability = config.get('high_availability', False)
         self.high_availability_vip = None
+        self.keepalived_version_tag = None
         if self.high_availability:
             self.high_availability_vip = self.controlplane_host
-
-        self.keepalived_version_tag = config.get('keepalived_version_tag', None)
+            self.keepalived_version_tag = config.get('keepalived_version_tag', 'v2.0.25')
 
     def ansible_vars(self):
         vars = {
@@ -259,8 +261,11 @@ class OnecloudConfig(object):
         }
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip
-        if self.keepalived_version_tag:
             vars['keepalived_version_tag'] = self.keepalived_version_tag
+        if self.onecloud_version:
+            vars['onecloud_version'] = self.onecloud_version
+        if self.node_ip:
+            vars['node_ip'] = self.node_ip
         return vars
 
 
@@ -276,6 +281,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.db_password = config.ensure_get('db_password')
         self.onecloud_version = config.ensure_get('onecloud_version')
         self.operator_version = config.get('operator_version', self.onecloud_version)
+        self.restore_mode = config.get('restore_mode', False)
 
         # set calico ip_autodetection_method only in primary master
         self.ip_autodetection_method = config.get('ip_autodetection_method', None)
@@ -287,6 +293,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.use_ee = config.get('use_ee', False)
         self.image_repository = config.get('image_repository', 'registry.cn-beijing.aliyuncs.com/yunionio')
         self.enable_minio = config.get('enable_minio', False)
+        self.offline_nodes = config.get('offline_nodes', '')
 
     @classmethod
     def get_group(cls):
@@ -307,7 +314,9 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['ip_autodetection_method'] = self.ip_autodetection_method
         vars['image_repository'] = self.image_repository
         vars['enable_minio'] = self.enable_minio
-
+        vars['restore_mode'] = self.restore_mode
+        if len(self.offline_nodes) > 0:
+            vars['offline_nodes'] = ' '.join(self.offline_nodes)
         return vars
 
     def get_nodes(self):
@@ -374,57 +383,6 @@ class WorkerConfig(OnecloudJointConfig):
     @classmethod
     def get_group(cls):
         return GROUP_WORKER_NODES
-
-    def get_nodes(self):
-        return self.nodes
-
-
-class LonghornConfig(object):
-
-    def __init__(self, config, bastion_host=None):
-        self.nodes = get_nodes(config, bastion_host)
-        self.k8s_host_node_ips = config.get('k8s_host_node_ips', None)
-        self.longhorn_image_repository = config.get('longhorn_image_repository', None)
-        self.longhorn_data_path = config.get('longhorn_data_path', None)
-        self.longhorn_over_provisioning_percentage = config.get('longhorn_over_provisioning_percentage', None)
-        self.high_availability_controlplane_as_host = config.get('high_availability_controlplane_as_host', None)
-
-    @classmethod
-    def get_group(cls):
-        return GROUP_LONGHORN_NODES
-
-    def ansible_vars(self):
-        vars = {}
-        if self.k8s_host_node_ips:
-            vars['k8s_host_node_ips'] = self.k8s_host_node_ips
-        if self.longhorn_image_repository:
-            vars['longhorn_image_repository'] = self.longhorn_image_repository
-        if self.longhorn_data_path:
-            vars['longhorn_data_path'] = self.longhorn_data_path
-        if self.longhorn_over_provisioning_percentage:
-            vars['longhorn_over_provisioning_percentage'] = self.longhorn_over_provisioning_percentage
-        if self.high_availability_controlplane_as_host:
-            vars['high_availability_controlplane_as_host'] = self.high_availability_controlplane_as_host
-
-    def get_nodes(self):
-        return self.nodes
-
-
-class RebootConfig(object):
-
-    def __init__(self, config, bastion_host=None):
-        self.nodes = get_nodes(config, bastion_host)
-        self.availability_controlplane_as_host = config.get('availability_controlplane_as_host', None)
-
-    @classmethod
-    def get_group(cls):
-        return GROUP_REBOOT_NODES
-
-    def ansible_vars(self):
-        vars = {}
-        if self.availability_controlplane_as_host:
-            vars['availability_controlplane_as_host'] = self.availability_controlplane_as_host
-        return vars
 
     def get_nodes(self):
         return self.nodes

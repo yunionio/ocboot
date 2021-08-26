@@ -1,0 +1,32 @@
+---
+- name: Update pciids
+  become: yes
+  copy:
+    src: pci.ids
+    dest: /usr/share/hwdata/pci.ids
+    owner: root
+    group: root
+    mode: 0644
+
+- name: ensure gpu init dir exists
+  file: path=/usr/local/gpu-init state=directory
+
+- name: cp gpu related files
+  become: yes
+  copy:
+    src: "{{ item }}"
+    dest: /usr/local/gpu-init/
+    owner: root
+    group: root
+    mode: preserve
+  loop:
+    - functions
+    - gpu_setup.sh
+
+- name: init gpus
+  shell: bash /usr/local/gpu-init/gpu_setup.sh
+  args:
+    executable: /bin/bash
+    chdir: /usr/local/gpu-init/
+  when:
+    - is_centos_x86 is defined

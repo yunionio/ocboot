@@ -1,20 +1,20 @@
-# - name: pre-install-common
-  # include_role:
-    # name: pre-install-common
-  # when:
-  # - ansible_connection is defined
-  # - ansible_connection == "ssh"
-
-# - name: pre-install-host
-  # include_role:
-    # name: pre-install-host
-  # when:
-  # - ansible_connection is defined
-  # - ansible_connection == "ssh"
-
 - name: Do common setup
   include_role:
     name: common
+
+- name: pre-install-common
+  include_role:
+    name: pre-install-common
+  when:
+  - ansible_connection is defined
+  - ansible_connection == "ssh"
+
+- name: pre-install-host
+  include_role:
+    name: pre-install-host
+  when:
+  - ansible_connection is defined
+  - ansible_connection == "ssh"
 
 - name: TCP Configuration
   include_role:
@@ -87,3 +87,14 @@
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
   when:
     kubelet_result.rc != 0
+
+- name: Include utils/k8s/kubelet/extra-args tasks
+  include_role:
+    name: utils/k8s/kubelet/extra-args
+
+- name: Include utils/kernel-check tasks
+  include_role:
+    name: utils/kernel-check
+  when:
+  - k8s_node_as_oc_host|default(false)|bool == true
+  - is_centos_x86 is defined

@@ -30,14 +30,14 @@
   delay: 10
   register: result
   until: result.rc == 0
-  when: high_availability_vip is not defined
+
 
 - name: Check onecloud cluster exists
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: "kubectl get onecloudcluster -n onecloud | grep default | wc -l"
   register: OC_CLUSTER_COUNT
-  when: high_availability_vip is not defined
+
 
 - name: Init construct create cluster args
   set_fact:
@@ -58,7 +58,6 @@
   until: result.rc == 0
   ignore_errors: yes
   when:
-  - high_availability_vip is not defined
   - OC_CLUSTER_COUNT.stdout|int == 0
 
 - name: Enable minio S3 object storage for services
@@ -101,13 +100,18 @@
    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
    /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
   ignore_errors: yes
+  args:
+    executable: /bin/bash
   when:
   - OC_USER_COUNT.stdout|int == 0
+  - use_ee is not defined or not use_ee
 
 - name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
+  args:
+    executable: /bin/bash
   when:
   - use_ee is not defined or not use_ee
 
@@ -115,6 +119,8 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc project-add-user system {{ onecloud_user }} admin
+  args:
+    executable: /bin/bash
   when:
   - use_ee is not defined or not use_ee
 
@@ -126,7 +132,8 @@
   ignore_errors: yes
   changed_when: false
   failed_when: false
-  when: high_availability_vip is not defined
+  args:
+    executable: /bin/bash
 
 - name: "Check if network contains {{ default_ip }}"
   shell: |
@@ -134,19 +141,22 @@
     /opt/yunion/bin/climc network-list --ip {{ default_ip }} | grep -v Total | wc -l
   register: network_count_ret
   ignore_errors: yes
-  when: high_availability_vip is not defined
+  args:
+    executable: /bin/bash
+
 
 - name: set admin network count
   set_fact:
     admin_network_count: "{{ network_count_ret.stdout }}"
-  when: high_availability_vip is not defined
 
 - name: "Register adm0 network for {{ default_ip }}/{{ default_masklen }}, gateway {{ default_gateway }}"
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }}
     /opt/yunion/bin/climc network-private adm0
-  when: high_availability_vip is not defined and network_admin_exist.rc != 0 and admin_network_count|int == 0
+  when: network_admin_exist.rc != 0 and admin_network_count|int == 0
+  args:
+    executable: /bin/bash
 
 - name: "post install scripts"
   shell: |
@@ -156,4 +166,5 @@
       sh -c "$line" 2>&1 | tee -a /tmp/post-install.log
       echo "[DONE ]processing $line OK"
     done
-  when: high_availability_vip is not defined
+  args:
+    executable: /bin/bash

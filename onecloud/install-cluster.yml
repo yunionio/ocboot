@@ -1,3 +1,7 @@
+- hosts: all
+  roles:
+    - utils/detect-os
+
 - hosts: mariadb_node
   roles:
     - mariadb
@@ -9,15 +13,28 @@
 - hosts: primary_master_node
   roles:
     - primary-master-node/setup_k8s
+    - restore/add-sync-user
+
+- hosts: primary_master_node
+  roles:
+    - primary-master-node/rsync_rpms
 
 - hosts: master_nodes
   roles:
     - master-node
 
+- hosts: worker_nodes
+  roles:
+    - worker-node
+
+- hosts: primary_master_node:master_nodes:worker_nodes
+  roles:
+    - utils/gpu-init
+
 - hosts: primary_master_node
   roles:
     - primary-master-node/setup_cloud
 
-- hosts: worker_nodes
+- hosts: primary_master_node
   roles:
-    - worker-node
+    - primary-master-node/reboot

@@ -1,0 +1,13 @@
+---
+
+- name: Checking Important Ports
+  wait_for:
+    port: "{{ item  }}"
+    state: stopped
+    timeout: 3
+  with_items:
+    - 80
+    - 443
+    - 6443
+    - 8080
+

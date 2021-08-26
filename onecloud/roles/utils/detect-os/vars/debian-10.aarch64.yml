@@ -1,5 +1,5 @@
-debian_based_arch: amd64
 is_debian_based: true
+debian_based_arch: arm64
 
 common_packages:
   - apt-transport-https
@@ -27,10 +27,7 @@ common_packages:
   - librbd1
   - libspice-server1
   - ntp
-  - python-pymysql
   - python-selinux
-  - python-yaml
-  - python3-pip
   - software-properties-common
   - wget
   - ovmf
@@ -40,3 +37,7 @@ common_packages:
   - yunion-ocadm
   - yunion-qemu-2.12.1
   - yunion-fetcherfs
+
+common_services:
+    - ntp
+    - yunion-executor

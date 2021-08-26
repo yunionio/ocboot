@@ -1,0 +1,22 @@
+---
+- name: Check if host has NetworkManager
+  command: systemctl show NetworkManager
+  register: nm_check
+  failed_when: false
+  changed_when: false
+
+- name: Ensure NetworkManager conf.id dir for Calico
+  file:
+    path: "/etc/NetworkManager/conf.d"
+    state: directory
+    recurse: yes
+  when: nm_check.rc == 0
+
+- name: Prevent NetworkManager from managing Calico interfaces
+  copy:
+    content: |
+      [keyfile]
+      unmanaged-devices=interface-name:cali*;interface-name:tunl*
+    dest: /etc/NetworkManager/conf.d/calico.conf
+  when: nm_check.rc == 0
+  notify: Reload NetworkManager

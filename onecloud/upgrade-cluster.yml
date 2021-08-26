@@ -1,5 +1,7 @@
 - hosts: all
   roles:
+    - { role: utils/detect-os }
+    - { role: utils/gpu-init }
     - { role: upgrade/common }
 
 - hosts: primary_master_node
