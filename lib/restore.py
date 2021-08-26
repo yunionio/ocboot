@@ -61,11 +61,28 @@ def ensure_db_config(args):
 
     if args.install_db_to_localhost:
         # install
+        import time
+        mycnf = os.path.join(ROOT_PATH, 'onecloud/roles/mariadb/files/my.cnf')
+        timestamp = str(time.time())
+        bak_cnf = '/etc/my.cnf.%(timestamp)s' % locals()
+        assert os.path.exists(mycnf)
+
         run_bash_cmd('''systemctl is-active mariadb > /dev/null || yum install -y mariadb-server && systemctl enable --now mariadb''')
+        run_bash_cmd('''
+         mv -fv /etc/my.cnf %(bak_cnf)s && cp -fv %(mycnf)s /etc/my.cnf && sudo systemctl restart mariadb''' % locals())
         # set password
-        sql = ''' grant all privileges on *.* to `%(user)s`@`%%` identified by "%(passwd)s" with grant option;FLUSH PRIVILEGES;''' % ret
+        sqls = [
+            '''grant all privileges on *.* to `%(user)s`@`localhost` identified by "%(passwd)s" with grant option''' % ret,
+            '''grant all privileges on *.* to `%(user)s`@`%%` identified by "%(passwd)s" with grant option''' % ret,
+            '''FLUSH PRIVILEGES''',
+            '''set global net_buffer_length=999424 ''',
+            '''set global max_allowed_packet=999999488 ''',
+        ]
+
         db = DB()
-        db.cursor.execute(sql)
+        for sql in sqls:
+            db.cursor.execute(sql)
+        print("mysql init done.")
     db_config.update(ret)
     return db_config
 
