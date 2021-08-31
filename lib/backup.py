@@ -7,7 +7,7 @@ import os
 from . import ocboot
 from .db import backup_config, backup_db
 from .utils import print_title
-from cmd import ensure_pv
+from .cmd import ensure_pv
 
 def add_command(subparsers):
     parser = subparsers.add_parser(
