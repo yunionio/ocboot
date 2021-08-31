@@ -1,0 +1,44 @@
+---
+- name: Setup repo mirrors
+  include_role:
+    name: utils/mirror
+
+- name: "Add yunion rpm repository {{ yunion_yum_repo }}"
+  get_url:
+    url: "{{ yunion_yum_repo }}"
+    dest: /etc/yum.repos.d/yunion.repo
+    force: yes
+  become: yes
+  when:
+  - is_centos_x86 is defined
+
+- name: "update repo"
+  shell: |
+    yum clean all
+    yum --disablerepo='*' --enablerepo='yunion*' makecache fast
+  when:
+  - is_centos_x86 is defined
+
+- name: "uninstall old rpms"
+  shell: |
+    rpms=$(rpm -qa |grep yunion|grep -v fetcherfs |grep 3.6| xargs)
+    if [ -n "$rpms" ]; then
+      yum remove -y $rpms
+    fi
+  when:
+  - is_centos_x86 is defined
+  args:
+    executable: /bin/bash
+
+- name: Upgrade yunion common packages
+  yum:
+    name:
+      - yunion-ocadm
+      - yunion-climc
+      - yunion-executor
+      - kernel-lt-5.4.130-1.yn20210710.el7.x86_64
+    disablerepo: "*"
+    enablerepo: "yunion-*"
+    state: latest
+  when:
+  - is_centos_x86 is defined
