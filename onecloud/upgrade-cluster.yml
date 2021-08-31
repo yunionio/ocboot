@@ -15,3 +15,7 @@
 - hosts: worker_nodes
   roles:
     - { role: upgrade/worker_nodes }
+
+- hosts: primary_master_node:master_nodes:worker_nodes
+  roles:
+    - utils/gpu-init
