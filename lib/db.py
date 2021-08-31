@@ -2,7 +2,7 @@ import os
 import MySQLdb
 from shutil import copyfile
 
-from cmd import run_bash_cmd
+from .cmd import run_bash_cmd
 from .utils import print_title
 
 PV_ARGS = 'pv --timer --rate --eta'
