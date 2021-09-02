@@ -31,6 +31,10 @@
   roles:
     - utils/gpu-init
 
+- hosts: master_nodes:worker_nodes
+  roles:
+    - utils/kernel-check
+
 - hosts: primary_master_node
   roles:
     - primary-master-node/setup_cloud
