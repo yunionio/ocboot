@@ -1,6 +1,6 @@
 ---
 - name: Define kernel regex
-  set_fact: kernel_regex="el[0-9]+.yn[0-9]{8}."
+  set_fact: kernel_regex="\.yn[0-9]{8}\."
 
 - name: Is yunion kernel running
   shell: |
