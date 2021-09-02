@@ -30,3 +30,5 @@
   when:
   - is_yunion_kernel_running.rc != 0
   - ansible_connection == "ssh"
+  - k8s_node_as_oc_host|default(false)|bool == true
+  - is_centos_x86 is defined
