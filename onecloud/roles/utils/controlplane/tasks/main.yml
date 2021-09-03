@@ -4,5 +4,5 @@
     name: "Use kubeadm renew certificates"
     special_time: monthly
     user: root
-    job: "/usr/bin/kubeadm alpha certs renew all"
+    job: "/opt/yunion/bin/ocadm alpha certs renew all"
     cron_file: yunion_kubeadm_renew_certs
