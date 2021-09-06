@@ -1,9 +1,5 @@
 # encoding: utf-8
 
-from shutil import copyfile
-import MySQLdb
-import os
-
 from . import ocboot
 from .db import backup_config, backup_db
 from .utils import print_title

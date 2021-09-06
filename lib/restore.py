@@ -5,7 +5,7 @@ import yaml
 from .color import GB
 from . import ocboot
 from .db import DB
-from .cmd import run_bash_cmd, ensure_pv, extract_with_pv
+from .cmd import run_bash_cmd, ensure_pv
 from .utils import to_yaml
 from .utils import print_title
 
