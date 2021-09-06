@@ -63,8 +63,3 @@ def run_bash_cmd(cmd):
 def ensure_pv():
     if not os.path.isfile('/usr/bin/pv'):
         run_bash_cmd('yum install -y pv >/dev/null')
-
-
-def extract_with_pv(archive):
-    cmd = '''pv %(archive)s --name %(archive)s | tar -zx''' % locals()
-    run_bash_cmd(cmd)
