@@ -1,5 +1,5 @@
 import os
-import MySQLdb
+
 from shutil import copyfile
 
 from .cmd import run_bash_cmd
@@ -9,6 +9,9 @@ PV_ARGS = 'pv --timer --rate --eta'
 MYSQL_BACKUP_ARGS = '--add-drop-database --add-drop-table --add-locks --single-transaction --quick '
 class DB():
     def __init__(self, config=None, database="", host='127.0.0.1', user='root', passwd=None, port=3306):
+
+        import MySQLdb
+
         values = {
             'db_port': 3306,
             'db_host': '127.0.0.1',
