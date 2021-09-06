@@ -1,8 +1,17 @@
 ---
-- name: Ensure a cronjob that renews certificates
+- name: Remove kubeadm cronjob that renews certificates
   cron:
     name: "Use kubeadm renew certificates"
     special_time: monthly
     user: root
-    job: "/opt/yunion/bin/ocadm alpha certs renew all"
+    job: "/usr/bin/kubeadm alpha certs renew all"
     cron_file: yunion_kubeadm_renew_certs
+    state: absent
+
+- name: Ensure a cronjob that renews k8s certificates
+  cron:
+    name: "Use ocadm renew certificates"
+    special_time: monthly
+    user: root
+    job: "/opt/yunion/bin/ocadm alpha certs renew all"
+    cron_file: yunion_ocadm_renew_certs
