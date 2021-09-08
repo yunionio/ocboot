@@ -2,6 +2,8 @@
   package:
     name: mariadb-server
     state: present
+  when:
+  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
 
 - name: Install mariadb on centos
   package:
@@ -10,6 +12,7 @@
   when:
   - ansible_facts['distribution'] == "CentOS"
   - ansible_facts['distribution_major_version'] == "7"
+  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
 
 - name: Set discovered Ansible Python interpreter.
   set_fact:
@@ -22,7 +25,8 @@
     - python-mysqldb
     - python-pymysql
     state: present
-  when: ansible_os_family == "UnionTech OS Server 20 Enterprise" or ansible_os_family == "Debian"
+  when:
+  - ansible_os_family == "UnionTech OS Server 20 Enterprise" or ansible_os_family == "Debian"
 
 - name: Copy my.cnf
   copy:
