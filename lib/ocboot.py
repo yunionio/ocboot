@@ -251,6 +251,8 @@ class OnecloudConfig(object):
             self.high_availability_vip = self.controlplane_host
             self.keepalived_version_tag = config.get('keepalived_version_tag', 'v2.0.25')
 
+        self.iso_install_mode = config.get('iso_install_mode', False)
+
     def ansible_vars(self):
         vars = {
             'docker_registry_mirrors': self.registry_mirrors,
@@ -266,6 +268,8 @@ class OnecloudConfig(object):
             vars['onecloud_version'] = self.onecloud_version
         if self.node_ip:
             vars['node_ip'] = self.node_ip
+        if self.iso_install_mode:
+            vars['iso_install_mode'] = True
         return vars
 
 
