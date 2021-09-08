@@ -54,4 +54,3 @@ def print_title(title):
     print('=' * 80)
     print(title)
     print('=' * 80)
-

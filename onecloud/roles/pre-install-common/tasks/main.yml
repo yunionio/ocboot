@@ -37,10 +37,11 @@
 
 - name: ensure systemd installed
   yum:
-    name: systemd    
+    name: systemd
   when:
   - is_systemd_installed.rc != 0
   - is_centos_x86 is defined
+  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
 
 - name: yum install yunion packages; it should take a few minutes...
   package: name="{{ item }}" state="present"
@@ -93,13 +94,14 @@
     - yunion-registry
   when:
   - is_centos_x86 is defined
+  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
 
 - name: config ntpd service
   template: src=ntp.conf dest=/etc/ntp.conf
   when: ntpd_server is defined
 
 - name: sync with ntpd_server
-  shell: |    
+  shell: |
     echo "sync with ntpd {{ ntpd_server }}"
     systemctl stop ntpd
     ntpdate {{ ntpd_server }}; echo $?
