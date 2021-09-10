@@ -1,6 +1,6 @@
 # encoding: utf-8
-import argparse
-import sys
+
+import platform
 import os
 import time
 
@@ -53,6 +53,8 @@ def do_install(args):
         raise e
 
 def need_reboot(ip, inside):
+    if not kernel_utils.is_centos():
+        return False
     if os.environ.get('NO_REBOOT', ''):
         print("NO_REBOOT flag passed, ignore rebooting")
         return False
