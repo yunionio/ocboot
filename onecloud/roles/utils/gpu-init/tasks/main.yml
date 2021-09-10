@@ -1,4 +1,12 @@
 ---
+- name: ensure gpu init dir exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /usr/local/gpu-init
+    - /usr/share/hwdata
+
 - name: Update pciids
   become: yes
   copy:
@@ -7,9 +15,6 @@
     owner: root
     group: root
     mode: 0644
-
-- name: ensure gpu init dir exists
-  file: path=/usr/local/gpu-init state=directory
 
 - name: cp gpu related files
   become: yes
