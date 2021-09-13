@@ -32,3 +32,48 @@
   - ansible_connection == "ssh"
   - k8s_node_as_oc_host|default(false)|bool == true
   - is_centos_x86 is defined
+
+- name: Define kernel regex
+  set_fact: kernel_regex_debian_510="5\.10\.0"
+
+- name: Install 5.10 kernel for debian
+  package:
+    name:
+    - linux-headers-5.10.0-0.bpo.8-arm64
+    - linux-image-5.10.0-0.bpo.8-arm64
+    state: present
+  when:
+  - is_debian_based is defined
+
+- name: Debian current kernel
+  shell: |
+    uname -r|grep -Po '[\d.]+' |head -1
+  register: debian_current_kernel
+  changed_when: false
+  failed_when: false
+  args:
+    warn: no
+
+- name: Debian Installed 5.10 kernel
+  shell: |
+    apt list --installed 2>&1 |grep linux-image|grep -q '{{ kernel_regex_debian_510 }}'
+  register: debian_installed_510_kernel
+  changed_when: false
+  failed_when: false
+  args:
+    warn: no
+  when:
+  - is_debian_based is defined
+
+- name: Reboot Debian for new kernel
+  reboot:
+    reboot_timeout:  900 # 15 mins
+    connect_timeout: 900 # 15 mins
+    msg: "rebooting host to enable yunion kernel ... please wait... "
+    test_command: "uname -r | grep -qE '{{ kernel_regex_debian_510 }}' "
+  when:
+  - ansible_connection == "ssh"
+  - k8s_node_as_oc_host|default(false)|bool == true
+  - is_debian_based is defined
+  - debian_current_kernel != "5.10.0"
+  - debian_installed_510_kernel.rc == 0

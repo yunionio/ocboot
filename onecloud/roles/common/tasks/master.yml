@@ -1,7 +1,7 @@
 ---
 - name: Add yunion rpm repository
   get_url:
-    url: https://iso.yunion.cn/yumrepo-3.7/yunion.repo
+    url: https://iso.yunion.cn/yumrepo-3.8/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
   become: yes
   when:
@@ -11,21 +11,25 @@
   yum:
     state: latest
     name:
-      - kernel-3.10.0-1160.6.1.el7.yn20201125
-      - kernel-devel-3.10.0-1160.6.1.el7.yn20201125
-      - kernel-headers-3.10.0-1160.6.1.el7.yn20201125
+      - kernel-lt-5.4.130-1.yn20210710.el7
       - yunion-executor
   when:
   - is_centos_x86 is defined
   - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
 
-- name: init apt cache for uos
+- name: init apt cache for debian
+  get_url:
+    url: https://iso.yunion.cn/uos/buster/{{ debian_based_arch }}/3.8/yunion.gpg-key.asc
+    dest: /tmp/yunion.gpg-key.asc
+  become: yes
+  when:
+  - is_debian_based is defined
+
+- name: apply debian sig key
   shell: |
-    echo "deb [trusted=yes] https://iso.yunion.cn/uos/buster/{{ debian_based_arch }}/3.7 ./" > /etc/apt/sources.list.d/yunion.list;
-    curl -k https://iso.yunion.cn/uos/buster/{{ debian_based_arch }}/3.7/yunion.gpg-key.asc -o yunion.gpg-key.asc;
-    apt-key add yunion.gpg-key.asc;
+    apt-key add /tmp/yunion.gpg-key.asc;
     apt-get update -y;
-    rm -f yunion.gpg-key.asc;
+    rm -f /tmp/yunion.gpg-key.asc
   args:
     executable: /bin/bash
   when:
