@@ -72,12 +72,3 @@ def is_yunion_kernel():
     kernel_str = platform.platform()
     pattern = re.compile(r'\.yn[\d]{8}\.')
     return pattern.search(kernel_str) is not None
-
-def is_centos():
-    # we only provide x86 centos kernel which need reboot
-    try:
-        if not (platform.uname()[-2] == 'x86_64' and platform.system() == 'Linux'):
-            return False
-    except IndexError:
-        pass
-    return os.system('grep -qi centos /etc/os-release 2>/dev/null') == 0
