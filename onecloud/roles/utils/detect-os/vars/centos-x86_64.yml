@@ -7,16 +7,17 @@ common_packages:
   - boost-random
   - boost-system
   - boost-thread
+  - bridge-utils
   - celt051
+  - conntrack-tools
+  - curl
   - fuse
   - fuse-devel
   - fuse-libs
   - gssproxy
-  - jq
-  - ipvsadm
   - ipset
-  - conntrack-tools
-  - bridge-utils
+  - ipvsadm
+  - jq
   - keyutils
   - kmod
   - kmod-openvswitch
@@ -54,12 +55,13 @@ common_packages:
   - unbound
   - unbound-libs
   - usbredir
+  - wget
   - yunion-climc
   - yunion-executor
+  - yunion-fetcherfs
   - yunion-ocadm
   - yunion-ovmfrpm
   - yunion-qemu-2.12.1
-  - yunion-fetcherfs
 
 common_services:
     - ntpd
