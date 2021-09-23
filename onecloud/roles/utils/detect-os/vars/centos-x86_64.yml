@@ -21,9 +21,9 @@ common_packages:
   - keyutils
   - kmod
   - kmod-openvswitch
-  - kubeadm
-  - kubectl
-  - kubelet
+  - kubeadm-1.15.12-0
+  - kubectl-1.15.12-0
+  - kubelet-1.15.12-0
   - libbasicobjects
   - libcollection
   - libini_config
