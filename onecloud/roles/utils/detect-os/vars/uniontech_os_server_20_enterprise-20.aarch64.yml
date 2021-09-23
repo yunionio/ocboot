@@ -19,9 +19,9 @@ common_packages:
   - ipset
   - ipvsadm
   - jq
-  - kubeadm=1.15.8-00 #
-  - kubectl=1.15.8-00 #
-  - kubelet=1.15.8-00 #
+  - kubeadm=1.15.12-00 #
+  - kubectl=1.15.12-00 #
+  - kubelet=1.15.12-00 #
   - libusb-1.0-0
   - libusbredirparser1
   - librbd1
