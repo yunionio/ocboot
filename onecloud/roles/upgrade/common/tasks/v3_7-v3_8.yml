@@ -36,7 +36,6 @@
       - yunion-ocadm
       - yunion-climc
       - yunion-executor
-      - kernel-lt-5.4.130-1.yn20210710.el7.x86_64
     disablerepo: "*"
     enablerepo: "yunion-*"
     state: latest
