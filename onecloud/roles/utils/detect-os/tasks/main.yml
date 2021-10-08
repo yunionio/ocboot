@@ -19,3 +19,9 @@
       skip: true
   tags:
     - facts
+
+- name: define non iso install mode
+  set_fact:
+    non_iso_mode: true
+  when:
+  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false or ansible_connection == "ssh"
