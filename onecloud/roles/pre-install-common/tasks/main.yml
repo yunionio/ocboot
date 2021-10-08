@@ -64,9 +64,9 @@
     - iscsi-initiator-utils
     - jq
     - kmod-openvswitch
-    - kubeadm-1.15.8-0
-    - kubectl-1.15.8-0
-    - kubelet-1.15.8-0
+    - kubeadm-1.15.12-0
+    - kubectl-1.15.12-0
+    - kubelet-1.15.12-0
     - kubernetes-cni
     - libaio
     - libusb
