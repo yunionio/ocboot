@@ -17,4 +17,4 @@
       - yunion-executor-server
   when:
   - is_centos_x86 is defined
-  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
+  - non_iso_mode is defined
