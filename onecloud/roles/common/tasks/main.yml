@@ -112,15 +112,6 @@
   - br_netfilter
   - ip_conntrack
 
-- name: Test ip_conntrack status
-  shell: |
-    set -e
-    set -o pipefail
-    lsmod |grep conntrack
-    lsmod |grep br_netfilter
-  args:
-    executable: /bin/bash
-
 - name: Load br_netfilter at boot
   copy:
     owner: root
