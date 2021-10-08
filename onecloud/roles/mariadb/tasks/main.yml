@@ -3,7 +3,7 @@
     name: mariadb-server
     state: present
   when:
-  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
+  - non_iso_mode is defined
 
 - name: Install mariadb on centos
   package:
@@ -12,7 +12,7 @@
   when:
   - ansible_facts['distribution'] == "CentOS"
   - ansible_facts['distribution_major_version'] == "7"
-  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
+  - non_iso_mode is defined
 
 - name: Set discovered Ansible Python interpreter.
   set_fact:
