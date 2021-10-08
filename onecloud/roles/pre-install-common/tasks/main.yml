@@ -41,7 +41,7 @@
   when:
   - is_systemd_installed.rc != 0
   - is_centos_x86 is defined
-  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
+  - non_iso_mode is defined
 
 - name: yum install yunion packages; it should take a few minutes...
   package: name="{{ item }}" state="present"
@@ -94,7 +94,7 @@
     - yunion-registry
   when:
   - is_centos_x86 is defined
-  - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false
+  - non_iso_mode is defined
 
 - name: config ntpd service
   template: src=ntp.conf dest=/etc/ntp.conf
