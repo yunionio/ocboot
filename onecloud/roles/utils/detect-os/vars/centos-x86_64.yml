@@ -8,6 +8,7 @@ common_packages:
   - boost-system
   - boost-thread
   - bridge-utils
+  - ceph-common
   - celt051
   - conntrack-tools
   - curl
