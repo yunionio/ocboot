@@ -3,6 +3,7 @@
   get_url:
     url: https://iso.yunion.cn/yumrepo-3.4/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
+    validate_certs: no
   become: yes
   when:
   - is_centos_x86 is defined
