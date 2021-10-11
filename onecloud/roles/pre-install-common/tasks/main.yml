@@ -50,6 +50,7 @@
     - autogen-libopts
     - bash-completion
     - bridge-utils
+    - ceph-common
     - conntrack-tools
     - container-selinux
     - containerd.io
