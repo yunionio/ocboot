@@ -6,6 +6,7 @@ common_packages:
   - bash-completion
   - bridge-utils
   - ca-certificates
+  - ceph-common
   - chntpw
   - conntrack
   - conntrackd
