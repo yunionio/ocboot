@@ -9,7 +9,7 @@
   - is_centos_x86 is defined
   - non_iso_mode is defined
 
-- name: Install yunion common packages
+- name: Install yunion common packages for centos x86
   yum:
     state: latest
     name:
@@ -32,3 +32,25 @@
     executable: /bin/bash
   when:
   - is_debian_based is defined
+
+- name: Add yunion rpm repository for arm64 centos
+  get_url:
+    url: https://iso.yunion.cn/centos-7-aarch/yunion.repo
+    dest: /etc/yum.repos.d/yunion.repo
+    validate_certs: no
+  become: yes
+  when:
+  - is_centos_aarch64 is defined
+  - non_iso_mode is defined
+
+- name: Install yunion common packages for arm64
+  yum:
+    state: latest
+    name:
+      - kernel-4.14.0-115.8.2.el7a.yn20210924
+      - kernel-devel-4.14.0-115.8.2.el7a.yn20210924
+      - kernel-headers-4.14.0-115.8.2.el7a.yn20210924
+      - yunion-executor-server
+  when:
+  - is_centos_aarch64 is defined
+  - non_iso_mode is defined

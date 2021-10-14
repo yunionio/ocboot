@@ -1,31 +1,29 @@
 ---
 
 is_centos_based: true
-is_centos_x86: true
+is_centos_aarch64: true
 
 common_packages:
   - boost-iostreams
   - boost-random
   - boost-system
   - boost-thread
-  - bridge-utils
-  - ceph-common
   - celt051
-  - conntrack-tools
-  - curl
   - fuse
   - fuse-devel
   - fuse-libs
   - gssproxy
-  - ipset
-  - ipvsadm
   - jq
+  - ipvsadm
+  - ipset
+  - conntrack-tools
+  - bridge-utils
   - keyutils
   - kmod
   - kmod-openvswitch
-  - kubeadm-1.15.12-0
-  - kubectl-1.15.12-0
-  - kubelet-1.15.12-0
+  - kubeadm
+  - kubectl
+  - kubelet
   - libbasicobjects
   - libcollection
   - libini_config
@@ -57,13 +55,12 @@ common_packages:
   - unbound
   - unbound-libs
   - usbredir
-  - wget
   - yunion-climc
   - yunion-executor
-  - yunion-fetcherfs
   - yunion-ocadm
   - yunion-ovmfrpm
   - yunion-qemu-2.12.1
+  - yunion-fetcherfs
 
 common_services:
     - ntpd
