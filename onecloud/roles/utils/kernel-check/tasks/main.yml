@@ -31,7 +31,7 @@
   - is_yunion_kernel_running.rc != 0
   - ansible_connection == "ssh"
   - k8s_node_as_oc_host|default(false)|bool == true
-  - is_centos_x86 is defined
+  - is_centos_based is defined
 
 - name: Define kernel regex
   set_fact: kernel_regex_debian_510="5\.10\.0"
