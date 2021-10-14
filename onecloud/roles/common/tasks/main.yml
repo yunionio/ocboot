@@ -9,8 +9,9 @@
       - bash-completion
       - epel-release
       - ca-certificates
+    state: latest
   when:
-  - is_centos_x86 is defined
+  - is_centos_based is defined
   - non_iso_mode is defined
 
 - name: Set facts
@@ -104,6 +105,8 @@
   package:
    name: systemd
    state: latest
+  when:
+    - is_centos_based is defined
 
 - name: Config NetworkManager
   include_role:
@@ -213,7 +216,7 @@
         - docker-ce-cli
         - containerd.io
     when:
-    - is_centos_x86 is defined
+    - is_centos_based is defined
     - non_iso_mode is defined
 
   - name: Make /etc/docker dir
