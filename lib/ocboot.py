@@ -147,6 +147,10 @@ class Node(object):
         if not self.node_ip:
             self.node_ip = self.host
         self.bastion_host = None
+        self.vrrp_priority = config.get('vrrp_priority', 0)
+        self.vrrp_interface = config.get('vrrp_interface', None)
+        self.vrrp_vip = config.get('vrrp_vip', None)
+        self.vrrp_router_id = config.get('vrrp_router_id', None)
 
     def get_host(self):
         return self.host
@@ -169,6 +173,11 @@ class Node(object):
             vars['ansible_connection'] = 'local'
         if self.host_networks:
             vars['host_networks'] = self.host_networks
+        if self.vrrp_interface or self.vrrp_vip:
+            vars['vrrp_vip'] = self.vrrp_vip
+            vars['vrrp_interface'] = self.vrrp_interface
+            vars['vrrp_priority'] = self.vrrp_priority
+            vars['vrrp_router_id'] = self.vrrp_router_id
         return vars
 
     def __str__(self):

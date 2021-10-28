@@ -1,0 +1,5 @@
+# Handlers for registry notifications
+- name: restart eipgw
+  service:
+    name: yunion-sdnagent-eipgw
+    state: restarted
