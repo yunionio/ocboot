@@ -99,7 +99,11 @@
   when: "item + '.service' in ansible_facts.services"
   loop:
   - firewalld
-  #  - NetworkManager
+
+- name: ensure systemd installed
+  package:
+   name: systemd
+   state: latest
 
 - name: Config NetworkManager
   include_role:
