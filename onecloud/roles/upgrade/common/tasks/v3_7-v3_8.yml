@@ -18,7 +18,7 @@
     yum clean all
     yum --disablerepo='*' --enablerepo='yunion*' makecache fast
   when:
-  - is_centos_x86 is defined
+  - is_centos_based is defined
 
 - name: "uninstall old rpms"
   shell: |
@@ -27,7 +27,7 @@
       yum remove -y $rpms
     fi
   when:
-  - is_centos_x86 is defined
+  - is_centos_based is defined
   args:
     executable: /bin/bash
 
@@ -41,4 +41,4 @@
     enablerepo: "yunion-*"
     state: latest
   when:
-  - is_centos_x86 is defined
+  - is_centos_based is defined
