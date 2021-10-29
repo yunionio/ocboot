@@ -31,18 +31,6 @@
   args:
     warn: no
 
-- name: is systemd installed
-  command: "systemctl --version"
-  register: is_systemd_installed
-
-- name: ensure systemd installed
-  yum:
-    name: systemd
-  when:
-  - is_systemd_installed.rc != 0
-  - is_centos_x86 is defined
-  - non_iso_mode is defined
-
 - name: yum install yunion packages; it should take a few minutes...
   package: name="{{ item }}" state="present"
   with_items:
