@@ -1,0 +1,85 @@
+---
+- name: EIP HA
+  when:
+    - vrrp_interface is defined
+    - vrrp_vip is defined
+  become: true
+  block:
+    - name: install yunion-sdnagent rpm
+      package:
+        name: yunion-sdnagent
+        state: latest
+      when:
+      - is_centos_x86 is defined
+      notify: restart eipgw
+
+    - name: set conf var facts with file
+      become: yes
+      copy:
+        src: get_oc_vars.sh
+        dest: /tmp/get_oc_vars.sh
+        mode: '0755'
+
+    - name: set conf var facts
+      shell: /tmp/get_oc_vars.sh
+      args:
+        executable: /bin/bash
+
+    - name: load vars
+      include_vars: /tmp/oc_vars
+
+    - name: clean tmp files
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /tmp/oc_vars
+        - /tmp/get_oc_vars.sh
+
+    - name: enable ip forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+
+    - name: make sdnagent.conf
+      template:
+        src: sdnagent.conf.j2
+        dest: /etc/yunion/sdnagent.conf
+      notify: restart eipgw
+
+    - name: install keepalived
+      package:
+        name: keepalived
+        state: present
+
+    - name: mkdir /etc/keepalived
+      file:
+        name: /etc/keepalived
+        state: directory
+        owner: root
+        group: root
+
+    - name: make keepalived eipgw.conf
+      template:
+        src: keepalived-eipgw.conf.j2
+        dest: /etc/keepalived/eipgw.conf
+      vars:
+        vrrp_notify_script: /etc/keepalived/eipgw-notify.sh
+      notify: restart eipgw
+
+    - name: copy keepalived notify script
+      copy:
+        src: keepalived-eipgw-notify.sh
+        dest: /etc/keepalived/eipgw-notify.sh
+        owner: root
+        group: root
+        mode: 0700
+
+    - name: enable yunion-sdnagent-eipgw service
+      service:
+        name: yunion-sdnagent-eipgw
+        state: started
+        enabled: yes
