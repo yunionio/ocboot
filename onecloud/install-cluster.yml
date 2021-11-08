@@ -39,6 +39,10 @@
   roles:
     - primary-master-node/setup_cloud
 
+- hosts: worker_nodes
+  roles:
+    - utils/eip-ha
+
 - hosts: primary_master_node
   roles:
     - primary-master-node/reboot
