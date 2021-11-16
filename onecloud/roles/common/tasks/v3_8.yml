@@ -8,11 +8,21 @@
   when:
   - is_centos_x86 is defined
 
+- name: make cache
+  shell: |
+    yum -y --disablerepo='*' --enablerepo='yunion*' makecache
+  when:
+  - is_centos_x86 is defined
+
 - name: Install yunion common packages
   yum:
     state: latest
+    enablerepo: "yunion*"
+    disablerepo: "*"
     name:
-      - kernel-lt-5.4.130-1.yn20210710.el7
+      - kernel-3.10.0-1160.6.1.el7.yn20201125
+      - kernel-devel-3.10.0-1160.6.1.el7.yn20201125
+      - kernel-headers-3.10.0-1160.6.1.el7.yn20201125
       - yunion-executor
   when:
   - is_centos_x86 is defined
