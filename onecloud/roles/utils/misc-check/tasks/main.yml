@@ -1,0 +1,23 @@
+---
+
+# - name: Checking Important Ports
+#   wait_for:
+#     port: "{{ item  }}"
+#     state: stopped
+#     timeout: 3
+#   with_items:
+#     - 80
+#     - 443
+#     - 6443
+#     - 8080
+
+- block:
+
+  - name: print hostname msg
+    debug:
+      msg: "Host name cat not contain 'localhost'!"
+
+  - name: check hostname
+    shell: exit 1
+
+  when: ansible_hostname | regex_search('localhost', ignorecase=True)
