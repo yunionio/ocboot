@@ -149,6 +149,8 @@ primary_master_node:
   onecloud_user_password: admin@123
   # This machine serves as a Yunion OneCloud private cloud computing node
   as_host: true
+  # enable_eip_man for all-in-one mode only
+  enable_eip_man: true
 """
 
 def gen_config(ipaddr):
