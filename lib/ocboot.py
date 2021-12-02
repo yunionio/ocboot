@@ -261,6 +261,7 @@ class OnecloudConfig(object):
             self.keepalived_version_tag = config.get('keepalived_version_tag', 'v2.0.25')
 
         self.iso_install_mode = config.get('iso_install_mode', False)
+        self.enable_eip_man = config.get('enable_eip_man', False)
 
     def ansible_vars(self):
         vars = {
@@ -269,6 +270,7 @@ class OnecloudConfig(object):
             'k8s_controlplane_host': self.controlplane_host,
             'k8s_controlplane_port': self.controlplane_port,
             'k8s_node_as_oc_host': self.as_host,
+            'enable_eip_man': self.enable_eip_man,
         }
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip
