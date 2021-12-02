@@ -38,6 +38,7 @@
 - hosts: primary_master_node
   roles:
     - primary-master-node/setup_cloud
+    - utils/enable-eip
 
 - hosts: worker_nodes
   roles:
