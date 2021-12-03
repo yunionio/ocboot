@@ -51,7 +51,7 @@ def install_ansible():
 
 
 def check_passless_ssh(ipaddr):
-    cmd = "ssh -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr)
+    cmd = "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr)
     ret = os.system(cmd)
     if ret == 0:
         return
@@ -79,7 +79,7 @@ def install_passless_ssh(ipaddr):
     ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub root@%s" % (ipaddr))
     if ret != 0:
         raise Exception("ssh-copy-id")
-    ret = os.system("ssh -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr))
+    ret = os.system("ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr))
     if ret != 0:
         raise Exception("check passwordless ssh login failed")
 

@@ -15,7 +15,7 @@ GROUP_WORKER_NODES = "worker_nodes"
 def load_config(config_file):
     import yaml
     with open(config_file) as f:
-        config = Config(yaml.load(f))
+        config = Config(yaml.safe_load(f))
         return OcbootConfig(config)
 
 
