@@ -44,6 +44,7 @@
     state: present
   when:
   - is_debian_based is defined
+  - debian_based_arch is defined and debian_based_arch == "arm64"
 
 - name: Debian current kernel
   shell: |
@@ -77,3 +78,4 @@
   - is_debian_based is defined
   - debian_current_kernel != "5.10.0"
   - debian_installed_510_kernel.rc == 0
+  - debian_based_arch is defined and debian_based_arch == "arm64"
