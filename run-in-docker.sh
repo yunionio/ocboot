@@ -1,5 +1,7 @@
 #!/bin/bash
 
+: ${OCBOOT_IMAGE="registry.cn-beijing.aliyuncs.com/yunionio/ocboot:v1.0"}
+
 if [ $# -eq 0 ]; then
   echo "Error: no argument"
   exit 1
@@ -20,7 +22,7 @@ if ! git version > /dev/null 2>&1; then
 fi
 
 if [ ! -d "./ocboot" ];then
-  echo "Clone ocboot"
+  echo "Ocboot does not exist, Clone ocboot"
   git clone https://github.com/yunionio/ocboot.git > /dev/null 2>&1
 fi
 
@@ -28,10 +30,21 @@ if ! docker ps > /dev/null 2>&1; then
   echo "Error: Docker unavailable, Please resolve the problem and try again"
   exit 3
 fi
+
 if [ $# -gt 1 ]; then
-  docker run -v ~/.ssh/id_rsa:/root/.ssh/id_rsa -v `pwd`/ocboot:/opt/ocboot/ -t ocboot:v0.1 $@
+  echo 'copy config file to "ocboot" directory'
+  for i in $@ ; do
+    if [ -f $i ]; then
+      cp -uv $i ocboot
+    fi
+  done
+  docker run -t --network host -v ~/.ssh/id_rsa:/root/.ssh/id_rsa -v `pwd`/ocboot:/opt/ocboot/ $OCBOOT_IMAGE $@
 else
-  docker run -v ~/.ssh/id_rsa:/root/.ssh/id_rsa -v `pwd`/ocboot:/opt/ocboot/ --entrypoint /opt/ocboot/run.py -t ocboot:v0.1 $@
+  docker run -t --network host -v ~/.ssh/id_rsa:/root/.ssh/id_rsa -v `pwd`/ocboot:/opt/ocboot/ --entrypoint /opt/ocboot/run.py $OCBOOT_IMAGE $@
 fi
 
-echo "Script running complete"
+if [ $? -eq 0 ];then
+  echo "Script running complete"
+else
+  echo "Script running failure!!!"
+fi

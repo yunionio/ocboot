@@ -4,11 +4,29 @@ ocboot 能够快速的在 CentOS 7 或者 Debian 10 机器上搭建部署 [Cloud
 
 ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
 
+为了避免因为环境依赖产生的问题，我们也提供了使用容器来部署，由于部署过程中有重启容器引擎的操作，故使用容器时只能以远程的方式部署。使用容器时，只需要配置好ssh免密登录，按需创建配置文件，以及安装好docker即可开始部署。
+## 使用docker部署
+```bash
+# Allinone install
+$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s <IP>
+$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-allinone.yml
+
+# Multiple nodes install
+$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-nodes.yml
+
+# High availability install
+$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-k8s-ha.yml
+
+# Upgrade node
+$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s upgrade <PRIMARY_HOST> v3.8.4
+```
+如果条件不能满足，请使用下面的方法进行部署。
+
 # 依赖说明
 
 - 操作系统: Centos 7.x 或者 Debian 10
 - 最低配置要求: 4核8G
-- 软件: ansible
+- 软件: ansible-2.9.25
 - 能够 ssh 免密登录待部署机器
 
 # 使用方法
@@ -52,7 +70,7 @@ ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以�
 
 ### 单节点 all in one 部署
 
-假设已经准备好了 1 台 Centos 7 机器，它的 ip 是 `10.127.10.158`，我想在这台机器上 allinone 安装 OneCloud v3.4.15 版本。
+假设已经准备好了 1 台 Centos 7 机器，它的 ip 是 `10.127.10.158`，我想在这台机器上 allinone 安装 OneCloud v3.8.4 版本。
 
 ```bash
 # 编写 config-allinone.yml 文件
@@ -72,7 +90,7 @@ primary_master_node:
   hostname: 10.127.10.158
   user: root
   # onecloud 版本
-  onecloud_version: v3.4.15
+  onecloud_version: v3.8.4
   # 数据库连接地址
   db_host: 10.127.10.158
   # 数据库用户
@@ -122,7 +140,7 @@ mariadb_node:
   db_user: root
   db_password: your-sql-password
 primary_master_node:
-  onecloud_version: v3.4.15
+  onecloud_version: v3.8.4
   hostname: 10.127.10.156
   user: root
   db_host: 10.127.10.156
@@ -183,9 +201,10 @@ MASTER_2_IP=10.127.90.103
 
 cat > config-k8s-ha.yml <<EOF
 primary_master_node:
-  use_local: true
+  hostname: $PRIMARY_IP
+  use_local: false
   user: root
-  onecloud_version: "v3.6.16"
+  onecloud_version: "v3.8.4"
   db_host: $DB_IP
   db_user: "$DB_USER"
   db_password: "$DB_PSWD"
@@ -237,7 +256,7 @@ $ ./ocboot.py install ./config-k8s-ha.yml
 
 ```bash
 # 执行升级
-$ ./ocboot.py upgrade <PRIMARY_HOST> v3.6.9
+$ ./ocboot.py upgrade <PRIMARY_HOST> v3.8.4
 
 # 查看升级可选参数
 $ ./ocboot.py upgrade -h
