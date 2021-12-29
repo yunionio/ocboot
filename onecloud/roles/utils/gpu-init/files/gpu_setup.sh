@@ -128,7 +128,7 @@ grub_setup() {
     # 以便解决重启后因未加载 lvm 驱动而卡住的问题
     sed -i -e 's#rd.lvm.lv=[^ ]*##gi' $grub_cfg
 
-    idx=$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' $(find /etc/ -name 'grub2*cfg' |head -1 ) |grep -P '\.yn\d{8}\.'|awk '{print $1}' |head -1)
+    idx=$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' $(find /etc/ -name 'grub2*cfg' -exec test -e {} \; -print |head -1 ) |grep -P '\.yn\d{8}\.'|awk '{print $1}' |head -1)
     if grep -q '^GRUB_DEFAULT' $grub_cfg; then
         sudo sed -i -e "s#^GRUB_DEFAULT=.*#GRUB_DEFAULT=$idx#" $grub_cfg
     else
