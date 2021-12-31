@@ -9,3 +9,13 @@ update-pciids:
 		mv $(TMP_PCI_IDS) $(DEST_PCI_IDS)
 
 .PHONY: test
+
+REGISTRY ?= "registry.cn-beijing.aliyuncs.com/yunionio"
+VERSION ?= $(shell git describe --exact-match 2> /dev/null || \
+                git describe --match=$(git rev-parse --short=8 HEAD) --always --dirty --abbrev=8)
+
+image:
+	docker build -t $(REGISTRY)/ocboot:$(VERSION) -f ./Dockerfile .
+
+image-push:
+	docker push $(REGISTRY)/ocboot:$(VERSION)

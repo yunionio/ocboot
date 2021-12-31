@@ -4,8 +4,10 @@ ocboot 能够快速的在 CentOS 7 或者 Debian 10 机器上搭建部署 [Cloud
 
 ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
 
-为了避免因为环境依赖产生的问题，我们也提供了使用容器来部署，由于部署过程中有重启容器引擎的操作，故使用容器时只能以远程的方式部署。使用容器时，只需要配置好ssh免密登录，按需创建配置文件，以及安装好docker即可开始部署。
+为了避免因为环境依赖产生的问题，我们也提供了使用容器来部署，由于部署过程中有重启容器引擎的操作，故**使用容器时只能以远程的方式部署(即部署的目标机器和运行 ocboot 容器的机器不能是同一台)**。使用容器时，只需要配置好 ssh 免密登录，按需创建配置文件，以及安装好 docker 即可开始部署。
+
 ## 使用docker部署
+
 ```bash
 # Allinone install
 $ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s <IP>
