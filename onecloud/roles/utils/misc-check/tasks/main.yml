@@ -15,7 +15,7 @@
 
   - name: print hostname msg
     debug:
-      msg: "Host name cat not contain 'localhost'!"
+      msg: "Host name can not contain 'localhost'!"
 
   - name: check hostname
     shell: exit 1

@@ -157,8 +157,12 @@ def gen_config(ipaddr):
     global conf
     import os.path
     import yaml
+    import os
+    config_dir = os.getenv("OCBOOT_CONFIG_DIR")
     cur_path = os.path.abspath(os.path.dirname(__file__))
-    temp = os.path.join(cur_path, "config-allinone-current.yml")
+    if not config_dir:
+        config_dir = cur_path
+    temp = os.path.join(config_dir, "config-allinone-current.yml")
     verf = os.path.join(cur_path, "VERSION")
     with open(verf, 'r') as f:
         ver = f.read().strip()

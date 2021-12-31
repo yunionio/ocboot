@@ -2,6 +2,10 @@
   roles:
     - utils/detect-os
 
+- hosts: all
+  roles:
+    - utils/misc-check
+
 - hosts: mariadb_node
   roles:
     - mariadb
