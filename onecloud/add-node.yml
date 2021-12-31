@@ -1,0 +1,9 @@
+- hosts: all
+  roles:
+    - utils/detect-os
+
+- hosts: worker_nodes
+  roles:
+    - worker-node
+    - utils/gpu-init
+    - utils/kernel-check

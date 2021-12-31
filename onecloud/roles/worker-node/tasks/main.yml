@@ -31,7 +31,7 @@
 - name: Get join token
   shell: kubeadm token create --description "ocadm-playbook-node-joining-token" --ttl 15m --print-join-command | awk '{print $5}{print $7}'
   register: K8S_JOIN_TOKEN
-  delegate_to: "{{ k8s_controlplane_host }}"
+  delegate_to: "{{ ansible_user }}@{{ k8s_controlplane_host }}"
   run_once: yes
   when:
     k8s_join_token is not defined or k8s_join_token|length == 0
@@ -83,7 +83,7 @@
     when:
       host_networks is defined
 
-  - name: "Use ocadm join work node to '{{ controlplane_endpoint }}'"
+  - name: "Use '/opt/yunion/bin/ocadm {{ join_args }}'"
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
   when:
     kubelet_result.rc != 0
