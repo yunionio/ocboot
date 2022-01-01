@@ -19,6 +19,9 @@ $ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh
 # High availability install
 $ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-k8s-ha.yml
 
+# Add node
+$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s add-node <PRIMARY_HOST> <NODE_IP1> <NODE_IP2> ... <NODE_IPN>
+
 # Upgrade node
 $ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s upgrade <PRIMARY_HOST> v3.8.4
 ```
@@ -252,7 +255,15 @@ $ ./ocboot.py install ./config-k8s-ha.yml
 
 ## 添加节点
 
-添加节点也很简单，只需要按照自己的规划，在已有的 config 里面添加对应的节点 ssh 登录 ip 和用户，然后再重复执行 `./ocboot.py install config.yml` 即可。
+添加节点使用 add-node 子命令把节点加入到已有集群。
+
+```bash
+# 比如把节点 192.168.121.61 加入到已有集群 192.168.121.21
+$ ./ocboot.py add-node 192.168.121.21 192.168.121.61
+
+# 可以一次添加多个节点，格式如下
+$ ./ocboot.py add-node $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
+```
 
 ## 升级节点
 

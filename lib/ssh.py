@@ -22,6 +22,18 @@ class SSHClient(object):
         self.private_key_file = private_key_f
         self.client = self.new_ssh_client()
 
+    def get_host(self):
+        return self.host
+
+    def get_user(self):
+        return self.user
+
+    def get_port(self):
+        return self.port
+
+    def get_private_key_file(self):
+        return self.private_key_f
+
     def new_ssh_client(self):
         k = paramiko.RSAKey.from_private_key_file(self.private_key_file)
         c = paramiko.SSHClient()
