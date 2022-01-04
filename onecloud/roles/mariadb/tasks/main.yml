@@ -79,8 +79,8 @@
     default_ip=$(ip route get 1 | head -n 1 | awk '{print $7}')
     given_ip="{{ db_host }}"
     if [[ "$given_ip" == "$default_ip" ]] || [[ "$given_ip" == 127.* ]]; then
-      mysql -u "{{ db_user }}" -p"{{ db_password }}" -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;'
-    else
+      mysql -u "{{ db_user }}" -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;' || \
+      mysql -u "{{ db_user }}" -p"{{ db_password }}" -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;' || \
       mysql -u "{{ db_user }}" -p"{{ db_password }}" -h "{{ db_host }}" -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;'
     fi
   args:
