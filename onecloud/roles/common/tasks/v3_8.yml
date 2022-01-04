@@ -68,9 +68,7 @@
   yum:
     state: latest
     name:
-      - kernel-4.14.0-115.8.2.el7a.yn20210924
-      - kernel-devel-4.14.0-115.8.2.el7a.yn20210924
-      - kernel-headers-4.14.0-115.8.2.el7a.yn20210924
+      - kernel
       - yunion-executor
   when:
   - is_centos_aarch64 is defined
