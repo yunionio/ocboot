@@ -9,6 +9,12 @@ ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使�
 ## 使用docker部署
 
 ```bash
+# Start by creating a working directory
+mkdir _config
+cd _config
+
+# Then select different parameters as required
+
 # Allinone install
 $ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s <IP>
 $ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-allinone.yml

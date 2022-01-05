@@ -9,23 +9,15 @@ if ! docker ps > /dev/null 2>&1; then
     exit 3
 fi
 
-run_cmd="docker run --rm -t --network host -v $HOME/.ssh/id_rsa:/root/.ssh/id_rsa"
-
-if [ $# -ge 2 ]; then
-    echo 'copy config file to "ocboot" directory'
-    for i in $@ ; do
-        if [ -f $i ]; then
-            CONF=$i
-        fi
-    done
-    $run_cmd -v `pwd`/$CONF:/opt/ocboot/$CONF $OCBOOT_IMAGE $@
-elif [ $# -eq 1 ]; then
-    config_dir="$(pwd)/_config"
-    mkdir "$config_dir"
-    $run_cmd -v "$config_dir":/opt/ocboot/_config \
-        --env OCBOOT_CONFIG_DIR=/opt/ocboot/_config \
-        --entrypoint /opt/ocboot/run.py $OCBOOT_IMAGE $@
-else
-    $run_cmd -v `pwd`/$CONF:/opt/ocboot/$CONF $OCBOOT_IMAGE -h
+if [ $# -eq 0 ]; then
+    docker run --rm $OCBOOT_IMAGE -h
     exit 1
+fi
+
+run_cmd="docker run --rm -t --network host -v $HOME/.ssh/id_rsa:/root/.ssh/id_rsa -v $(pwd):/opt/ocboot/_config --env OCBOOT_CONFIG_DIR=/opt/ocboot/_config"
+
+if [ $# -eq 1 ]; then
+    $run_cmd --entrypoint /opt/ocboot/run.py $OCBOOT_IMAGE $@
+elif [ $# -ge 2 ]; then
+    $run_cmd $OCBOOT_IMAGE $@
 fi
