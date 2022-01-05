@@ -14,7 +14,9 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-run_cmd="docker run --rm -t --network host -v $HOME/.ssh/id_rsa:/root/.ssh/id_rsa -v $(pwd):/opt/ocboot/_config --env OCBOOT_CONFIG_DIR=/opt/ocboot/_config"
+config_dir="$(pwd)/_config"
+run_cmd="docker run --rm -t --network host -v $HOME/.ssh/id_rsa:/root/.ssh/id_rsa -v $config_dir:/opt/ocboot/_config --env OCBOOT_CONFIG_DIR=/opt/ocboot/_config"
+mkdir -p "$config_dir"
 
 if [ $# -eq 1 ]; then
     $run_cmd --entrypoint /opt/ocboot/run.py $OCBOOT_IMAGE $@
