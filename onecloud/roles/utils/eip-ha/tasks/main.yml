@@ -13,28 +13,41 @@
       - is_centos_x86 is defined
       notify: restart eipgw
 
-    - name: set conf var facts with file
-      become: yes
-      copy:
-        src: get_oc_vars.sh
-        dest: /tmp/get_oc_vars.sh
-        mode: '0755'
+    - name: get vars
+      shell: |
+        /opt/yunion/bin/ocadm cluster rcadmin | sed \
+        -e 's#export ##' \
+        -e 's#OS_REGION_NAME#oc_region#' \
+        -e 's#OS_AUTH_URL#oc_auth_url#' \
+        -e 's#OS_USERNAME#oc_admin_user#' \
+        -e 's#OS_PASSWORD#oc_admin_password#' \
+        -e 's#OS_PROJECT_NAME#oc_admin_project#' \
+        -e 's#=#: "#' \
+        -e 's#$#"#' | \
+        grep '^oc_'
+      register: oc_vars
+      delegate_to: "{{ k8s_controlplane_host }}"
 
-    - name: set conf var facts
-      shell: /tmp/get_oc_vars.sh
-      args:
-        executable: /bin/bash
+    - name: write oc vars
+      copy:
+        content: "{{ oc_vars.stdout }}"
+        dest: /tmp/oc_vars
+
+    - name: get oc vars
+      run_once: yes
+      fetch:
+        src: /tmp/oc_vars
+        dest: /tmp/oc_vars
+        flat: yes
 
     - name: load vars
+      run_once: yes
       include_vars: /tmp/oc_vars
 
     - name: clean tmp files
       file:
-        path: "{{ item }}"
+        path: /tmp/oc_vars
         state: absent
-      with_items:
-        - /tmp/oc_vars
-        - /tmp/get_oc_vars.sh
 
     - name: enable ip forwarding
       sysctl:
