@@ -21,5 +21,10 @@ mkdir -p "$config_dir"
 if [ $# -eq 1 ]; then
     $run_cmd --entrypoint /opt/ocboot/run.py $OCBOOT_IMAGE $@
 elif [ $# -ge 2 ]; then
-    $run_cmd $OCBOOT_IMAGE $@
+    for i in $@ ; do
+        if [ -f $i ]; then
+            MOUNT_CONF="-v `pwd`/$i:/opt/ocboot/$i"
+        fi
+    done
+    $run_cmd $MOUNT_CONF $OCBOOT_IMAGE $@
 fi
