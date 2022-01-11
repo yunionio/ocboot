@@ -212,6 +212,7 @@ def restore_config(args):
             f.write(yaml_content)
         except IOError as e:
             print('write yaml config to %s error: %s!' % (config_file, e))
+    run_bash_cmd(""" sed -i -e 's@^  iso_install_mode: true@#  iso_install_mode: true@' '%s' """ % config_file)
 
 def helper():
     print('\n')

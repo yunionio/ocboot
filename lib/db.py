@@ -154,3 +154,4 @@ def backup_config(src, dest):
     output = os.path.join(dest, 'config.yml')
     print('backup config %s to %s... ' % (src, output))
     copyfile(src, output)
+    run_bash_cmd(""" sed -i -e 's@^  iso_install_mode: true@#  iso_install_mode: true@' '%s' """ % output)
