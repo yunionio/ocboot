@@ -244,6 +244,18 @@ primary_master_node:
   - $PRIMARY_IP:5000
   host_networks: "$PRIMARY_INTERFACE/br0/$PRIMARY_IP"
 
+mariadb_ha_node:
+  db_vip: $DB_VIP
+  db_user: "$DB_USER"
+  db_password: "$DB_PSWD"
+  db_port: $DB_PORT
+  db_nic: $DB_NIC
+  hosts:
+  - user: root
+    hostname: 10.127.100.247
+  - user: root
+    hostname: 10.127.100.248
+
 master_nodes:
   controlplane_host: $K8S_VIP
   controlplane_port: "6443"
