@@ -6,6 +6,7 @@ from . import utils
 
 
 GROUP_MARIADB_NODE = "mariadb_node"
+GROUP_MARIADB_HA_NODES = "mariadb_ha_nodes"
 GROUP_REGISTRY_NODE="registry_node"
 GROUP_PRIMARY_MASTER_NODE = "primary_master_node"
 GROUP_MASTER_NODES = "master_nodes"
@@ -27,10 +28,13 @@ class OcbootConfig(object):
         self.bastion_host = self.load_bastion_host(config)
 
         self.mariadb_config = self._fetch_conf(MariadbConfig)
+        self.mariadb_ha_config = self._fetch_conf(MariadbHAConfig)
         self.registry_config = self._fetch_conf(RegistryConfig)
         self.primary_master_config = self._fetch_conf(PrimaryMasterConfig)
         self.master_config = self._fetch_conf(MasterConfig)
         self.worker_config = self._fetch_conf(WorkerConfig)
+        if self.mariadb_config and self.mariadb_ha_config:
+            raise Exception("mariadb_node and mariadb_ha_nodes cannot coexist in config")
 
     def load_bastion_host(self, config):
         bastion_config = config.get('bastion_host', None)
@@ -49,7 +53,7 @@ class OcbootConfig(object):
         return config_cls(Config(group_config), self.bastion_host)
 
     def get_onecloud_version(self):
-        for node in [self.mariadb_config, self.registry_config, self.primary_master_config, self.master_config, self.worker_config]:
+        for node in [self.mariadb_config, self.mariadb_ha_config, self.registry_config, self.primary_master_config, self.master_config, self.worker_config]:
             if not node:
                 continue
             version = getattr(node, 'onecloud_version', None)
@@ -66,6 +70,7 @@ class OcbootConfig(object):
     def get_ansible_inventory(self):
         return ansible.get_inventory_config(
             self.mariadb_config,
+            self.mariadb_ha_config,
             self.registry_config,
             self.primary_master_config,
             self.master_config,
@@ -216,6 +221,36 @@ class MariadbConfig(object):
             "db_port": self.db_port,
             "db_host": self.node.host,
         }
+
+
+class MariadbHAConfig(object):
+
+    def __init__(self, config, bastion_host=None):
+        self.nodes = get_nodes(config, bastion_host)
+
+        self.db_user = config.get('db_user', 'root')
+        self.db_password = config.ensure_get('db_password')
+        self.db_port = config.get('db_port', 3306)
+        self.db_vip = config.get('db_vip', None)
+        self.db_nic = config.get('db_nic', None)
+
+    @classmethod
+    def get_group(cls):
+        return GROUP_MARIADB_HA_NODES
+
+    def get_nodes(self):
+        return self.nodes
+
+    def ansible_vars(self):
+        vars = {
+            "db_user": self.db_user,
+            "db_password": self.db_password,
+            "db_port": self.db_port,
+        }
+        if self.db_vip:
+            vars['db_vip'] = self.db_vip
+            vars['db_nic'] = self.db_nic
+        return vars
 
 
 class RegistryConfig(object):

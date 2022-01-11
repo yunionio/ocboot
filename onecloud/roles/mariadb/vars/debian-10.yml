@@ -1,0 +1,14 @@
+---
+mariadb_version: latest
+mariadb_package: mariadb-server
+
+mariadb_versioned_pkg:
+  'latest': "{{ mariadb_package }}"
+  '5.5.68': "{{ mariadb_package }}-5.5.68-1.el{{ ansible_distribution_major_version }}"
+  'stable': "{{ mariadb_package }}-5.5.68-1.el{{ ansible_distribution_major_version }}"
+
+mariadb_package_info:
+  pkgs:
+    - "{{ mariadb_versioned_pkg[mariadb_version | string] }}"
+    - python-mysqldb
+    - python-pymysql

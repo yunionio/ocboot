@@ -1,25 +1,56 @@
 [mysqld]
 datadir=/var/lib/mysql
 socket=/var/lib/mysql/mysql.sock
+
 # Disabling symbolic-links is recommended to prevent assorted security risks
 symbolic-links=0
+
 # Settings user and group are ignored when systemd is used.
 # If you need to run mysqld under a different user or group,
 # customize your systemd unit file for mariadb according to the
 # instructions in http://fedoraproject.org/wiki/Systemd
+
 # skip domain name resolve
 skip_name_resolve
+
 # auto delete binlog older than 30 days
 expire_logs_days=30
+
 innodb_file_per_table=ON
 max_connections = 300
 max_allowed_packet=20M
+
+{% if 'mariadb_ha_nodes' in group_names and inventory_hostname == groups['mariadb_ha_nodes'][0] %}
+server-id = 1
+auto_increment_offset = 1
+{% else %}
+server-id = 2
+auto_increment_offset = 2
+{% endif %}
+
+auto_increment_increment = 2
+log-bin = mysql-bin
+binlog-format = row
+log-slave-updates
+max_binlog_size = 1G
+replicate-ignore-db = information_schema
+replicate-ignore-db = performance_schema
+max_connections = 1000
+max_connect_errors = 0
+max_allowed_packet = 1G
+slave-net-timeout=10
+master-retry-count=0
+
+slow_query_log = 1
+long_query_time = 2
+slow_query_log_file = /var/log/mariadb/slow-query.log
+
+[mysql]
+no-auto-rehash
 
 [mysqld_safe]
 log-error=/var/log/mariadb/mariadb.log
 pid-file=/var/run/mariadb/mariadb.pid
 
-#
 # include all files from the config directory
-#
 !includedir /etc/my.cnf.d

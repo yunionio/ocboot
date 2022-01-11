@@ -1,0 +1,40 @@
+---
+- name: modify sysctl.conf
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+  loop:
+    - name: net.ipv4.ip_forward
+      value: 1
+    - name: net.ipv4.ip_nonlocal_bind
+      value: 1
+    
+- name: install keepalived
+  package:
+    name: keepalived
+    state: present
+
+- name: copy keepalived config
+  template:
+    dest: /etc/keepalived/keepalived.conf
+    src: keepalived.conf.j2
+    backup: yes
+  register: conf_status
+
+- name: Copy check_interface scripts
+  template:
+    dest: /etc/keepalived/check_interface.sh
+    src: check_interface.sh.j2
+    mode: '0755'
+
+- name: start keepalived
+  systemd:
+    name: keepalived
+    state: started
+    enabled: yes
+
+- name: restart keepalived if config changed
+  systemd:
+    name: keepalived
+    state: restarted
+  when: conf_status is changed

@@ -1,0 +1,5 @@
+db_user: root
+db_password: dbpassword
+db_port: 3306
+
+file_path_cached: /tmp/dump_all_db.sql
