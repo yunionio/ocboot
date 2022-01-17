@@ -34,11 +34,11 @@ def _run_cmd(cmds):
 def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
     """
     debug level support example:
-    VERBOSE_LEVEL=4 /opt/yunionboot/run.py /opt/yunion/upgrade/config.yml
+    ANSIBLE_VERBOSITY=4 /opt/yunionboot/run.py /opt/yunion/upgrade/config.yml
     """
     debug_flag = ''
     if debug_level == 0:
-        debug_level = int(os.environ.get('VERBOSE_LEVEL', 0))
+        debug_level = int(os.environ.get('ANSIBLE_VERBOSITY', 0))
     if debug_level > 0:
         if debug_level > 0:
             debug_flag = '-' + 'v' * debug_level
