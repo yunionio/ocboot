@@ -10,6 +10,10 @@
   roles:
     - mariadb
 
+- hosts: mariadb_ha_nodes
+  roles:
+    - mariadb
+
 - hosts: registry_node
   roles:
     - registry

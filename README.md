@@ -178,22 +178,23 @@ $ ./ocboot.py install ./config-nodes.yml
 ```
 
 ### 高可用部署
-假设准备好了 3 台 CentOS7 机器，以及 1 台 Mariadb/MySQL 的机器，规划如下：
+假设准备好了 3 台 CentOS7 机器，安装的成高可用的模式，以及双主的高可用数据库。规划如下：
 
-role          | ip            | interface    |  note
-------------  | ------------- | ------------ | ------------------------------
-k8s primary   | 10.127.90.101 | eth0         | -                             |
-k8s master 1  | 10.127.90.102 | eth0         | -                             |
-k8s master 2  | 10.127.90.103 | eth0         | -                             |
-k8s VIP       | 10.127.190.10 | -            | -                             |
-DB            | 10.127.190.11 | -            | pswd="0neC1oudDB#",  port=3306|
+role              | ip            | interface    |  note
+----------------- | ------------- | ------------ | ------------------------------
+k8s primary       | 10.127.90.101 | eth0         | -                             |
+k8s master 1 ,db1 | 10.127.90.102 | eth0         | pswd="0neC1oudDB#",  port=3306|
+k8s master 2 ,db2 | 10.127.90.103 | eth0         | pswd="0neC1oudDB#",  port=3306|
+k8s vip           | 10.127.190.10 | -            | -                             |
+db vip            | 10.127.190.11 | -            | db_nic=eth0                   |
 
 ```bash
 # 填充变量，生成配置
-DB_IP="10.127.190.11"
+DB_VIP="10.127.190.11"
 DB_PORT=3306
 DB_PSWD="0neC1oudDB#"
 DB_USER=root
+DB_NIC="eth0"
 
 K8S_VIP=10.127.190.10
 PRIMARY_INTERFACE="eth0"
@@ -205,12 +206,24 @@ MASTER_2_INTERFACE="eth0"
 MASTER_2_IP=10.127.90.103
 
 cat > config-k8s-ha.yml <<EOF
+mariadb_ha_nodes:
+  db_vip: $DB_VIP
+  db_user: "$DB_USER"
+  db_password: "$DB_PSWD"
+  db_port: $DB_PORT
+  db_nic: $DB_NIC
+  hosts:
+  - user: root
+    hostname: $MASTER_1_IP
+  - user: root
+    hostname: $MASTER_2_IP
+
 primary_master_node:
   hostname: $PRIMARY_IP
   use_local: false
   user: root
   onecloud_version: "v3.8.4"
-  db_host: $DB_IP
+  db_host: $DB_VIP
   db_user: "$DB_USER"
   db_password: "$DB_PSWD"
   db_port: "$DB_PORT"

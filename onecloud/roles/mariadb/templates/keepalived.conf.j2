@@ -1,0 +1,37 @@
+! Configuration File for keepalived
+
+global_defs {
+    router_id oneclouddb
+    enable_script_security 1
+    script_user root
+}
+
+vrrp_script check_interface {
+    script "/etc/keepalived/check_interface.sh"
+    interval 15
+}
+
+vrrp_script check_mariadb {
+    script "</dev/tcp/127.0.0.1/{{ db_port }}"
+    interval 1
+}
+
+vrrp_instance VI_1 {
+    state BACKUP
+    interface {{ db_nic }}
+    virtual_router_id 92
+    priority 99
+    advert_int 1
+    nopreempt
+    authentication {
+        auth_type PASS
+        auth_pass dbpass
+    }
+    virtual_ipaddress {
+        {{ db_vip }}
+    }
+    track_script {
+        check_interface
+        check_mariadb
+    }
+}

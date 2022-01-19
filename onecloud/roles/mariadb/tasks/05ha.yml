@@ -1,0 +1,46 @@
+---
+- name: Create readonly user
+  mysql_user:
+    name: repl
+    password: "{{ repl_password | d(db_password) }}"
+    host: '%'
+    priv: '*.*:ALL'
+    state: present
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+
+- include_tasks: 10ha.yml
+  when: inventory_hostname == groups['mariadb_ha_nodes'][0]
+
+- include_tasks: 20ha.yml
+  when: inventory_hostname == groups['mariadb_ha_nodes'][1]
+
+- when: inventory_hostname == groups['mariadb_ha_nodes'][0]
+  block:
+    - name: Get master binlog file name and binlog position
+      mysql_replication:
+        mode: getmaster
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+      delegate_to: "{{ groups['mariadb_ha_nodes'][1] }}"
+      register: repl_info
+
+    - name: Change master to db02 for db01
+      mysql_replication:
+        mode: changemaster
+        master_host: "{{ hostvars[groups['mariadb_ha_nodes'][1]]['ansible_host'] }}"
+        master_log_file: "{{ repl_info.File }}"
+        master_log_pos: "{{ repl_info.Position }}"
+        master_user: "repl"
+        master_password: "{{ repl_password | d(db_password) }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+      ignore_errors: true
+
+    - name: Start slave
+      mysql_replication:
+        mode: startslave
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+
+- include_tasks: keepalived.yml

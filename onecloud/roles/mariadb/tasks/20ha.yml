@@ -1,0 +1,40 @@
+# db2
+- name: Upload db_file to node if it is cached
+  synchronize:
+    src: "{{ file_path_cached }}"
+    dest: "{{ file_path_cached }}"
+    mode: push
+
+- name: Restore database
+  mysql_db:
+    name: all
+    state: import
+    target: "{{ file_path_cached }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+
+- name: Get master binlog file name and binlog position
+  mysql_replication:
+    mode: getmaster
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+  delegate_to: "{{ groups['mariadb_ha_nodes'][0] }}"
+  register: repl_info
+
+- name: Change master to db01 for db02
+  mysql_replication:
+    mode: changemaster
+    master_host: "{{ hostvars[groups['mariadb_ha_nodes'][0]]['ansible_host'] }}"
+    master_log_file: "{{ repl_info.File }}"
+    master_log_pos: "{{ repl_info.Position }}"
+    master_user: "repl"
+    master_password: "{{ repl_password | d(db_password) }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+  ignore_errors: true
+
+- name: Start slave
+  mysql_replication:
+    mode: startslave
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"

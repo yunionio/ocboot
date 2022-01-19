@@ -1,0 +1,14 @@
+#db1
+- name: Dump all databases
+  mysql_db:
+    state: dump
+    name: all
+    target: "{{ file_path_cached }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+
+- name: Copy db_file back to ansible host file cache
+  synchronize:
+    src: "{{ file_path_cached }}"
+    dest: "{{ file_path_cached }}"
+    mode: pull

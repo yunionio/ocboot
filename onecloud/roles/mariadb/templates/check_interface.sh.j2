@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# if default ip route != given interface, exit 1
+
+function get_ip_by_interface(){
+  local interface="$1"
+  if [ -z "$interface" ]; then
+    return 1
+  fi
+  ip a s "$interface" |grep -o 'inet [a-z:0-9.]*' | sed -e 's#[^0-9.]*##' | grep {{ ansible_host }}
+}
+
+function get_current_interface(){
+    local interface
+    if [ -n "$(get_ip_by_interface {{ db_nic }})" ] ; then
+        echo {{ db_nic }}
+        return
+    fi
+
+    if [ -n "$(get_ip_by_interface br0)" ]; then
+        echo br0
+        return
+    fi
+
+    interface=$(ip route | awk '/default/ { print $5 }')
+    if [ -n "$interface" ] ; then
+        echo "$interface"
+        return
+    fi
+    return -1
+}
+
+env_interface="$(cat /etc/keepalived/keepalived.conf| grep -w interface |awk '{print $2}')"
+router_interface="$(get_current_interface)"
+logger "got router interface: $router_interface"
+
+if [[ "$router_interface" != "$env_interface" ]]; then
+    logger "replace interface $env_interface with $router_interface"
+    sed -i -e "s#$env_interface#$router_interface#g" /etc/keepalived/keepalived.conf
+    systemctl restart keepalived
+else
+    logger "interface $router_interface OK"
+fi
