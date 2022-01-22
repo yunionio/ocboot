@@ -12,7 +12,7 @@
 
 - hosts: mariadb_ha_nodes
   roles:
-    - mariadb
+    - mariadb-ha
 
 - hosts: registry_node
   roles:
