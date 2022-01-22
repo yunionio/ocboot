@@ -1,36 +1,30 @@
+---
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution|lower }}-{{ ansible_distribution_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower }}-{{ ansible_distribution_release|lower }}.yml"
+        - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower }}.yml"
+        - "{{ ansible_os_family|lower }}.yml"
+        - "{{ ansible_distribution|lower| replace(' ', '_')| replace('_\"_', '') }}.yml"
+      paths:
+        - ../../mariadb/vars
+      skip: true
+  tags:
+    - facts
+
 - name: Install mariadb
   package:
-    name: mariadb-server
+    name: "{{ item }}"
     state: present
-  when:
-  - non_iso_mode is defined
+  failed_when: false
+  loop: "{{ mariadb_package_info.pkgs }}"
 
-- name: Install mariadb on centos
-  package:
-    name: MySQL-python
-    state: installed
-  when:
-  - ansible_facts['distribution'] == "CentOS"
-  - ansible_facts['distribution_major_version'] == "7"
-  - non_iso_mode is defined
-
-- name: Set discovered Ansible Python interpreter.
-  set_fact:
-    ansible_python_interpreter: "{{ ansible_facts.python.executable }}"
-  when: ansible_python_interpreter is not defined
-
-- name: Install mariadb python libs
-  package:
-    name:
-    - python-mysqldb
-    - python-pymysql
-    state: present
-  when:
-  - is_debian_based is defined
-
-- name: Copy my.cnf
-  copy:
-    src: my.cnf
+- name: copy my.cnf
+  template:
+    src: my.cnf.j2
     dest: /etc/my.cnf
     backup: yes
 
@@ -47,33 +41,19 @@
   args:
     executable: /bin/bash
 
-- name: Enable mariadb
-  service:
+- name: start mariadb
+  systemd:
     name: mariadb
     enabled: yes
     state: started
 
-
-- name: mariadb hack for uos
-  shell: |
-    if [ ! -d /etc/my.cnf.d ] && [ -d /etc/mysql ]; then
-      ln -sf /etc/mysql /etc/my.cnf.d
-    fi
-    if [ -f /etc/mysql/mariadb.conf.d/50-server.cnf ] && grep -qP 'bind-address *= *127.0.0.1' /etc/mysql/mariadb.conf.d/50-server.cnf; then
-      cp -vf /etc/mysql/mariadb.conf.d/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf.$(date +"%Y%m%d-%H%M%S").bak
-      sed -i 's#bind-address *= *127.0.0.1#bind-address = 0.0.0.0#' /etc/mysql/mariadb.conf.d/50-server.cnf
-    fi
-    systemctl restart mariadb
-  args:
-    executable: /bin/bash
+- debug: var=db_password
 
 - name: Change root password
   mysql_user:
     name: "{{ db_user }}"
     password: "{{ db_password }}"
   ignore_errors: yes
-  changed_when: false
-  failed_when: false
 
 - name: Allow remote root access with grant priv with raw mysql
   shell: mysql -u {{ db_user }} -p{{ db_password }} -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;'
@@ -94,3 +74,6 @@
     state: absent
     login_user: "{{ db_user }}"
     login_password: "{{ db_password }}"
+
+- when: groups['mariadb_ha_nodes'] | length > 1
+  include_tasks: 05ha.yml

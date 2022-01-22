@@ -1,6 +1,6 @@
 [mysqld]
 datadir=/var/lib/mysql
-socket=/var/lib/mysql/mysql.sock
+
 
 # Disabling symbolic-links is recommended to prevent assorted security risks
 symbolic-links=0
@@ -20,7 +20,7 @@ innodb_file_per_table=ON
 max_connections = 300
 max_allowed_packet=20M
 
-{% if 'mariadb_ha_nodes' in group_names and inventory_hostname == groups['mariadb_ha_nodes'][0] %}
+{% inventory_hostname == groups['mariadb_ha_nodes'][0] %}
 server-id = 1
 auto_increment_offset = 1
 {% else %}
@@ -43,13 +43,13 @@ master-retry-count=0
 
 slow_query_log = 1
 long_query_time = 2
-slow_query_log_file = /var/log/mariadb/slow-query.log
+slow_query_log_file = /var/log/mysql/slow-query.log
 
 [mysql]
 no-auto-rehash
 
 [mysqld_safe]
-log-error=/var/log/mariadb/mariadb.log
+log-error=/var/log/mysql/mariadb.log
 pid-file=/var/run/mariadb/mariadb.pid
 
 # include all files from the config directory
