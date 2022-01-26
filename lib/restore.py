@@ -176,8 +176,8 @@ def restore_config(args):
     }
 
     # primary node ip update
-    if config_json['primary_master_node'].get('controlplane_host') != config_json['primary_master_node'].get('node_ip'):
-        raise Exception("Primary controlplane_host and node_ip are different. Not supported backup mode!")
+    # if config_json['primary_master_node'].get('controlplane_host') != config_json['primary_master_node'].get('node_ip'):
+    #     raise Exception("Primary controlplane_host and node_ip are different. Not supported backup mode!")
 
     config_json['primary_master_node'].update({
         'controlplane_host': args.primary_ip,
