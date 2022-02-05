@@ -32,5 +32,6 @@ for namespace in $nslist; do
                 echo -e "init=$img \c"
             fi
         done |sed -e 's# kubectl#\nkubectl#g'
+        echo
     done
 done
