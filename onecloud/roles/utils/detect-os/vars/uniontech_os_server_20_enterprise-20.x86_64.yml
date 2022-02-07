@@ -27,6 +27,7 @@ common_packages:
   - libusbredirparser1
   - librbd1
   - libspice-server1
+  - nfs-common
   - ntp
   - python-pymysql
   - python-selinux
