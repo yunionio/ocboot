@@ -31,6 +31,14 @@
   args:
     executable: /bin/bash
 
+- name: Install ceph-common packages
+  yum:
+    name:
+      - ceph-common
+    state: latest
+  when:
+  - is_centos_based is defined
+
 - name: Upgrade yunion common packages
   yum:
     name:
