@@ -20,7 +20,7 @@ innodb_file_per_table=ON
 max_connections = 300
 max_allowed_packet=20M
 
-{% inventory_hostname == groups['mariadb_ha_nodes'][0] %}
+{% if inventory_hostname == groups['mariadb_ha_nodes'][0] %}
 server-id = 1
 auto_increment_offset = 1
 {% else %}
@@ -43,13 +43,13 @@ master-retry-count=0
 
 slow_query_log = 1
 long_query_time = 2
-slow_query_log_file = /var/log/mysql/slow-query.log
+slow_query_log_file = /var/log/mariadb/slow-query.log
 
 [mysql]
 no-auto-rehash
 
 [mysqld_safe]
-log-error=/var/log/mysql/mariadb.log
+log-error=/var/log/mariadb/mariadb.log
 pid-file=/var/run/mariadb/mariadb.pid
 
 # include all files from the config directory
