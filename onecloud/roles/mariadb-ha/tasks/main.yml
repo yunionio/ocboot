@@ -10,7 +10,7 @@
         - "{{ ansible_os_family|lower }}.yml"
         - "{{ ansible_distribution|lower| replace(' ', '_')| replace('_\"_', '') }}.yml"
       paths:
-        - ../../mariadb/vars
+        - ../vars
       skip: true
   tags:
     - facts
