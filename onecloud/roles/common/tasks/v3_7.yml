@@ -50,7 +50,7 @@
       - kernel-4.14.0-115.8.2.el7a.yn20210924
       - kernel-devel-4.14.0-115.8.2.el7a.yn20210924
       - kernel-headers-4.14.0-115.8.2.el7a.yn20210924
-      - yunion-executor-server
+      - yunion-executor
   when:
   - is_centos_aarch64 is defined
   - non_iso_mode is defined
