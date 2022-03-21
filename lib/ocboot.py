@@ -328,6 +328,7 @@ class PrimaryMasterConfig(OnecloudConfig):
 
         self.db_user = config.get('db_user', 'root')
         self.db_host = config.ensure_get('db_host')
+        self.db_port = config.get('db_port', 3306)
         self.db_password = config.ensure_get('db_password')
         self.onecloud_version = config.ensure_get('onecloud_version')
         self.operator_version = config.get('operator_version', self.onecloud_version)
@@ -353,6 +354,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars = super(PrimaryMasterConfig, self).ansible_vars()
 
         vars['db_host'] = self.db_host
+        vars['db_port'] = self.db_port
         vars['db_user'] = self.db_user
         vars['db_password'] = self.db_password
         vars['onecloud_version'] = self.onecloud_version
