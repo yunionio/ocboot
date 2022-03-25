@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import json
+import re
 
 from .ssh import SSHClient
 from . import k8s
@@ -22,14 +23,22 @@ def construct_cluster(primary_master_host, ssh_user, ssh_private_file, ssh_port)
     cluster = OnecloudCluster(cli)
     return cluster
 
+def json_trim(str_2_replace):
+    regex = re.compile(r"^[^{]+|[^}]+$", re.DOTALL)
+    return regex.sub("", str_2_replace)
 
 class OnecloudCluster(object):
 
     def __init__(self, ssh_client):
         self.ssh_client = ssh_client
+        ret = ssh_client.exec_command(
+            'kubectl -n onecloud get onecloudclusters default -o json')
+        try:
+            cluster = json.loads(ret)
+        except ValueError:
+            ret = json_trim(ret)
+            cluster = json.loads(ret)
 
-        cluster = json.loads(ssh_client.exec_command(
-            'kubectl -n onecloud get onecloudclusters default -o json'))
         self.cluster = k8s.Resource(cluster)
 
         self.k8s_nodes = None
