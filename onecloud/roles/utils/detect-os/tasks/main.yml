@@ -16,7 +16,6 @@
         - defaults.yml
       paths:
         - ../vars
-      skip: true
   tags:
     - facts
 
