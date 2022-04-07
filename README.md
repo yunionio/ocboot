@@ -52,7 +52,7 @@ ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以�
 
 ### 单节点 all in one 部署
 
-假设已经准备好了 1 台 Centos 7 机器，它的 ip 是 `10.127.10.158`，我想在这台机器上 allinone 安装 OneCloud v3.4.15 版本。
+假设已经准备好了 1 台 Centos 7 机器，它的 ip 是 `10.127.10.158`，我想在这台机器上 allinone 安装 OneCloud v3.8.8 版本。
 
 ```bash
 # 编写 config-allinone.yml 文件
@@ -72,7 +72,7 @@ primary_master_node:
   hostname: 10.127.10.158
   user: root
   # onecloud 版本
-  onecloud_version: v3.4.15
+  onecloud_version: v3.8.8
   # 数据库连接地址
   db_host: 10.127.10.158
   # 数据库用户
@@ -122,7 +122,7 @@ mariadb_node:
   db_user: root
   db_password: your-sql-password
 primary_master_node:
-  onecloud_version: v3.4.15
+  onecloud_version: v3.8.8
   hostname: 10.127.10.156
   user: root
   db_host: 10.127.10.156
@@ -185,8 +185,8 @@ cat > config-k8s-ha.yml <<EOF
 primary_master_node:
   use_local: true
   user: root
-  onecloud_version: "v3.6.16"
-  db_host: $DB_IP
+  onecloud_version: "v3.8.8"
+  db_host: $DB_VIP
   db_user: "$DB_USER"
   db_password: "$DB_PSWD"
   db_port: "$DB_PORT"
@@ -237,7 +237,7 @@ $ ./ocboot.py install ./config-k8s-ha.yml
 
 ```bash
 # 执行升级
-$ ./ocboot.py upgrade <PRIMARY_HOST> v3.6.9
+$ ./ocboot.py upgrade <PRIMARY_HOST> v3.8.8
 
 # 查看升级可选参数
 $ ./ocboot.py upgrade -h
