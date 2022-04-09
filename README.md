@@ -112,6 +112,10 @@ primary_master_node:
   onecloud_user_password: demo@123
   # 该节点作为 OneCloud 私有云计算节点
   as_host: true
+  # k8s pod network CIDR:
+  pod_network_cidr: 10.40.0.0/16
+  # k8s service CIDR
+  service_cidr: 10.96.0.0/12
 EOF
 
 # 开始部署
