@@ -310,6 +310,9 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.image_repository = config.get('image_repository', 'registry.cn-beijing.aliyuncs.com/yunionio')
         self.enable_minio = config.get('enable_minio', False)
         self.offline_nodes = config.get('offline_nodes', '')
+        self.pod_network_cidr = config.get('pod_network_cidr', '10.40.0.0/16')
+        self.service_cidr = config.get('service_cidr', '10.96.0.0/12')
+        self.service_dns_domain = config.get('service_dns_domain', 'cluster.local')
 
     @classmethod
     def get_group(cls):
@@ -332,6 +335,9 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['image_repository'] = self.image_repository
         vars['enable_minio'] = self.enable_minio
         vars['restore_mode'] = self.restore_mode
+        vars['pod_network_cidr'] = self.pod_network_cidr
+        vars['service_cidr'] = self.service_cidr
+        vars['service_dns_domain'] = self.service_dns_domain
         if len(self.offline_nodes) > 0:
             vars['offline_nodes'] = ' '.join(self.offline_nodes)
         return vars

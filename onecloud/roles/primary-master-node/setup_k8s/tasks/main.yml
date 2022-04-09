@@ -73,6 +73,24 @@
     when:
       onecloud_version is defined
 
+  - name: Construct pod-network-cidr
+    set_fact:
+      init_args: "{{ init_args }} --pod-network-cidr {{ pod_network_cidr }}"
+    when:
+      pod_network_cidr is defined
+
+  - name: Construct service-cidr
+    set_fact:
+      init_args: "{{ init_args }} --service-cidr {{ service_cidr }}"
+    when:
+      service_cidr is defined
+
+  - name: Construct service-dns-domain
+    set_fact:
+      init_args: "{{ init_args }} --service-dns-domain {{ service_dns_domain }}"
+    when:
+      service_dns_domain is defined
+
   - name: Construct onecloud version
     set_fact:
       init_args: "{{ init_args }} --addon-calico-ip-autodetection-method {{ ip_autodetection_method }}"
