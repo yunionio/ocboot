@@ -36,6 +36,7 @@ class OnecloudCluster(object):
         try:
             cluster = json.loads(ret)
         except ValueError:
+            print("load json return error: %s" % ret)
             ret = json_trim(ret)
             cluster = json.loads(ret)
 
