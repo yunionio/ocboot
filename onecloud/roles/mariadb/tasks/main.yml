@@ -85,18 +85,3 @@
     fi
   args:
     executable: /bin/bash
-
-- name: Remove all anonymous user accounts
-  mysql_user:
-    name: ''
-    host_all: yes
-    state: absent
-    login_user: "{{ db_user }}"
-    login_password: "{{ db_password }}"
-
-- name: Remove test database
-  mysql_db:
-    name: test
-    state: absent
-    login_user: "{{ db_user }}"
-    login_password: "{{ db_password }}"
