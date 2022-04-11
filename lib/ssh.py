@@ -43,14 +43,16 @@ class SSHClient(object):
                     "-o", "UserKnownHostsFile=/dev/null",
                     "-o", "ForwardX11=no",
                     "-i", self.get_private_key_file(),
-                    user_host]
-            print("%s" % ' '.join(args))
+                    user_host,
+                    cmd]
+            debug_args = [x for x in args]
+            debug_args[-1] = "'%s'" % debug_args[-1]
+            debug_cmd = ' '.join(debug_args)
+            print(debug_cmd)
             ssh = subprocess.Popen(args,
-                                   shell=False,
-                                   stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
-            stdout, stderr = ssh.communicate(cmd.encode('utf-8'))
+            stdout, stderr = ssh.communicate()
             out = stdout.decode('utf-8')
             err = stderr.decode('utf-8')
             return out, err
