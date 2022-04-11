@@ -79,7 +79,7 @@
     - yunion-executor
     - yunion-fetcherfs
     - yunion-ocadm
-    - yunion-qemu-2.12.1
+    - yunion-qemu-4.2.0
   when:
   - is_centos_based is defined
   - non_iso_mode is defined
