@@ -76,6 +76,7 @@
     - usbredir
     - wget
     - yunion-climc
+    - yunion-climc-ee
     - yunion-executor
     - yunion-fetcherfs
     - yunion-ocadm

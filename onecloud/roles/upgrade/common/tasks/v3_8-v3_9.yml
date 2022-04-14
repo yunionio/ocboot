@@ -37,6 +37,7 @@
     name:
       - yunion-ocadm
       - yunion-climc
+      - yunion-climc-ee
       - yunion-executor
     disablerepo: "*"
     enablerepo: "yunion-*"
