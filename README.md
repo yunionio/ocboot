@@ -122,12 +122,16 @@ Password: demo@123
 $ cat <<EOF >./config-nodes.yml
 mariadb_node:
   hostname: 10.127.10.156
+  # 待部署节点 ssh 端口
+  port: 22
   user: root
   db_user: root
   db_password: your-sql-password
 primary_master_node:
   onecloud_version: v3.8.8
   hostname: 10.127.10.156
+  # 待部署节点 ssh 端口
+  port: 22
   user: root
   db_host: 10.127.10.156
   db_user: root
@@ -137,8 +141,12 @@ primary_master_node:
 master_nodes:
   hosts:
   - hostname: 10.127.10.157
+    # 待部署节点 ssh 端口
+    port: 22
     user: root
   - hostname: 10.127.10.158
+    # 待部署节点 ssh 端口
+    port: 22
     user: root
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
@@ -146,8 +154,12 @@ master_nodes:
 worker_nodes:
   hosts:
   - hostname: 10.127.10.159
+    # 待部署节点 ssh 端口
+    port: 22
     user: root
   - hostname: 10.127.10.160
+    # 待部署节点 ssh 端口
+    port: 22
     user: root
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
