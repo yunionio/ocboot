@@ -254,10 +254,6 @@ primary_master_node:
   high_availability: true
   use_ee: false
   enable_minio: true
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
-  insecure_registries:
-  - $PRIMARY_IP:5000
   host_networks: "$PRIMARY_INTERFACE/br0/$PRIMARY_IP"
 
 master_nodes:
@@ -265,9 +261,6 @@ master_nodes:
   controlplane_port: "6443"
   as_controller: true
   as_host: true
-  ntpd_server: "$PRIMARY_IP"
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
   high_availability: true
   hosts:
   - user: root
