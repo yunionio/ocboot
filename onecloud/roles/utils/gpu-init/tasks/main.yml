@@ -33,5 +33,6 @@
   args:
     executable: /bin/bash
     chdir: /usr/local/gpu-init/
+  ignore_errors: yes
   when:
-  - is_centos_x86 is defined
+  - is_centos_based is defined
