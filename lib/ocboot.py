@@ -62,10 +62,19 @@ class OcbootConfig(object):
         raise Exception("get attr onecloud_version error")
 
     def ansible_global_vars(self):
-        return {
-            "onecloud_major_version": utils.get_major_version(
-                self.get_onecloud_version()),
+        major_version = utils.get_major_version(self.get_onecloud_version())
+        vars = {
+            "onecloud_major_version": major_version,
         }
+
+        # set yunion_qemu_package for pre released version
+        yunion_qemu_package = 'yunion-qemu-4.2.0'
+        if major_version in ['v3_6', 'v3_7', 'v3_8']:
+            yunion_qemu_package = 'yunion-qemu-2.12.1'
+        if yunion_qemu_package:
+            vars['yunion_qemu_package'] = yunion_qemu_package
+
+        return vars
 
     def get_ansible_inventory(self):
         return ansible.get_inventory_config(
