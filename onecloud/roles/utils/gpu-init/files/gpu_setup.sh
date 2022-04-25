@@ -111,6 +111,16 @@ _generate_kernel_cmdline() {
     echo "$cmdline" | cut -c2-
 }
 
+mk_grub(){
+    if [ -d /sys/firmware/efi ]; then
+        mkdir -p /boot/efi/EFI/centos
+        grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
+    else
+        grub2-mkconfig -o /boot/grub2/grub.cfg
+    fi
+}
+
+
 grub_setup() {
     info "Configure grub option..."
     local grub_cfg="/etc/default/grub"
@@ -128,8 +138,13 @@ grub_setup() {
     # 删掉 rd.lvm.lv(含)之后，空格之前的所有字符
     # 以便解决重启后因未加载 lvm 驱动而卡住的问题
     sed -i -e 's#rd.lvm.lv=[^ ]*##gi' $grub_cfg
-
-    idx=$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' $(find /etc/ -name 'grub2*cfg' -exec test -e {} \; -print |head -1 ) |grep -P '\.yn\d{8}\.'|awk '{print $1}' |head -1)
+    for i in {1..3}; do
+        idx=$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' $(find /etc/ -name 'grub2*cfg' -exec test -e {} \; -print |head -1 ) |grep -P '\.yn\d{8}\.'|awk '{print $1}' |head -1)
+        if [ "$idx" -gt "0" ]; then
+            break
+        fi
+        mk_grub
+    done
     if grep -q '^GRUB_DEFAULT' $grub_cfg; then
         sudo sed -i -e "s#^GRUB_DEFAULT=.*#GRUB_DEFAULT=$idx#" $grub_cfg
     else
@@ -138,12 +153,7 @@ grub_setup() {
         echo "GRUB_DEFAULT=$idx" >> $tmp_conf
         sudo mv $tmp_conf $grub_cfg
     fi
-    if [ -d /sys/firmware/efi ]; then
-        mkdir -p /boot/efi/EFI/centos
-        grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
-    else
-        grub2-mkconfig -o /boot/grub2/grub.cfg
-    fi
+    mk_grub
 }
 
 vfio_override_script_setup() {
