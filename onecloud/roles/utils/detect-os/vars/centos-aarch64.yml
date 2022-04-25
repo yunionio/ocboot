@@ -59,7 +59,7 @@ common_packages:
   - yunion-executor
   - yunion-ocadm
   - yunion-ovmfrpm
-  - yunion-qemu-4.2.0
+  - "{{ yunion_qemu_package }}"
   - yunion-fetcherfs
 
 common_services:
