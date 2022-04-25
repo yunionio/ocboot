@@ -63,7 +63,7 @@ common_packages:
   - yunion-fetcherfs
   - yunion-ocadm
   - yunion-ovmfrpm
-  - yunion-qemu-4.2.0
+  - "{{ yunion_qemu_package }}"
 
 common_services:
     - ntpd
