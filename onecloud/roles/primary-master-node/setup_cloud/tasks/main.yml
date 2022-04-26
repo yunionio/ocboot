@@ -70,6 +70,14 @@
   - enable_minio is defined
   - enable_minio|default(false)|bool == true
 
+- name: "Use product version {{ product_version }}"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/productVersion", "value": "{{ product_version }}"}]'
+  when:
+  - product_version is defined
+
 - name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin"
   shell: |
     /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin

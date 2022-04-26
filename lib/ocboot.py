@@ -34,7 +34,7 @@ class OcbootConfig(object):
         self.master_config = self._fetch_conf(MasterConfig)
         self.worker_config = self._fetch_conf(WorkerConfig)
         if self.mariadb_config and self.mariadb_ha_config:
-            raise Exception("mariadb_node and mariadb_ha_nodes cannot coexist in config")
+            raise Exception("mariadb_node and mariadb_ha_nodes can't coexist in config")
 
     def load_bastion_host(self, config):
         bastion_config = config.get('bastion_host', None)
@@ -330,6 +330,19 @@ class OnecloudConfig(object):
 
 class PrimaryMasterConfig(OnecloudConfig):
 
+    # All kinds of products
+    PRODUCT_VERSION_FULL_STACK = "FullStack"
+    # Cloud Management Platform product
+    PRODUCT_VERSION_CMP = "CMP"
+    # Private Cloud Edge on-premise product
+    PRODUCT_VERSION_Edge = "Edge"
+
+    PRODUCT_VERSIONS = [
+        PRODUCT_VERSION_FULL_STACK,
+        PRODUCT_VERSION_CMP,
+        PRODUCT_VERSION_Edge,
+    ]
+
     def __init__(self, config, bastion_host=None):
         super(PrimaryMasterConfig, self).__init__(config)
 
@@ -357,6 +370,13 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.pod_network_cidr = config.get('pod_network_cidr', '10.40.0.0/16')
         self.service_cidr = config.get('service_cidr', '10.96.0.0/12')
         self.service_dns_domain = config.get('service_dns_domain', 'cluster.local')
+        self.product_version = self.get_product_version(config)
+
+    def get_product_version(self, config):
+        pv = config.get('product_version', self.PRODUCT_VERSION_FULL_STACK)
+        if pv in self.PRODUCT_VERSIONS:
+            return pv
+        raise Exception("Unsupported product_version: %s" % pv)
 
     @classmethod
     def get_group(cls):
@@ -384,6 +404,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['service_dns_domain'] = self.service_dns_domain
         if len(self.offline_nodes) > 0:
             vars['offline_nodes'] = ' '.join(self.offline_nodes)
+        vars['product_version'] = self.product_version
         return vars
 
     def get_nodes(self):
