@@ -151,6 +151,8 @@ primary_master_node:
   as_host: true
   # enable_eip_man for all-in-one mode only
   enable_eip_man: true
+  # chose product_version in ['FullStack', 'CMP', 'Edge']
+  product_version: 'FullStack'
 """
 
 def gen_config(ipaddr):
