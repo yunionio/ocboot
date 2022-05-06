@@ -44,6 +44,12 @@ def add_command(subparsers):
                         default="22",
                         help=help_d("primary master host ssh port"))
 
+    parser.add_argument("--node-port", "-n",
+                        dest="ssh_node_port",
+                        type=int,
+                        default="22",
+                        help=help_d("worker node host ssh port"))
+
     parser.set_defaults(func=do_add_node)
 
 
@@ -57,7 +63,7 @@ def do_add_node(args):
     config = AddNodesConfig(cluster,
                            args.target_node_hosts,
                            args.ssh_user,
-                           args.ssh_private_file, args.ssh_port)
+                           args.ssh_private_file, args.ssh_node_port)
     config.run()
 
 
