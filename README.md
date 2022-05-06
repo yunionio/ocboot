@@ -285,6 +285,12 @@ $ ./ocboot.py add-node 192.168.121.21 192.168.121.61
 
 # 可以一次添加多个节点，格式如下
 $ ./ocboot.py add-node $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
+
+# 把 $node_ip ssh 端口 2222 的节点加入到 $PRIMARY_IP ssh 端口 4567 的集群
+$ ./ocboot.py add-node --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
+
+# 查看 add-node 命令帮助信息
+$ ./ocboot.py add-node --help
 ```
 
 ## 升级节点
