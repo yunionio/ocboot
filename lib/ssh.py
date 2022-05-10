@@ -38,6 +38,7 @@ class SSHClient(object):
         def cli_w(cmd):
             user_host = "%s@%s" % (self.get_user(), self.get_host())
             args = ["ssh",
+                    "-p", str(self.get_port()),
                     "-o", "LogLevel=error",
                     "-o", "StrictHostKeyChecking=no",
                     "-o", "UserKnownHostsFile=/dev/null",
