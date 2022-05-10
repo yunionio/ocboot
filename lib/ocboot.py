@@ -20,6 +20,26 @@ def load_config(config_file):
         return OcbootConfig(config)
 
 
+def get_ansible_global_vars(version):
+    major_version = utils.get_major_version(version)
+    vars = {
+        "onecloud_major_version": major_version,
+        'extra_packages': [],
+    }
+
+    # set yunion_qemu_package for pre released version
+    yunion_qemu_package = 'yunion-qemu-4.2.0'
+    extra_packages = [] 
+    if major_version in ['v3_6', 'v3_7', 'v3_8']:
+        yunion_qemu_package = 'yunion-qemu-2.12.1'
+    else:
+        extra_packages.append('yunion-climc-ee')
+    if yunion_qemu_package:
+        vars['yunion_qemu_package'] = yunion_qemu_package
+    vars['extra_packages'] = extra_packages
+    return vars
+
+
 class OcbootConfig(object):
 
     def __init__(self, config):
@@ -62,19 +82,7 @@ class OcbootConfig(object):
         raise Exception("get attr onecloud_version error")
 
     def ansible_global_vars(self):
-        major_version = utils.get_major_version(self.get_onecloud_version())
-        vars = {
-            "onecloud_major_version": major_version,
-        }
-
-        # set yunion_qemu_package for pre released version
-        yunion_qemu_package = 'yunion-qemu-4.2.0'
-        if major_version in ['v3_6', 'v3_7', 'v3_8']:
-            yunion_qemu_package = 'yunion-qemu-2.12.1'
-        if yunion_qemu_package:
-            vars['yunion_qemu_package'] = yunion_qemu_package
-
-        return vars
+        return get_ansible_global_vars(self.get_onecloud_version())
 
     def get_ansible_inventory(self):
         return ansible.get_inventory_config(
@@ -420,11 +428,13 @@ class OnecloudJointConfig(OnecloudConfig):
         self.join_token = config.get('join_token', None)
         self.join_cert_key = config.get('join_certificate_key', None)
         self.ntpd_server = config.get('ntpd_server', None)
+        self.controlplane_ssh_port = config.get('controlplane_ssh_port', 22)
 
     def ansible_vars(self):
         vars = super(OnecloudJointConfig, self).ansible_vars()
 
         vars['k8s_node_as_oc_controller'] = self.as_controller
+        vars['k8s_controlplane_ssh_port'] = self.controlplane_ssh_port
         if self.join_token:
             vars['k8s_join_token'] = self.join_token
         if self.join_cert_key:
