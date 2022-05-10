@@ -1,7 +1,8 @@
 # encoding: utf-8
 import subprocess
 import os
-import json
+
+from lib import utils
 
 
 def get_ansible_config_path():
@@ -46,7 +47,10 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
     cmd = ["ansible-playbook"]
 
     if vars:
-        cmd.extend(["-e", "'%s'" % json.dumps(vars)])
+        vars_f = "/tmp/oc_vars.yml"
+        with open(vars_f, 'w') as f:
+            f.write(utils.to_yaml(vars))
+        cmd.extend(["-e", "@%s" % vars_f])
 
     cmd.extend(["-i", hosts_f, playbook_f])
 

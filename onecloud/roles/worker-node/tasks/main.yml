@@ -28,10 +28,20 @@
   when:
     k8s_controlplane_host is not defined or k8s_controlplane_host|length == 0
 
+- name: Add controlplane host
+  add_host:
+    hostname: '{{ k8s_controlplane_host }}'
+    ansible_host: '{{ k8s_controlplane_host }}'
+    ansible_ssh_host: '{{ k8s_controlplane_host }}'
+    ansible_user: '{{ ansible_user }}'
+    ansible_ssh_user: '{{ ansible_user }}'
+    ansible_port: '{{ k8s_controlplane_ssh_port | default(22) }}'
+    ansible_ssh_port: '{{ k8s_controlplane_ssh_port | default(22) }}'
+
 - name: Get join token
   shell: kubeadm token create --description "ocadm-playbook-node-joining-token" --ttl 15m --print-join-command | awk '{print $5}{print $7}'
   register: K8S_JOIN_TOKEN
-  delegate_to: "{{ ansible_user }}@{{ k8s_controlplane_host }}"
+  delegate_to: "{{ k8s_controlplane_host }}"
   run_once: yes
   when:
     k8s_join_token is not defined or k8s_join_token|length == 0

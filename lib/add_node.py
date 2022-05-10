@@ -5,6 +5,7 @@ import os
 
 from .cluster import construct_cluster
 from .ocboot import WorkerConfig, Config
+from .ocboot import get_ansible_global_vars
 from .cmd import run_ansible_playbook
 from . import ansible
 from . import utils
@@ -63,13 +64,16 @@ def do_add_node(args):
     config = AddNodesConfig(cluster,
                            args.target_node_hosts,
                            args.ssh_user,
-                           args.ssh_private_file, args.ssh_node_port)
+                           args.ssh_private_file,
+                           args.ssh_port,
+                           args.ssh_node_port)
     config.run()
 
 
 class AddNodesConfig(object):
 
-    def __init__(self, cluster, target_nodes, ssh_user, ssh_private_file, ssh_port):
+    def __init__(self, cluster, target_nodes, ssh_user, ssh_private_file,
+            controlplane_ssh_port, ssh_port):
         target_nodes = list(set(target_nodes))
         for target_node in target_nodes:
             node = cluster.find_node_by_ip_or_hostname(target_node)
@@ -78,12 +82,13 @@ class AddNodesConfig(object):
                     node.get_hostname(), node.get_ip()))
         self.current_version = cluster.get_current_version()
         controlplane_host = cluster.get_primary_master_node_ip()
-        nodes_conf = [{'hostname': target_node, 'user': ssh_user} for target_node in target_nodes]
+        nodes_conf = [{'hostname': target_node, 'user': ssh_user, 'port': ssh_port} for target_node in target_nodes]
         woker_config_dict = {
             'hosts': nodes_conf,
             'controlplane_host': controlplane_host,
             'ad_controller': False,
             'as_host': True,
+            'controlplane_ssh_port': controlplane_ssh_port,
         }
         self.worker_config = WorkerConfig(Config(woker_config_dict))
         print("Get current cluster %s version: %s" % (controlplane_host, self.current_version))
@@ -102,6 +107,4 @@ class AddNodesConfig(object):
         )
 
     def get_vars(self):
-        return {
-            'onecloud_major_version': utils.get_major_version(self.current_version)
-        }
+        return get_ansible_global_vars(self.current_version)
