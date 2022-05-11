@@ -43,6 +43,9 @@
   register: K8S_JOIN_TOKEN
   delegate_to: "{{ k8s_controlplane_host }}"
   run_once: yes
+  environment:
+    http_proxy: ''
+    https_proxy: ''
   when:
     k8s_join_token is not defined or k8s_join_token|length == 0
   changed_when: false
@@ -95,6 +98,9 @@
 
   - name: "Use '/opt/yunion/bin/ocadm {{ join_args }}'"
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
+    environment:
+      http_proxy: ''
+      https_proxy: ''
   when:
     kubelet_result.rc != 0
 
