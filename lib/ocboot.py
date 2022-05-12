@@ -61,11 +61,17 @@ class OcbootConfig(object):
         user = bastion_config.get('user', 'root')
         return ansible.AnsibleBastionHost(host, user)
 
+    def get_primary_master_ssh_port(self):
+        return self.primary_master_config.node.port
+
     def _fetch_conf(self, config_cls):
         group = config_cls.get_group()
         group_config = self.config.get(group, None)
         if not group_config:
             return None
+        if group in [GROUP_MASTER_NODES, GROUP_WORKER_NODES]:
+            if not group_config.get('controlplane_ssh_port', None):
+                group_config['controlplane_ssh_port'] = self.get_primary_master_ssh_port()
         return config_cls(Config(group_config), self.bastion_host)
 
     def get_onecloud_version(self):
