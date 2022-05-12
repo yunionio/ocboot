@@ -30,11 +30,24 @@
   changed_when: false
   failed_when: false
 
+- name: Add controlplane host
+  add_host:
+    hostname: '{{ k8s_controlplane_host }}'
+    ansible_host: '{{ k8s_controlplane_host }}'
+    ansible_ssh_host: '{{ k8s_controlplane_host }}'
+    ansible_user: '{{ ansible_user }}'
+    ansible_ssh_user: '{{ ansible_user }}'
+    ansible_port: '{{ k8s_controlplane_ssh_port | default(22) }}'
+    ansible_ssh_port: '{{ k8s_controlplane_ssh_port | default(22) }}'
+
 - name: Get join token
   shell: kubeadm token create --description "ocadm-playbook-node-joining-token" --ttl 15m --print-join-command | awk '{print $5}{print $7}'
   register: K8S_JOIN_TOKEN
   delegate_to: "{{ k8s_controlplane_host }}"
   run_once: yes
+  environment:
+    http_proxy: ''
+    https_proxy: ''
   when:
     k8s_join_token is not defined or k8s_join_token|length == 0
   changed_when: false
@@ -44,6 +57,9 @@
   register: K8S_CERT_KEY
   delegate_to: "{{ k8s_controlplane_host }}"
   run_once: yes
+  environment:
+    http_proxy: ''
+    https_proxy: ''
   when:
     k8s_join_certificate_key is not defined or k8s_join_certificate_key|length == 0
   changed_when: false
@@ -120,6 +136,9 @@
 
   - name: Use ocadm join master node
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
+    environment:
+      http_proxy: ''
+      https_proxy: ''
   when:
     kubelet_result.rc != 0
 
