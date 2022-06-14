@@ -106,7 +106,8 @@ class UpgradeConfig(object):
     def get_yunion_yum_repo(self):
         ver = self.upgrade_onecloud_major_version.replace('_', '.')
         ver = ver[1:]
-        return "https://iso.yunion.cn/yumrepo-%s/yunion.repo" % (ver)
+        return "https://iso.yunion.cn/centos/7/%s/x86_64/yunion.repo" % (ver)
+
 
     def to_ansible_vars(self):
         return {

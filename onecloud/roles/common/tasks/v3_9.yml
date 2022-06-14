@@ -1,7 +1,7 @@
 ---
 - name: Add yunion rpm repository
   get_url:
-    url: https://iso.yunion.cn/yumrepo-3.8/yunion.repo
+    url: https://iso.yunion.cn/centos/7/3.9/x86_64/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
     validate_certs: no
   become: yes
