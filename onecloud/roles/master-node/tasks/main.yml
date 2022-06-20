@@ -134,6 +134,13 @@
     - high_availability_vip is defined
     - keepalived_version_tag is defined
 
+  - name: disable-resource-management for join
+    set_fact:
+      init_cluster_args: "{{ init_cluster_args }} --disable-resource-management"
+    when:
+    - is_kylin_based is defined
+    - is_kylin_based |default(false)|bool == true
+
   - name: Use ocadm join master node
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
     environment:
