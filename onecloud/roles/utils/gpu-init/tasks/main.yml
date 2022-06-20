@@ -36,3 +36,4 @@
   ignore_errors: yes
   when:
   - is_centos_based is defined
+  - is_kylin_based|default(false)|bool == false
