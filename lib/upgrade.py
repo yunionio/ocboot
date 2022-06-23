@@ -54,6 +54,12 @@ def add_command(subparsers):
                         default="22",
                         help=help_d("primary master host ssh port"))
 
+    parser.add_argument("--node-port", "-n",
+                        dest="ssh_node_port",
+                        type=int,
+                        default="22",
+                        help=help_d("worker node host ssh port"))
+
     parser.add_argument("--as-bastion", "-B",
                         dest="primary_as_bastion",
                         action="store_true",
@@ -76,7 +82,7 @@ def do_upgrade(args):
     if args.primary_as_bastion:
         bastion_host = AnsibleBastionHost(args.primary_master_host)
 
-    inventory_content = cluster.generate_playbook_inventory(bastion_host)
+    inventory_content = cluster.generate_playbook_inventory(bastion_host, args.ssh_port, args.ssh_node_port)
     inventory_f = '/tmp/test-hosts.ini'
     with open(inventory_f, 'w') as f:
         f.write(inventory_content)

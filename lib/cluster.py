@@ -88,7 +88,7 @@ class OnecloudCluster(object):
                 return node
         return None
 
-    def generate_playbook_inventory(self, bastion_host=None):
+    def generate_playbook_inventory(self, bastion_host=None, master_port=22, node_port=22):
         inventory = AnsibleInventory()
 
         def add_i(node):
@@ -96,13 +96,13 @@ class OnecloudCluster(object):
                 node.with_bastion(bastion_host)
             inventory.add(node)
 
-        add_i(AnsiblePrimaryMasterHost(self.primary_master_node))
+        add_i(AnsiblePrimaryMasterHost(self.primary_master_node, port=master_port))
 
         for node in self.master_nodes:
-            add_i(AnsibleMasterHost(node))
+            add_i(AnsibleMasterHost(node, port=master_port))
 
         for node in self.worker_nodes:
-            add_i(AnsibleWorkerHost(node))
+            add_i(AnsibleWorkerHost(node, port=node_port))
 
         return inventory.generate_content()
 
@@ -162,12 +162,13 @@ class AnsibleInventory(object):
 
 class ansibleHost(object):
 
-    def __init__(self, node, role, user='root'):
+    def __init__(self, node, role, user='root', port=22):
         self.hostname = node.get_hostname()
         self.ip = node.get_ip()
         self.role = role
         self.user = user
         self.bastion_host = None
+        self.port = port
 
     def get_hostname(self):
         return self.hostname
@@ -183,10 +184,14 @@ class ansibleHost(object):
         return self
 
     def get_content(self):
-        config = '%s ansible_host=%s ansible_ssh_user=%s' % (
+        config = '%s ansible_ssh_host=%s ansible_host=%s ansible_ssh_user=%s ansible_user=%s ansible_ssh_port=%s ansible_port=%s' % (
             self.hostname,
             self.ip,
-            self.user)
+            self.ip,
+            self.user,
+            self.user,
+            self.port,
+            self.port)
         if self.bastion_host:
             config += " ansible_ssh_common_args='%s'" % self.bastion_host.to_option()
         return config
@@ -194,20 +199,20 @@ class ansibleHost(object):
 
 class AnsiblePrimaryMasterHost(ansibleHost):
 
-    def __init__(self, node, user='root'):
+    def __init__(self, node, user='root', port=22):
         super(AnsiblePrimaryMasterHost, self).__init__(
-            node, GROUP_PRIMARY_MASTER_NODE, user)
+            node, GROUP_PRIMARY_MASTER_NODE, user, port)
 
 
 class AnsibleMasterHost(ansibleHost):
 
-    def __init__(self, node, user='root'):
+    def __init__(self, node, user='root', port=22):
         super(AnsibleMasterHost, self).__init__(
-            node, GROUP_MASTER_NODES, user)
+            node, GROUP_MASTER_NODES, user, port)
 
 
 class AnsibleWorkerHost(ansibleHost):
 
-    def __init__(self, node, user='root'):
+    def __init__(self, node, user='root', port=22):
         super(AnsibleWorkerHost, self).__init__(
-            node, GROUP_WORKER_NODES, user)
+            node, GROUP_WORKER_NODES, user, port)
