@@ -39,6 +39,7 @@
       - yunion-climc
       - yunion-climc-ee
       - yunion-executor
+      - yunion-qemu-4.2.0
     disablerepo: "*"
     enablerepo: "yunion-*"
     state: latest
