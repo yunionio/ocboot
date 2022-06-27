@@ -4,3 +4,4 @@
   when:
     - k8s_node_as_oc_host|default(false)|bool == true
     - no_reboot is not defined or no_reboot|default(false)|bool == false
+    - is_kylin_based|default(false)|bool == false
