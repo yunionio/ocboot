@@ -50,6 +50,13 @@
   - use_ee is defined
   - use_ee|default(false)|bool == true
 
+- name: construct create cluster args
+  set_fact:
+    init_cluster_args: "{{ init_cluster_args }} --disable-resource-management"
+  when:
+  - is_kylin_based is defined
+  - is_kylin_based |default(alse)|bool == true
+
 - name: Create essential services, wait for a few minutes...
   shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait"
   retries: 6

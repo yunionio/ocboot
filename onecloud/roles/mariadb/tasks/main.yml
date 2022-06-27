@@ -14,6 +14,26 @@
   - ansible_facts['distribution_major_version'] == "7"
   - non_iso_mode is defined
 
+- name: Install mariadb on centos
+  package:
+    name: MySQL-python
+    state: installed
+  when:
+  - ansible_facts['distribution'] == "CentOS"
+  - ansible_facts['distribution_major_version'] == "7"
+  - non_iso_mode is defined
+
+- name: Install mysql python for Kylin
+  package:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - python2-PyMySQL
+    - python3-PyMySQL
+  when:
+  - ansible_facts['distribution'] == "Kylin Linux Advanced Server"
+  - ansible_facts['distribution_major_version'] == "V10"
+
 - name: Set discovered Ansible Python interpreter.
   set_fact:
     ansible_python_interpreter: "{{ ansible_facts.python.executable }}"
@@ -70,7 +90,6 @@
   mysql_user:
     name: "{{ db_user }}"
     password: "{{ db_password }}"
-  ignore_errors: yes
   changed_when: false
   failed_when: false
 
@@ -85,3 +104,4 @@
     fi
   args:
     executable: /bin/bash
+

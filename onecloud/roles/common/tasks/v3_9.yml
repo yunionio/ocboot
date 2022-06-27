@@ -1,18 +1,36 @@
 ---
 - name: Add yunion rpm repository
   get_url:
-    url: https://iso.yunion.cn/centos/7/3.9/x86_64/yunion.repo
+    url: https://iso.yunion.cn/centos/7/3.9/{{ansible_architecture}}/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
     validate_certs: no
   become: yes
   when:
-  - is_centos_x86 is defined
+  - is_centos_based is defined
+
+- name: Add yunion rpm repository for Kylin
+  get_url:
+    url: https://iso.yunion.cn/kylin/v10/3.9/{{ansible_architecture}}/kylin-yunion.repo
+    dest: /etc/yum.repos.d/kylin-yunion.repo
+    validate_certs: no
+  become: yes
+  when:
+  - is_kylin_based|default(false)|bool == true
+
+- name: Add yunion rpm repository for Kylin
+  get_url:
+    url: https://iso.yunion.cn/centos/7/3.9/{{ansible_architecture}}/kylin.repo
+    dest: /etc/yum.repos.d/yunion.repo
+    validate_certs: no
+  become: yes
+  when:
+  - is_kylin_based|default(false)|bool == true
 
 - name: make cache
   shell: |
     yum -y --disablerepo='*' --enablerepo='yunion*' makecache
   when:
-  - is_centos_x86 is defined
+  - is_centos_based is defined
 
 - name: Install yunion common packages
   yum:
@@ -20,10 +38,9 @@
     enablerepo: "yunion*"
     disablerepo: "*"
     name:
-      - kernel-3.10.0-1160.6.1.el7.yn20201125
-      - kernel-devel-3.10.0-1160.6.1.el7.yn20201125
-      - kernel-headers-3.10.0-1160.6.1.el7.yn20201125
-      - yunion-executor
+      - kernel-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
+      - kernel-devel-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
+      - kernel-headers-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
   when:
   - is_centos_x86 is defined
   - non_iso_mode is defined
@@ -53,16 +70,6 @@
     name: libselinux-python
   when:
   - is_centos_aarch64 is defined
-
-- name: Add yunion rpm repository for arm64 centos
-  get_url:
-    url: https://iso.yunion.cn/centos-7-aarch/yunion.repo
-    dest: /etc/yum.repos.d/yunion.repo
-    validate_certs: no
-  become: yes
-  when:
-  - is_centos_aarch64 is defined
-  - non_iso_mode is defined
 
 - name: Install yunion common packages for arm64
   yum:

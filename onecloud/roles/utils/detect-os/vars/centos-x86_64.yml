@@ -4,15 +4,18 @@ is_centos_based: true
 is_centos_x86: true
 
 common_packages:
+  - bash-completion
   - boost-iostreams
   - boost-random
   - boost-system
   - boost-thread
   - bridge-utils
+  - ca-certificates
   - ceph-common
   - celt051
   - conntrack-tools
   - curl
+  - epel-release
   - fuse
   - fuse-devel
   - fuse-libs
