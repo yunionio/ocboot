@@ -32,6 +32,7 @@
   - ansible_connection == "ssh"
   - k8s_node_as_oc_host|default(false)|bool == true
   - is_centos_based is defined
+  - is_kylin_based|default(false)|bool == false
 
 - name: Define kernel regex
   set_fact: kernel_regex_debian_510="5\.10\.0"
