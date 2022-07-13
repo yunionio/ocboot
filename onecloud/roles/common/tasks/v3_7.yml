@@ -1,5 +1,5 @@
 ---
-- name: Add yunion rpm repository
+- name: Add cloud rpm repository
   get_url:
     url: https://iso.yunion.cn/yumrepo-3.7/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
@@ -9,7 +9,7 @@
   - is_centos_x86 is defined
   - non_iso_mode is defined
 
-- name: Install yunion common packages for centos x86
+- name: Install cloud common packages for centos x86
   yum:
     state: latest
     name:
@@ -33,7 +33,7 @@
   when:
   - is_debian_based is defined
 
-- name: Add yunion rpm repository for arm64 centos
+- name: Add cloud rpm repository for arm64 centos
   get_url:
     url: https://iso.yunion.cn/centos-7-aarch/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
@@ -43,7 +43,7 @@
   - is_centos_aarch64 is defined
   - non_iso_mode is defined
 
-- name: Install yunion common packages for arm64
+- name: Install cloud common packages for arm64
   yum:
     state: latest
     name:
