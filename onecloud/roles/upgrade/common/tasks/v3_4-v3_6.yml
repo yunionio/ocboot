@@ -3,7 +3,7 @@
   include_role:
     name: utils/mirror
 
-- name: "Add yunion rpm repository {{ yunion_yum_repo }}"
+- name: "Add cloud rpm repository {{ yunion_yum_repo }}"
   get_url:
     url: "{{ yunion_yum_repo }}"
     dest: /etc/yum.repos.d/yunion.repo
@@ -13,14 +13,14 @@
   when:
   - is_centos_x86 is defined
 
-- name: Remove the old yunion-executor-server package
+- name: Remove the old executor-server package
   yum:
     name: yunion-executor-server
     state: absent
   when:
   - is_centos_x86 is defined
 
-- name: Upgrade yunion common packages
+- name: Upgrade common packages
   yum:
     name:
       - yunion-ocadm
@@ -32,7 +32,7 @@
   when:
   - is_centos_x86 is defined
 
-- name: Restart yunion executor service
+- name: Restart executor service
   service:
     name: "{{ item }}"
     enabled: yes

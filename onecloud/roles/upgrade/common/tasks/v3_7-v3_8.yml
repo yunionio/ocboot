@@ -3,7 +3,7 @@
   include_role:
     name: utils/mirror
 
-- name: "Add yunion rpm repository {{ yunion_yum_repo }}"
+- name: "Add cloud rpm repository {{ yunion_yum_repo }}"
   get_url:
     url: "{{ yunion_yum_repo }}"
     dest: /etc/yum.repos.d/yunion.repo
@@ -39,7 +39,7 @@
   when:
   - is_centos_based is defined
 
-- name: Upgrade yunion common packages
+- name: Upgrade common packages
   yum:
     name:
       - yunion-ocadm
