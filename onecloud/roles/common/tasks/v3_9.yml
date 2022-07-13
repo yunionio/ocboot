@@ -1,5 +1,5 @@
 ---
-- name: Add yunion rpm repository
+- name: Add cloud rpm repository
   get_url:
     url: https://iso.yunion.cn/centos/7/3.9/{{ansible_architecture}}/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
@@ -8,7 +8,7 @@
   when:
   - is_centos_based is defined
 
-- name: Add yunion rpm repository for Kylin
+- name: Add cloud rpm repository for Kylin
   get_url:
     url: https://iso.yunion.cn/kylin/v10/3.9/{{ansible_architecture}}/kylin-yunion.repo
     dest: /etc/yum.repos.d/kylin-yunion.repo
@@ -17,7 +17,7 @@
   when:
   - is_kylin_based|default(false)|bool == true
 
-- name: Add yunion rpm repository for Kylin
+- name: Add cloud rpm repository for Kylin
   get_url:
     url: https://iso.yunion.cn/centos/7/3.9/{{ansible_architecture}}/kylin.repo
     dest: /etc/yum.repos.d/yunion.repo
@@ -32,7 +32,7 @@
   when:
   - is_centos_based is defined
 
-- name: Install yunion common packages
+- name: Install cloud common packages
   yum:
     state: latest
     enablerepo: "yunion*"
@@ -71,7 +71,7 @@
   when:
   - is_centos_aarch64 is defined
 
-- name: Install yunion common packages for arm64
+- name: Install cloud common packages for arm64
   yum:
     state: latest
     name:

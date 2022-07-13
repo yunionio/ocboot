@@ -141,13 +141,13 @@ primary_master_node:
   controlplane_host: 10.127.10.158
   # Port of Kubernetes controlplane
   controlplane_port: "6443"
-  # Yunion OneCloud version
+  # OneCloud version
   onecloud_version: 'v3.4.12'
-  # Yunion OneCloud login username
+  # OneCloud login username
   onecloud_user: admin
-  # Yunion OneCloud login user's password
+  # OneCloud login user's password
   onecloud_user_password: admin@123
-  # This machine serves as a Yunion OneCloud private cloud computing node
+  # This machine serves as a OneCloud private cloud computing node
   as_host: true
   # enable_eip_man for all-in-one mode only
   enable_eip_man: true
