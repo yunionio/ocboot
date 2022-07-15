@@ -96,7 +96,7 @@
     when:
       host_networks is defined
 
-  - name: "Use '/opt/yunion/bin/ocadm {{ join_args }}'"
+  - name: "Use 'ocadm {{ join_args }}'"
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
     environment:
       http_proxy: ''

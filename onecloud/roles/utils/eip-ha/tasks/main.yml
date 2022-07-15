@@ -5,7 +5,7 @@
     - vrrp_vip is defined
   become: true
   block:
-    - name: install yunion-sdnagent rpm
+    - name: install sdnagent rpm
       package:
         name: yunion-sdnagent
         state: latest

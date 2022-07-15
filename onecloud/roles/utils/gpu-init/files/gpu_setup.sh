@@ -250,7 +250,7 @@ add_drivers+=" vfio vfio_iommu_type1 vfio_pci"
 EOF
     local yn_kernel=$(ls /boot/vmlinuz-* | grep yn | sort -r | head -n 1)
     if [ -z "$yn_kernel" ]; then
-        error_exit "Not found yunion customize kernel"
+        error_exit "Not found cloud customize kernel"
     fi
     local kernel_release=$(basename $yn_kernel | sed 's/vmlinuz-//g')
     dracut -f --kver $kernel_release --install find --install $VFIO_PCI_OVERRIDE_TOOL

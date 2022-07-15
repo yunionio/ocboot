@@ -234,7 +234,7 @@
   service: name=kubelet enabled=yes
   tags: k8s
 
-- name: Export yunion bin path in /etc/profile
+- name: Export cloud bin path in /etc/profile
   lineinfile:
     dest: /etc/profile
     line: "export PATH=$PATH:/opt/yunion/bin"
@@ -243,7 +243,7 @@
     regexp: '^export PATH=.*/opt/yunion/bin'
   when: shell is undefined or shell == 'bash'
 
-- name: Enable yunion systemd services
+- name: Enable cloud systemd services
   service:
     name: "{{ item }}"
     enabled: yes

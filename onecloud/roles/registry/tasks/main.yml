@@ -6,7 +6,7 @@
   - is_centos_based is defined
   - non_iso_mode is defined
 
-- name: Create yunion directory
+- name: Create cloud conf directory
   file:
     name: /etc/yunion/
     state: directory
