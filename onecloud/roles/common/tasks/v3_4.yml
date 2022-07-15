@@ -1,5 +1,5 @@
 ---
-- name: Add yunion rpm repository
+- name: Add cloud rpm repository
   get_url:
     url: https://iso.yunion.cn/yumrepo-3.4/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
@@ -8,7 +8,7 @@
   when:
   - is_centos_x86 is defined
 
-- name: Install yunion common packages
+- name: Install cloud common packages
   yum:
     state: latest
     name:

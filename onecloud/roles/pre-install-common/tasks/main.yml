@@ -1,12 +1,12 @@
 ---
 # This role contains common plays that will run on all nodes
 
-- name: ensure group yunion exists
+- name: ensure group exists
   group:
     name: yunion
     state: present
 
-- name: ensure user yunion exists
+- name: ensure user exists
   user:
     name: yunion
     shell: /bin/bash
@@ -31,7 +31,7 @@
   args:
     warn: no
 
-- name: yum install yunion packages; it should take a few minutes...
+- name: yum install cloud packages; it should take a few minutes...
   package: name="{{ item }}" state="present"
   with_items:
     - ansible
