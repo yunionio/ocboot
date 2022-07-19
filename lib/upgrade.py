@@ -65,6 +65,12 @@ def add_command(subparsers):
                         action="store_true",
                         help="use primary master node as ssh bastion host to run ansible")
 
+    parser.add_argument("--image-repository", "-i",
+                        dest="image_repository",
+                        default="registry.cn-beijing.aliyuncs.com/yunionio",
+                        help="specify 3rd party image and namespace")
+
+
     parser.set_defaults(func=do_upgrade)
 
 
@@ -86,11 +92,16 @@ def do_upgrade(args):
     inventory_f = '/tmp/test-hosts.ini'
     with open(inventory_f, 'w') as f:
         f.write(inventory_content)
+
+    vars=config.to_ansible_vars()
+    if args.image_repository:
+        vars['image_repository'] = args.image_repository
+
     # start run upgrade playbook
     return_code = run_ansible_playbook(
         inventory_f,
         './onecloud/upgrade-cluster.yml',
-        vars=config.to_ansible_vars(),
+        vars=vars,
     )
     if return_code is not None and return_code != 0:
         return return_code

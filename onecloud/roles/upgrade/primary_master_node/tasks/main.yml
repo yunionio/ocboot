@@ -5,8 +5,12 @@
 
 # use async task to upgrade, ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_async.html
 - name: primary master node | Use ocadm upgrade version "{{ current_onecloud_version }}" to "{{ upgrade_onecloud_version }}"
-  shell:
-    cmd: "pkill ocadm ; /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} --version {{ upgrade_onecloud_version }} --wait"
+  shell: |
+      pkill ocadm
+      /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} \
+        --version {{ upgrade_onecloud_version }} \
+        --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}} \
+        --wait
   # 30 minutes timeout
   async: 1800
   poll: 0
