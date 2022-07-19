@@ -92,13 +92,18 @@ def do_upgrade(args):
     inventory_f = '/tmp/test-hosts.ini'
     with open(inventory_f, 'w') as f:
         f.write(inventory_content)
+
+    vars=config.to_ansible_vars()
+    if args.image_repository:
+        vars['image_repository'] = args.image_repository
+
     # start run upgrade playbook
     vars=config.to_ansible_vars()
     vars['image_repository'] = args.image_repository
     return_code = run_ansible_playbook(
         inventory_f,
         './onecloud/upgrade-cluster.yml',
-        vars = vars,
+        vars=vars,
     )
     if return_code is not None and return_code != 0:
         return return_code
