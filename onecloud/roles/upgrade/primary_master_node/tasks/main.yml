@@ -9,7 +9,7 @@
       pkill ocadm
       /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} \
         --version {{ upgrade_onecloud_version }} \
-        --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunionio')}} \
+        --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} \
         --wait
   # 30 minutes timeout
   async: 1800
