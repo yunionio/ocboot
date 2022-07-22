@@ -29,7 +29,7 @@ def get_ansible_global_vars(version):
 
     # set yunion_qemu_package for pre released version
     yunion_qemu_package = 'yunion-qemu-4.2.0'
-    extra_packages = [] 
+    extra_packages = []
     if major_version in ['v3_6', 'v3_7', 'v3_8']:
         yunion_qemu_package = 'yunion-qemu-2.12.1'
     else:
@@ -378,7 +378,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.onecloud_user = config.get('onecloud_user', 'admin')
         self.onecloud_user_password = config.get('onecloud_user_password', 'admin@123')
         self.use_ee = config.get('use_ee', False)
-        self.image_repository = config.get('image_repository', 'registry.cn-beijing.aliyuncs.com/yunionio')
+        self.image_repository = config.get('image_repository', 'registry.cn-beijing.aliyuncs.com/yunion')
         self.enable_minio = config.get('enable_minio', False)
         self.offline_nodes = config.get('offline_nodes', '')
         self.pod_network_cidr = config.get('pod_network_cidr', '10.40.0.0/16')
