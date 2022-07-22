@@ -67,7 +67,7 @@ def add_command(subparsers):
 
     parser.add_argument("--image-repository", "-i",
                         dest="image_repository",
-                        default="registry.cn-beijing.aliyuncs.com/yunionio",
+                        default="registry.cn-beijing.aliyuncs.com/yunion",
                         help="specify 3rd party image and namespace")
 
 
