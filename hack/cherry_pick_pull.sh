@@ -156,10 +156,14 @@ EOF
 hub pull-request -F "${prtext}" -h "${GITHUB_USER}:${NEWBRANCH}" -b "${MAIN_REPO_ORG}:${rel}"
 }
 
+function python_bin() {
+    command -v python3 >/dev/null 2>&1 && echo python3 || python
+}
+
 function extract-subject {
   local patch="$1"
 
-  python -c '
+  $(python_bin) -c '
 import os
 import email.parser
 import email.header
