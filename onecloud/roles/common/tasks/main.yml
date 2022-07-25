@@ -13,6 +13,7 @@
   when:
   - is_centos_based is defined
   - non_iso_mode is defined
+  - offline_deploy|default(false)|bool == false
 
 - name: Set facts
   set_fact:
@@ -105,6 +106,8 @@
   package:
    name: systemd
    state: latest
+  when:
+  - offline_deploy|default(false)|bool == false
 
 - name: Config NetworkManager
   include_role:
