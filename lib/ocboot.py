@@ -5,6 +5,7 @@ import os
 
 from . import ansible
 from . import utils
+from . import consts
 
 
 GROUP_MARIADB_NODE = "mariadb_node"
@@ -32,7 +33,7 @@ def get_ansible_global_vars(version):
     # set yunion_qemu_package for pre released version
     yunion_qemu_package = 'yunion-qemu-4.2.0'
     extra_packages = []
-    if major_version in ['v3_6', 'v3_7', 'v3_8']:
+    if utils.is_below_v3_9(version):
         yunion_qemu_package = 'yunion-qemu-2.12.1'
     else:
         extra_packages.append('yunion-climc-ee')
@@ -382,7 +383,9 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.onecloud_user = config.get('onecloud_user', 'admin')
         self.onecloud_user_password = config.get('onecloud_user_password', 'admin@123')
         self.use_ee = config.get('use_ee', False)
-        self.image_repository = config.get('image_repository', 'registry.cn-beijing.aliyuncs.com/yunion')
+        self.image_repository = config.get('image_repository', consts.REGISTRY_ALI_YUNION)
+        if utils.is_below_v3_9(self.onecloud_version):
+            self.image_repository = consts.REGISTRY_ALI_YUNIONIO
         self.enable_minio = config.get('enable_minio', False)
         self.offline_nodes = config.get('offline_nodes', '')
         self.pod_network_cidr = config.get('pod_network_cidr', '10.40.0.0/16')

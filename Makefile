@@ -1,5 +1,5 @@
 test:
-	python -m unittest discover -s tests -v
+	python3 -m unittest discover -s tests -v
 
 TMP_PCI_IDS = /tmp/ocboot-pci.ids
 DEST_PCI_IDS = $(CURDIR)/onecloud/roles/utils/gpu-init/files/pci.ids
