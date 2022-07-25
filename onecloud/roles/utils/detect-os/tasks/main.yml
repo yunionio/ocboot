@@ -24,3 +24,4 @@
     non_iso_mode: true
   when:
   - iso_install_mode is not defined or iso_install_mode|default(false)|bool == false or ansible_connection == "ssh"
+  - offline_deploy|default(false)|bool == false

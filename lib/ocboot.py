@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from . import ansible
 from . import utils
 
+import os
 
 GROUP_MARIADB_NODE = "mariadb_node"
 GROUP_REGISTRY_NODE="registry_node"
@@ -262,6 +263,8 @@ class OnecloudConfig(object):
 
         self.iso_install_mode = config.get('iso_install_mode', False)
         self.enable_eip_man = config.get('enable_eip_man', False)
+        self.offline_deploy = config.get('offline_deploy', False) or os.environ.get('OFFLINE_DEPLOY') == 'true'
+
 
     def ansible_vars(self):
         vars = {
@@ -271,6 +274,7 @@ class OnecloudConfig(object):
             'k8s_controlplane_port': self.controlplane_port,
             'k8s_node_as_oc_host': self.as_host,
             'enable_eip_man': self.enable_eip_man,
+            'offline_deploy': self.offline_deploy,
         }
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip
