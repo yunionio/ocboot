@@ -8,6 +8,8 @@ from .ansible import AnsibleBastionHost
 from .cmd import run_ansible_playbook
 from .utils import get_major_version
 from .cluster import construct_cluster
+from . import consts
+from lib import utils
 
 
 UPGRADE_MSG = """
@@ -67,7 +69,7 @@ def add_command(subparsers):
 
     parser.add_argument("--image-repository", "-i",
                         dest="image_repository",
-                        default="registry.cn-beijing.aliyuncs.com/yunion",
+                        default=consts.REGISTRY_ALI_YUNION,
                         help="specify 3rd party image and namespace")
 
 
@@ -95,6 +97,9 @@ def do_upgrade(args):
 
     vars=config.to_ansible_vars()
     if args.image_repository:
+        if args.image_repository == consts.REGISTRY_ALI_YUNION:
+            if utils.is_below_v3_9(cur_ver):
+                args.image_repository = consts.REGISTRY_ALI_YUNIONIO
         vars['image_repository'] = args.image_repository
 
     # start run upgrade playbook
