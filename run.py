@@ -153,6 +153,7 @@ primary_master_node:
   enable_eip_man: true
   # chose product_version in ['FullStack', 'CMP', 'Edge']
   product_version: 'FullStack'
+  image_repository: registry.cn-beijing.aliyuncs.com/yunion
 """
 
 def gen_config(ipaddr):
@@ -161,6 +162,9 @@ def gen_config(ipaddr):
     import yaml
     import os
     config_dir = os.getenv("OCBOOT_CONFIG_DIR")
+    image_repository = os.getenv('IMAGE_REPOSITORY')
+    if image_repository not in ['', None, 'none']:
+        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion', image_repository)
     cur_path = os.path.abspath(os.path.dirname(__file__))
     if not config_dir:
         config_dir = cur_path

@@ -33,6 +33,7 @@
   when:
   - ansible_facts['distribution'] == "Kylin Linux Advanced Server"
   - ansible_facts['distribution_major_version'] == "V10"
+  - offline_deploy|default(false)|bool == false
 
 - name: Set discovered Ansible Python interpreter.
   set_fact:
