@@ -75,6 +75,7 @@
   when:
   - common_packages is defined
   - non_iso_mode is defined
+  - offline_deploy|default(false)|bool == false
 
 - name: Check that if selinux config exists
   stat:
@@ -102,6 +103,8 @@
   package:
    name: systemd
    state: latest
+  when:
+  - offline_deploy|default(false)|bool == false
 
 - name: Config NetworkManager
   include_role:

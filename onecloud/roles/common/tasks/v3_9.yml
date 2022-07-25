@@ -7,6 +7,7 @@
   become: yes
   when:
   - is_centos_based is defined
+  - offline_deploy|default(false)|bool == false
 
 - name: Add cloud rpm repository for Kylin
   get_url:
@@ -16,6 +17,7 @@
   become: yes
   when:
   - is_kylin_based|default(false)|bool == true
+  - offline_deploy|default(false)|bool == false
 
 - name: Add cloud rpm repository for Kylin
   get_url:
@@ -25,6 +27,7 @@
   become: yes
   when:
   - is_kylin_based|default(false)|bool == true
+  - offline_deploy|default(false)|bool == false
 
 - name: make cache
   shell: |
