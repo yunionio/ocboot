@@ -14,12 +14,43 @@
   shell: /opt/yunion/bin/ocadm token list | cut -d  ' ' -f1 | sed -n '2p'
   register: K8S_TOKEN
 
+- name: load local images if exist; it might take a few minutes...
+  shell: |
+    if [ ! -d /opt/deploy/images ]; then
+      exit 0
+    fi
+    count=$(find /opt/deploy/images -maxdepth 1 -type f -name '*tar.xz' |wc -l)
+    if [ "$count" -eq 0 ]; then
+      exit 0
+    fi
+    if [ ! -d /opt/deploy/images/loaded ]; then
+      mkdir -p /opt/deploy/images/loaded
+    fi
+
+    if [ -x /usr/bin/parallel ]; then
+      load_and_mv(){
+        local i=$1
+        docker load -i $i && mv $i /opt/deploy/images/loaded
+      }
+      export -f load_and_mv
+      parallel --will-cite load_and_mv ::: /opt/deploy/images/*.tar.xz
+    else
+      for i in /opt/deploy/images/*.tar.xz
+      do
+        docker load -i $i && mv $i /opt/deploy/images/loaded
+      done
+    fi
+  ignore_errors: yes
+  args:
+    executable: /bin/bash
+
 - name: Pull ocadm images on node
   command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} --onecloud-version {{ onecloud_version | default('latest') }} --operator-version {{ onecloud_version | default('latest') }}"
   register: command_result
   changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
   when:
   - K8S_TOKEN.stdout|length == 0
+  - offline_deploy|default(false)|bool == false
 
 - name: Check node is init
   shell: test -f /etc/kubernetes/kubelet.conf
