@@ -45,6 +45,23 @@ def get_major_version(ver):
     return '%s_%s' % (segs[0], segs[1])
 
 
+def is_below_v3_9(ver):
+    # 对于 master 版本，不做校验；对于 v3.6.x、v3.7.x这样的格式，做版本校验
+    if ver.startswith('master-'):
+        return False
+    segs = ver.split('.')
+    v_1st = int(segs[0].strip('v'))
+    v_2nd = int(segs[1])
+    if v_1st > 3:
+        return False
+    elif v_1st < 3:
+        return True
+    else:
+        if v_2nd < 9:
+            return True
+    return False
+
+
 def to_yaml(data):
     return yaml.dump(data, default_flow_style=False)
 
