@@ -10,6 +10,7 @@
 
 - name: make cache
   shell: |
+    yum clean all
     yum -y --disablerepo='*' --enablerepo='yunion*' makecache
   when:
   - is_centos_x86 is defined

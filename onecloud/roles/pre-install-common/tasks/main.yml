@@ -13,7 +13,9 @@
     groups: yunion
 
 - name: make cache for centos x86
-  shell: "yum makecache fast"
+  shell: |
+    yum clean all
+    yum makecache
   args:
     warn: no
   when:
