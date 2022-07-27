@@ -11,7 +11,7 @@ common_packages:
   - boost-thread
   - bridge-utils
   - ca-certificates
-  - ceph-common
+#  - ceph-common # 暂无 yunion 源
   - celt051
   - conntrack-tools
   - curl
