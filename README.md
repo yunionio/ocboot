@@ -415,20 +415,20 @@ optional arguments:
 
 ```bash
 # Allinone install
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s <IP>
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-allinone.yml
+$ ./run-in-docker.sh <IP>
+$ ./run-in-docker.sh install config-allinone.yml
 
 # Multiple nodes install
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-nodes.yml
+$ ./run-in-docker.sh install config-nodes.yml
 
 # High availability install
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-k8s-ha.yml
+$ ./run-in-docker.sh install config-k8s-ha.yml
 
 # Add node
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s add-node <PRIMARY_HOST> <NODE_IP1> <NODE_IP2> ... <NODE_IPN>
+$ ./run-in-docker.sh add-node <PRIMARY_HOST> <NODE_IP1> <NODE_IP2> ... <NODE_IPN>
 
 # Upgrade node
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s upgrade <PRIMARY_HOST> v3.8.8
+$ ./run-in-docker.sh upgrade <PRIMARY_HOST> v3.8.13
 ```
 
 </details>

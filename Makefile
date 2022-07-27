@@ -15,7 +15,5 @@ VERSION ?= $(shell git describe --exact-match 2> /dev/null || \
                 git describe --match=$(git rev-parse --short=8 HEAD) --always --dirty --abbrev=8)
 
 image:
-	docker build -t $(REGISTRY)/ocboot:$(VERSION) -f ./Dockerfile .
-
-image-push: image
-	docker push $(REGISTRY)/ocboot:$(VERSION)
+	docker buildx build --platform linux/arm64,linux/amd64 --push \
+		-t $(REGISTRY)/ocboot:$(VERSION) -f ./Dockerfile .
