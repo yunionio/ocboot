@@ -8,13 +8,15 @@
         [ -x /usr/bin/rsync ] || yum install -y rsync
         "
       rsync -Par $rpm_path/rpms $rpm_path/repodata $item:$rpm_path/
-      if [ -f /etc/yum.repos.d/yunion-local.repo ]; then
-        rsync /etc/yum.repos.d/yunion-local.repo $item:/etc/yum.repos.d/
-        ssh "$item" "yum makecache fast"
+      if grep -lqw yunion /etc/yum.repos.d/*.repo ; then
+        rsync $(grep -lw yunion /etc/yum.repos.d/*.repo| xargs ) $item:/etc/yum.repos.d/
+        ssh "$item" "yum -y --disablerepo='*' --enablerepo='yunion*' makecache"
       fi
     done
   args:
     executable: /bin/bash
   when:
+  - is_centos_based is defined
   - offline_nodes is defined
   - offline_nodes != ""
+

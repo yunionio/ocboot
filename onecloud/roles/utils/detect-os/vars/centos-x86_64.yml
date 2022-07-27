@@ -9,7 +9,7 @@ common_packages:
   - boost-system
   - boost-thread
   - bridge-utils
-  - ceph-common
+#      - ceph-common 暂无 yunion
   - celt051
   - conntrack-tools
   - curl
