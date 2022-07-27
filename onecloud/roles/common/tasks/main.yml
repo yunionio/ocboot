@@ -69,13 +69,11 @@
   - non_iso_mode is defined
 
 - name: install packages via loop
-  package: name="{{ item }}"
+  package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*"
   with_items:
   - "{{ common_packages }}"
   when:
   - common_packages is defined
-  - non_iso_mode is defined
-  - offline_deploy|default(false)|bool == false
 
 - name: Check that if selinux config exists
   stat:
@@ -213,9 +211,10 @@
         - docker-ce
         - docker-ce-cli
         - containerd.io
+      disablerepo: "*"
+      enablerepo: "yunion-*"
     when:
     - is_centos_based is defined
-    - non_iso_mode is defined
 
   - name: Make /etc/docker dir
     file:

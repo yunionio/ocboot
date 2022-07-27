@@ -47,7 +47,6 @@
       - kernel-headers-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
   when:
   - is_centos_x86 is defined
-  - non_iso_mode is defined
 
 - name: init apt cache for debian
   get_url:
