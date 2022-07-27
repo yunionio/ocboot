@@ -4,29 +4,6 @@ ocboot 能够快速的在 CentOS 7 或者 Debian 10 机器上搭建部署 [Cloud
 
 ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
 
-为了避免因为环境依赖产生的问题，我们也提供了使用容器来部署，由于部署过程中有重启容器引擎的操作，故**使用容器时只能以远程的方式部署(即部署的目标机器和运行 ocboot 容器的机器不能是同一台)**。使用容器时，只需要配置好 ssh 免密登录，按需创建配置文件，以及安装好 docker 即可开始部署。
-
-## 使用docker部署
-
-```bash
-# Allinone install
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s <IP>
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-allinone.yml
-
-# Multiple nodes install
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-nodes.yml
-
-# High availability install
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s install config-k8s-ha.yml
-
-# Add node
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s add-node <PRIMARY_HOST> <NODE_IP1> <NODE_IP2> ... <NODE_IPN>
-
-# Upgrade node
-$ curl https://raw.githubusercontent.com/yunionio/ocboot/master/run-in-docker.sh | sh -s upgrade <PRIMARY_HOST> v3.8.8
-```
-如果条件不能满足，请使用下面的方法进行部署。
-
 # 依赖说明
 
 - 操作系统: Centos 7.x 或者 Debian 10
@@ -419,3 +396,33 @@ optional arguments:
 * `--master-node-as-host`安装`master`节点时，将其作为`host` 节点。
 
 * `--worker-node-ips`、`--worker-node-as-host`，作用同上，如其名。
+
+## 使用docker部署
+
+为了避免因为环境依赖产生的问题，我们也提供了使用容器来部署，由于部署过程中有重启容器引擎的操作，故**使用容器时只能以远程的方式部署(即部署的目标机器和运行 ocboot 容器的机器不能是同一台)**。使用容器时，只需要配置好 ssh 免密登录，按需创建配置文件，以及安装好 docker 即可开始部署。
+
+<details>
+
+<summary>
+查看命令
+</summary>
+
+```bash
+# Allinone install
+$ ./run-in-docker.sh <IP>
+$ ./run-in-docker.sh install config-allinone.yml
+
+# Multiple nodes install
+$ ./run-in-docker.sh install config-nodes.yml
+
+# High availability install
+$ ./run-in-docker.sh install config-k8s-ha.yml
+
+# Add node
+$ ./run-in-docker.sh add-node <PRIMARY_HOST> <NODE_IP1> <NODE_IP2> ... <NODE_IPN>
+
+# Upgrade node
+$ ./run-in-docker.sh upgrade <PRIMARY_HOST> v3.8.13
+```
+
+</details>

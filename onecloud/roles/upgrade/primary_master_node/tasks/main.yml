@@ -3,6 +3,16 @@
   include_role:
     name: utils/controlplane
 
+- name: Upgrade ocadm packages
+  yum:
+    name:
+      - yunion-ocadm
+    disablerepo: "*"
+    enablerepo: "yunion-*"
+    state: latest
+  when:
+  - is_centos_based is defined
+
 # use async task to upgrade, ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_async.html
 - name: primary master node | Use ocadm upgrade version "{{ current_onecloud_version }}" to "{{ upgrade_onecloud_version }}"
   shell: |
