@@ -29,7 +29,7 @@
     - gpu_setup.sh
 
 - name: init gpus
-  shell: bash /usr/local/gpu-init/gpu_setup.sh
+  shell: bash /usr/local/gpu-init/gpu_setup.sh >/dev/null 2>&1
   args:
     executable: /bin/bash
     chdir: /usr/local/gpu-init/

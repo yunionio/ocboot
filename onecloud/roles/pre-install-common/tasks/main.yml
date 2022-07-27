@@ -15,7 +15,7 @@
 - name: make cache for centos x86
   shell: |
     yum clean all
-    yum makecache
+    yum -y --disablerepo='*' --enablerepo='yunion*' makecache
   args:
     warn: no
   when:
@@ -34,13 +34,13 @@
     warn: no
 
 - name: yum install cloud packages; it should take a few minutes...
-  package: name="{{ item }}" state="present"
+  package: name="{{ item }}" state="present" disablerepo="*" enablerepo="yunion-*"
   with_items:
     - ansible
     - autogen-libopts
     - bash-completion
     - bridge-utils
-    - ceph-common
+#    - ceph-common # 无yunion源。等做好之后再enable
     - conntrack-tools
     - container-selinux
     - containerd.io
@@ -84,7 +84,6 @@
     - "{{ yunion_qemu_package }}"
   when:
   - is_centos_based is defined
-  - non_iso_mode is defined
 
 - name: config ntpd service
   template: src=ntp.conf dest=/etc/ntp.conf
