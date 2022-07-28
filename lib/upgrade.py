@@ -98,7 +98,7 @@ def do_upgrade(args):
     vars=config.to_ansible_vars()
     if args.image_repository:
         if args.image_repository == consts.REGISTRY_ALI_YUNION:
-            if utils.is_below_v3_9(cur_ver):
+            if utils.is_below_v3_9(args.version):
                 args.image_repository = consts.REGISTRY_ALI_YUNIONIO
         vars['image_repository'] = args.image_repository
 
