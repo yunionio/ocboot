@@ -15,7 +15,6 @@ common_packages:
   - celt051
   - conntrack-tools
   - curl
-  - epel-release
   - fuse
   - fuse-devel
   - fuse-libs
