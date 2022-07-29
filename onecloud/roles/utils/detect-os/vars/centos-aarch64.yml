@@ -13,7 +13,6 @@ common_packages:
   - ca-certificates
   - celt051
   - conntrack-tools
-  - epel-release
   - fuse
   - fuse-devel
   - fuse-libs
