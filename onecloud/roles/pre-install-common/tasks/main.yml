@@ -46,7 +46,6 @@
     - containerd.io
     - cri-tools
     - docker-ce
-    - epel-release
     - fuse
     - fuse-devel
     - fuse-libs
