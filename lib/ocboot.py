@@ -68,7 +68,19 @@ class OcbootConfig(object):
         user = bastion_config.get('user', 'root')
         return ansible.AnsibleBastionHost(host, user)
 
+    def is_iso_join_mode(self):
+        worker_nodes = self.config.get('worker_nodes', None)
+        master_nodes = self.config.get('master_nodes', None)
+
+        if worker_nodes and worker_nodes.get('join_token', None):
+            return True
+        if master_nodes and master_nodes.get('join_token', None):
+            return True
+        return False
+
     def get_primary_master_ssh_port(self):
+        if self.is_iso_join_mode():
+            return
         return self.primary_master_config.node.port
 
     def _fetch_conf(self, config_cls):
