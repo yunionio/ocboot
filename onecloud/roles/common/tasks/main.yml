@@ -75,6 +75,14 @@
   when:
   - common_packages is defined
 
+- name: install misc obsolete packages
+  package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*"
+  with_items:
+  - yunion-qemu-2.12.1
+  when:
+  - is_centos_x86 is defined
+  - non_iso_mode is defined
+
 - name: Check that if selinux config exists
   stat:
     path: /etc/selinux/config
@@ -96,13 +104,6 @@
   when: "item + '.service' in ansible_facts.services"
   loop:
   - firewalld
-
-- name: ensure systemd installed
-  package:
-   name: systemd
-   state: latest
-  when:
-  - offline_deploy|default(false)|bool == false
 
 - name: Config NetworkManager
   include_role:
