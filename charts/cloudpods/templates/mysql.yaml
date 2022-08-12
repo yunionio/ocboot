@@ -1,0 +1,85 @@
+{{- if .Values.cluster.mysql.statefulset.enabled }}
+{{ $mysql := .Values.cluster.mysql }}
+{{ $statefulset := $mysql.statefulset }}
+{{ $image := $statefulset.image }}
+{{ $storageClass := $statefulset.persistence.storageClass }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "cloudpods.cluster.mysql.host" . }}
+  labels:
+    app: {{ template "cloudpods.name" . }}-mysql
+    chart: {{ template "cloudpods.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: mysql
+      port: {{ $mysql.port }}
+      protocol: TCP
+      targetPort: {{ $mysql.port }}
+  selector:
+    app: {{ template "cloudpods.name" . }}-mysql
+    release: {{ .Release.Name }}
+---
+apiVersion: {{ template "statefulset.apiVersion" . }}
+kind: StatefulSet
+metadata:
+  name: {{ template "cloudpods.mysql.fullname" . }}
+  labels:
+    app: {{ template "cloudpods.name" . }}-mysql
+    chart: {{ template "cloudpods.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: "Parallel"
+  serviceName: {{ template "cloudpods.cluster.mysql.host" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "cloudpods.name" . }}-mysql
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      name: {{ template "cloudpods.mysql.fullname" . }}
+      labels:
+        app: {{ template "cloudpods.name" . }}-mysql
+        release: {{ .Release.Name }}
+    spec:
+      {{- with .Values.operator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}-mysql
+          image: {{ $image.repository }}:{{ $image.tag }}
+          imagePullPolicy: {{ $image.pullPolicy }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: {{ $mysql.password | quote }}
+            - name: MYSQL_TCP_PORT
+              value: {{ $mysql.port | quote }}
+          ports:
+            - containerPort: {{ int $mysql.port }}
+              name: mysql
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-persistent-storage
+      spec:
+        accessModes: [ {{ $statefulset.persistence.accessMode | quote }} ]
+        {{- if $storageClass }}
+        storageClassName: {{ $storageClass }}
+        {{- else }}
+        storageClassName: {{ template "cloudpods.cluster.storageClass" . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $statefulset.persistence.size }}
+{{- end }}

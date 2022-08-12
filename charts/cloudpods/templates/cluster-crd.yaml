@@ -1,0 +1,84 @@
+{{- if .Values.createCRD -}}
+{{- if semverCompare "<1.20-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    helm.sh/hook: pre-install
+  creationTimestamp: null
+  name: onecloudclusters.onecloud.yunion.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.keystone.image
+    description: The image for keystone service
+    name: keystone
+    type: string
+  conversion:
+    strategy: None
+  group: onecloud.yunion.io
+  names:
+    kind: OnecloudCluster
+    listKind: OnecloudClusterList
+    plural: onecloudclusters
+    shortNames:
+    - onecloud
+    - oc
+    singular: onecloudcluster
+  preserveUnknownFields: true
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            mysql:
+              properties:
+                host:
+                  type: string
+                password:
+                  type: string
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+{{- else -}}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    helm.sh/hook: pre-install
+  creationTimestamp: null
+  name: onecloudclusters.onecloud.yunion.io
+spec:
+  conversion:
+    strategy: None
+  group: onecloud.yunion.io
+  names:
+    kind: OnecloudCluster
+    listKind: OnecloudClusterList
+    plural: onecloudclusters
+    shortNames:
+    - onecloud
+    - oc
+    singular: onecloudcluster
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: The image for keystone service
+      jsonPath: .spec.keystone.image
+      name: keystone
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            x-kubernetes-preserve-unknown-fields: true
+          status:
+            x-kubernetes-preserve-unknown-fields: true
+        type: object
+    served: true
+    storage: true
+{{- end -}}
+{{- end -}}

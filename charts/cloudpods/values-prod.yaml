@@ -1,0 +1,110 @@
+# Default values for cloudpods.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+operator:
+  replicaCount: 1
+  syncUser: false
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  nodeSelector: {}
+  tolerations:
+  - key: node-role.kubernetes.io/master
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/controlplane
+    effect: NoSchedule
+  affinity: {}
+
+  image:
+    repository: "registry.cn-beijing.aliyuncs.com/yunion/onecloud-operator"
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  imagePullSecrets: []
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+localPathCSI:
+  enabled: true
+  image:
+    repository: "registry.cn-beijing.aliyuncs.com/yunion/local-path-provisioner"
+    pullPolicy: IfNotPresent
+    tag: "v0.0.11"
+
+cluster:
+  mysql:
+    host: 1.2.3.4
+    port: 3306
+    user: root
+    password: your-db-password
+    statefulset:
+      enabled: false
+      image:
+        repository: "registry.cn-beijing.aliyuncs.com/yunionio/mysql"
+        pullPolicy: IfNotPresent
+        tag: "5.6"
+      persistence:
+        storageClass: ""
+        accessMode: ReadWriteOnce
+        size: 500Gi
+  # Overrides the image tag whose default is the chart appVersion.
+  version: ""
+  disableResourceManagement: false
+  imageRepository: registry.cn-beijing.aliyuncs.com/yunionio
+  # use domain name or IP address
+  publicEndpoint: foo.bar.com
+  edition: ce
+  storageClass: ""
+  baremetalagent:
+    disable: true
+    requests:
+      storage: 100G
+  glance:
+    requests:
+      storage: 100G
+  influxdb:
+    requests:
+      storage: 100G
+  meter:
+    requests:
+      storage: 25G
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+service:
+  port: 443
