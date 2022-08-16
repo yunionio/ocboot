@@ -51,7 +51,6 @@
     - fuse-libs
     - htop
     - ipvsadm
-    - iscsi-initiator-utils
     - jq
     - kmod-openvswitch
     - kubeadm-1.15.12-0
