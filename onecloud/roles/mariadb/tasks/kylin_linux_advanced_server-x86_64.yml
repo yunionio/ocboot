@@ -1,0 +1,10 @@
+ - name: Install mysql python for Kylin
+   package:
+     name: "{{ item }}"
+     state: installed
+     disablerepo: "*"
+     enablerepo: "yunion-*"
+   with_items:
+    - mariadb-server
+    - python2-PyMySQL
+    - python3-PyMySQL

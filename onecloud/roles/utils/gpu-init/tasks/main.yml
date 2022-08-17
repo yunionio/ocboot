@@ -34,6 +34,8 @@
     executable: /bin/bash
     chdir: /usr/local/gpu-init/
   ignore_errors: yes
+  no_log: True
+  failed_when: false
   when:
   - is_centos_based is defined
   - is_kylin_based|default(false)|bool == false

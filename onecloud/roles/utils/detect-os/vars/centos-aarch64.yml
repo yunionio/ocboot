@@ -10,13 +10,19 @@ common_packages:
   - boost-system
   - boost-thread
   - bridge-utils
-  - ca-certificates
   - celt051
+  - ceph-common
   - conntrack-tools
+  - container-selinux
+  - containerd.io
+  - cri-tools
+  - curl
+  - docker-ce
   - fuse
   - fuse-devel
   - fuse-libs
   - gssproxy
+  - htop
   - ipset
   - ipvsadm
   - jq
@@ -26,6 +32,8 @@ common_packages:
   - kubeadm
   - kubectl
   - kubelet
+  - kubernetes-cni
+  - libaio
   - libbasicobjects
   - libcollection
   - libini_config
@@ -42,13 +50,22 @@ common_packages:
   - libusbx
   - libverto-libevent
   - lm_sensors-libs
+  - lvm2
+  - nc
+  - net-tools
   - nfs-utils
   - nmap-ncat
+  - ntp
+  - ntpdate
+  - oniguruma
   - openvswitch
+  - parallel
+  - pciutils
   - pixman
   - quota
   - quota-nls
   - rpcbind
+  - rsync
   - spice
   - spice-protocol
   - sysstat
@@ -57,13 +74,17 @@ common_packages:
   - unbound
   - unbound-libs
   - usbredir
-  - yunion-climc
-  - yunion-executor
-  - yunion-ocadm
-  - yunion-ovmfrpm
+  - wget
   - "{{ yunion_qemu_package }}"
-  - yunion-fetcherfs
 
 common_services:
     - ntpd
     - yunion-executor
+
+latest_packages:
+    - ca-certificates
+    - yunion-climc
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
+    - yunion-ovmfrpm
