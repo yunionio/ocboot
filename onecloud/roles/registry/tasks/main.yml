@@ -1,10 +1,9 @@
 - name: Install registry
-  yum: name={{ item }} state=present
+  yum: name={{ item }} disablerepo="*" state=present enablerepo="yunion-*"
   with_items:
   - yunion-registry
   when:
   - is_centos_based is defined
-  - non_iso_mode is defined
 
 - name: Create cloud conf directory
   file:

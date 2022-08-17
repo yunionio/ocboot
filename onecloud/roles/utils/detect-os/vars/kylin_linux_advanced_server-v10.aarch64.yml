@@ -11,11 +11,11 @@ common_packages:
   - boost-system
   - boost-thread
   - bridge-utils
-  - ca-certificates
   - celt051
   - ceph-common
   - conntrack-tools
   - curl
+  - docker-ce
   - fuse
   - fuse-devel
   - fuse-libs
@@ -25,10 +25,11 @@ common_packages:
   - jq
   - keyutils
   - kmod
-    # - kmod-openvswitch
+  - kmod-openvswitch
   - kubeadm-1.15.12-0
   - kubectl-1.15.12-0
   - kubelet-1.15.12-0
+  - kubernetes-cni
   - libbasicobjects
   - libcollection
   - libini_config
@@ -48,12 +49,14 @@ common_packages:
   - nfs-utils
   - nmap-ncat
   - openvswitch
+  - parallel
   - pixman
   - python2-libselinux
   - python3-libselinux
   - quota
   - quota-nls
   - rpcbind
+  - rsync
   - sysstat
   - tcp_wrappers
   - tcpdump
@@ -61,13 +64,17 @@ common_packages:
   - unbound-libs
   - usbredir
   - wget
-  - yunion-climc
-  - yunion-executor
-  - yunion-fetcherfs
-  - yunion-ocadm
-  - yunion-ovmfrpm
-  - yunion-qemu-4.2.0-4.2.0-20220406.ky10.ky10
+  - "{{ yunion_qemu_package }}"
 
 common_services:
     - ntpd
     - yunion-executor
+
+latest_packages:
+    - ca-certificates
+    - yunion-climc
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
+    - yunion-ovmfrpm
+
