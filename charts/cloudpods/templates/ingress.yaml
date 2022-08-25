@@ -1,6 +1,5 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "cloudpods.fullname" . -}}
-{{- $svcPort := .Values.service.port -}}
+{{- $fullName := include "cloudpods.web.fullname" . -}}
 {{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
   {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
@@ -26,8 +25,8 @@ spec:
   {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
-  {{- if .Values.ingress.tls }}
   tls:
+  {{- if .Values.ingress.tls }}
     {{- range .Values.ingress.tls }}
     - hosts:
         {{- range .hosts }}
@@ -35,6 +34,8 @@ spec:
         {{- end }}
       secretName: {{ .secretName }}
     {{- end }}
+  {{- else }}
+    - secretName: {{ include "cloudpods.web.certs.fullname" . }}
   {{- end }}
   rules:
     {{- range .Values.ingress.hosts }}
@@ -51,10 +52,10 @@ spec:
               service:
                 name: {{ $fullName }}
                 port:
-                  number: {{ $svcPort }}
+                  number: 443
               {{- else }}
               serviceName: {{ $fullName }}
-              servicePort: {{ $svcPort }}
+              servicePort: 443
               {{- end }}
           {{- end }}
     {{- end }}

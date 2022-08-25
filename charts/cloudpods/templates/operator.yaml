@@ -2,6 +2,8 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: onecloud-operator
+  labels:
+    {{- include "cloudpods.labels" . | nindent 4 }}
 subjects:
 - kind: ServiceAccount
   name: onecloud-operator
@@ -15,6 +17,8 @@ kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: onecloud-operator
+  labels:
+    {{- include "cloudpods.labels" . | nindent 4 }}
 ---
 apiVersion: apps/v1
 kind: Deployment

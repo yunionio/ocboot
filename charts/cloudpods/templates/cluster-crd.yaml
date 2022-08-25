@@ -5,6 +5,8 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     helm.sh/hook: pre-install
+  labels:
+    {{- include "cloudpods.labels" . | nindent 4 }}
   creationTimestamp: null
   name: onecloudclusters.onecloud.yunion.io
 spec:

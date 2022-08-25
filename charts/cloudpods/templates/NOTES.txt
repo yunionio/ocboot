@@ -2,7 +2,9 @@
 {{- if .Values.ingress.enabled }}
 {{- range $host := .Values.ingress.hosts }}
   {{- range .paths }}
+  {{- if $host.host }}
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
