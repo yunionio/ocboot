@@ -1,0 +1,210 @@
+# Default values for cloudpods.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+createCRD: true
+
+operator:
+  replicaCount: 1
+  syncUser: true
+  disableNodeSelectorController: true
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  nodeSelector: {}
+  tolerations:
+  - key: node-role.kubernetes.io/master
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/controlplane
+    effect: NoSchedule
+  affinity: {}
+
+  image:
+    repository: "registry.cn-beijing.aliyuncs.com/yunionio/onecloud-operator"
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "v3.9-lzx-helm.1"
+
+  imagePullSecrets: []
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+localPathCSI:
+  enabled: true
+  helperPod:
+    image: registry.cn-beijing.aliyuncs.com/yunionio/busybox:1.35.0
+    pullPolicy: IfNotPresent
+  image:
+    # repository: "registry.cn-beijing.aliyuncs.com/yunion/local-path-provisioner"
+    pullPolicy: IfNotPresent
+    # tag: "v0.0.22"
+
+cluster:
+  mysql:
+    host: 1.2.3.4
+    port: 3306
+    user: root
+    password: your-db-password
+    statefulset:
+      enabled: true
+      image:
+        repository: "registry.cn-beijing.aliyuncs.com/yunionio/mysql"
+        pullPolicy: IfNotPresent
+        tag: "5.6"
+      persistence:
+        storageClass: ""
+        accessMode: ReadWriteOnce
+        size: 500Gi
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/controlplane
+        effect: NoSchedule
+  # Overrides the image tag whose default is the chart appVersion.
+  version: ""
+  # productVersion choose from:
+  # - CMP
+  # - FullStack
+  # - Edge
+  productVersion: CMP
+  # disableResourceManagement disable container cgroup resource limits and requests
+  disableResourceManagement: false
+  # imageRepository defines default image registry
+  imageRepository: registry.cn-beijing.aliyuncs.com/yunion
+  # publicEndpoint is upstream ingress virtual ip address or DNS domain
+  publicEndpoint: 10.127.100.207
+  # edition choose from:
+  # - ce: community edition
+  # - ee: enterprise edition
+  edition: ce
+  # storageClass for stateful component
+  storageClass: ""
+  ansibleserver:
+    service:
+      nodePort: 30890
+  apiGateway:
+    apiService:
+      nodePort: 30300
+    wsService:
+      nodePort: 30443
+  autoupdate:
+    service:
+      nodePort: 30981
+  # baremetal agent component spec
+  baremetalagent:
+    disable: true
+    requests:
+      storage: 100G
+  cloudevent:
+    service:
+      nodePort: 30892
+  cloudid:
+    service:
+      nodePort: 30893
+  cloudnet:
+    service:
+      nodePort: 30891
+  cloudproxy:
+    service:
+      nodePort: 30882
+  devtool:
+    service:
+      nodePort: 30997
+  # glance image component spec
+  glance:
+    service:
+      nodePort: 30292
+    requests:
+      storage: 100G
+  # influxdb component spec
+  influxdb:
+    service:
+      nodePort: 30086
+    requests:
+      storage: 100G
+  itsm:
+    service:
+      nodePort: 30595
+  keystone:
+    adminService:
+      nodePort: 30357
+    publicService:
+      nodePort: 30500
+  kubeserver:
+    service:
+      nodePort: 30442
+  logger:
+    service:
+      nodePort: 30999
+  # meter component spec
+  meter:
+    service:
+      nodePort: 30909
+    requests:
+      storage: 25G
+  monitor:
+    service:
+      nodePort: 30093
+  onecloudServiceOperator:
+    disable: true
+    service:
+      nodePort: 30885
+  regionServer:
+    service:
+      nodePort: 30888
+  report:
+    service:
+      nodePort: 30967
+  s3gateway:
+    service:
+      nodePort: 30884
+  scheduledtask:
+    service:
+      nodePort: 30978
+  scheduler:
+    service:
+      nodePort: 30887
+  suggestion:
+    service:
+      nodePort: 30987
+  webconsole:
+    service:
+      nodePort: 30899
+  yunionconf:
+    service:
+      nodePort: 30889
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - paths:
+        - path: /
+          pathType: ImplementationSpecific
+      host: ""
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local

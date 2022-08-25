@@ -1,0 +1,120 @@
+{{ $cluster := .Values.cluster }}
+{{ $mysql := .Values.cluster.mysql }}
+# deploy onecloud cluster customize resource instance
+apiVersion: "onecloud.yunion.io/v1alpha1"
+kind: OnecloudCluster
+metadata:
+  name: {{ include "cloudpods.fullname" . }}
+  annotations:
+    onecloud.yunion.io/edition: "{{ .Values.cluster.edition }}"
+    helm.sh/hook: post-install,post-upgrade,post-rollback
+  labels:
+    {{- include "cloudpods.labels" . | nindent 4 }}
+spec:
+  mysql:
+    host: {{ template "cloudpods.cluster.mysql.host" . }}
+    port: {{ $mysql.port }}
+    username: {{ $mysql.user }}
+    password: {{ $mysql.password }}
+  region: "region0"
+  imageRepository: "{{ $cluster.imageRepository }}"
+  version: "{{ $cluster.version | default .Chart.AppVersion }}"
+  loadBalancerEndpoint: "{{ $cluster.publicEndpoint }}"
+  disableResourceManagement: {{ $cluster.disableResourceManagement }}
+  productVersion: {{ $cluster.productVersion }}
+  ansibleserver:
+    service:
+      nodePort: {{ int $cluster.ansibleserver.service.nodePort }}
+  apiGateway:
+    apiService:
+      nodePort: {{ int $cluster.apiGateway.apiService.nodePort}}
+    wsService:
+      nodePort: {{ int $cluster.apiGateway.wsService.nodePort }}
+  autoupdate:
+    service:
+      nodePort: {{ int $cluster.autoupdate.service.nodePort }}
+  baremetalagent:
+    disable: {{ $cluster.baremetalagent.disable }}
+    requests:
+      storage: {{ $cluster.baremetalagent.requests.storage }}
+    storageClassName: {{ template "cloudpods.cluster.storageClass" . }}
+  cloudevent:
+    service:
+      nodePort: {{ int $cluster.cloudevent.service.nodePort }}
+  cloudid:
+    service:
+      nodePort: {{ int $cluster.cloudid.service.nodePort }}
+  cloudnet:
+    service:
+      nodePort: {{ int $cluster.cloudnet.service.nodePort }}
+  cloudproxy:
+    service:
+      nodePort: {{ int $cluster.cloudproxy.service.nodePort }}
+  devtool:
+    service:
+      nodePort: {{ int $cluster.devtool.service.nodePort }}
+  glance:
+    service:
+      nodePort: {{ int $cluster.glance.service.nodePort }}
+    requests:
+      storage: {{ $cluster.glance.requests.storage }}
+    storageClassName: {{ template "cloudpods.cluster.storageClass" . }}
+  influxdb:
+    service:
+      nodePort: {{ int $cluster.influxdb.service.nodePort }}
+    requests:
+      storage: {{ $cluster.influxdb.requests.storage }}
+    storageClassName: {{ template "cloudpods.cluster.storageClass" . }}
+  itsm:
+    service:
+      nodePort: {{ int $cluster.itsm.service.nodePort }}
+  keystone:
+    adminService:
+      nodePort: {{ int $cluster.keystone.adminService.nodePort }}
+    publicService:
+      nodePort: {{ int $cluster.keystone.publicService.nodePort }}
+  kubeserver:
+    service:
+      nodePort: {{ int $cluster.kubeserver.service.nodePort }}
+  logger:
+    service:
+      nodePort: {{ int $cluster.logger.service.nodePort }}
+  meter:
+    service:
+      nodePort: {{ int $cluster.meter.service.nodePort }}
+    requests:
+      storage: {{ $cluster.meter.requests.storage }}
+    storageClassName: {{ template "cloudpods.cluster.storageClass" . }}
+  monitor:
+    service:
+      nodePort: {{ int $cluster.monitor.service.nodePort }}
+  onecloudServiceOperator:
+    disable: true
+    service:
+      nodePort: {{ int $cluster.onecloudServiceOperator.service.nodePort }}
+  regionDNS:
+    disable: true
+  regionServer:
+    service:
+      nodePort: {{ int $cluster.regionServer.service.nodePort }}
+  report:
+    service:
+      nodePort: {{ int $cluster.report.service.nodePort }}
+  s3gateway:
+    service:
+      nodePort: {{ int $cluster.s3gateway.service.nodePort }}
+  scheduledtask:
+    service:
+      nodePort: {{ int $cluster.scheduledtask.service.nodePort }}
+  scheduler:
+    service:
+      nodePort: {{ int $cluster.scheduler.service.nodePort }}
+  suggestion:
+    service:
+      nodePort: {{ int $cluster.suggestion.service.nodePort }}
+  webconsole:
+    service:
+      nodePort: {{ int $cluster.webconsole.service.nodePort }}
+  yunionconf:
+    service:
+      nodePort: {{ int $cluster.yunionconf.service.nodePort }}
