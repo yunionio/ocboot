@@ -2,9 +2,12 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+createCRD: true
+
 operator:
   replicaCount: 1
-  syncUser: false
+  syncUser: true
+  disableNodeSelectorController: true
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
     # choice for the user. This also increases chances charts run on environments with little
@@ -25,10 +28,10 @@ operator:
   affinity: {}
 
   image:
-    repository: "registry.cn-beijing.aliyuncs.com/yunion/onecloud-operator"
-    pullPolicy: IfNotPresent
+    repository: "registry.cn-beijing.aliyuncs.com/yunionio/onecloud-operator"
+    pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
+    tag: "v3.9-lzx-helm.1"
 
   imagePullSecrets: []
 
@@ -47,10 +50,13 @@ operator:
 
 localPathCSI:
   enabled: true
-  image:
-    repository: "registry.cn-beijing.aliyuncs.com/yunion/local-path-provisioner"
+  helperPod:
+    image: registry.cn-beijing.aliyuncs.com/yunionio/busybox:1.35.0
     pullPolicy: IfNotPresent
-    tag: "v0.0.11"
+  image:
+    # repository: "registry.cn-beijing.aliyuncs.com/yunion/local-path-provisioner"
+    pullPolicy: IfNotPresent
+    # tag: "v0.0.22"
 
 cluster:
   mysql:
@@ -68,43 +74,137 @@ cluster:
         storageClass: ""
         accessMode: ReadWriteOnce
         size: 500Gi
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/controlplane
+        effect: NoSchedule
   # Overrides the image tag whose default is the chart appVersion.
   version: ""
+  # productVersion choose from:
+  # - CMP
+  # - FullStack
+  # - Edge
+  productVersion: CMP
+  # disableResourceManagement disable container cgroup resource limits and requests
   disableResourceManagement: false
-  imageRepository: registry.cn-beijing.aliyuncs.com/yunionio
-  # use domain name or IP address
+  # imageRepository defines default image registry
+  imageRepository: registry.cn-beijing.aliyuncs.com/yunion
+  # publicEndpoint is upstream ingress virtual ip address or DNS domain
   publicEndpoint: foo.bar.com
+  # edition choose from:
+  # - ce: community edition
+  # - ee: enterprise edition
   edition: ce
+  # storageClass for stateful component
   storageClass: ""
+  ansibleserver:
+    service:
+      nodePort: 30890
+  apiGateway:
+    apiService:
+      nodePort: 30300
+    wsService:
+      nodePort: 30443
+  autoupdate:
+    service:
+      nodePort: 30981
+  # baremetal agent component spec
   baremetalagent:
     disable: true
     requests:
       storage: 100G
+  cloudevent:
+    service:
+      nodePort: 30892
+  cloudid:
+    service:
+      nodePort: 30893
+  cloudnet:
+    service:
+      nodePort: 30891
+  cloudproxy:
+    service:
+      nodePort: 30882
+  devtool:
+    service:
+      nodePort: 30997
+  # glance image component spec
   glance:
+    service:
+      nodePort: 30292
     requests:
       storage: 100G
+  # influxdb component spec
   influxdb:
+    service:
+      nodePort: 30086
     requests:
       storage: 100G
+  itsm:
+    service:
+      nodePort: 30595
+  keystone:
+    adminService:
+      nodePort: 30357
+    publicService:
+      nodePort: 30500
+  kubeserver:
+    service:
+      nodePort: 30442
+  logger:
+    service:
+      nodePort: 30999
+  # meter component spec
   meter:
+    service:
+      nodePort: 30909
     requests:
       storage: 25G
+  monitor:
+    service:
+      nodePort: 30093
+  onecloudServiceOperator:
+    disable: true
+    service:
+      nodePort: 30885
+  regionServer:
+    service:
+      nodePort: 30888
+  report:
+    service:
+      nodePort: 30967
+  s3gateway:
+    service:
+      nodePort: 30884
+  scheduledtask:
+    service:
+      nodePort: 30978
+  scheduler:
+    service:
+      nodePort: 30887
+  suggestion:
+    service:
+      nodePort: 30987
+  webconsole:
+    service:
+      nodePort: 30899
+  yunionconf:
+    service:
+      nodePort: 30889
 
 ingress:
-  enabled: false
+  enabled: true
   className: ""
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: chart-example.local
-      paths:
+    - paths:
         - path: /
           pathType: ImplementationSpecific
+      host: ""
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
-
-service:
-  port: 443

@@ -127,6 +127,20 @@ Return operator name
 {{- end -}}
 
 {{/*
+Return web name
+*/}}
+{{- define "cloudpods.web.fullname" -}}
+{{- printf "%s-web" (include "cloudpods.fullname" .) -}}
+{{- end -}}
+
+{{/*
+Return web's certs name
+*/}}
+{{- define "cloudpods.web.certs.fullname" -}}
+{{- printf "%s-certs" (include "cloudpods.fullname" .) -}}
+{{- end -}}
+
+{{/*
 Return mysql name
 */}}
 {{- define "cloudpods.mysql.fullname" -}}
