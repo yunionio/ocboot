@@ -30,6 +30,8 @@ $ helm install --name-template default --namespace onecloud --debug  . -f values
 建议需要修改的地方如下：
 
 ```diff
+--- a/charts/cloudpods/values-prod.yaml
++++ b/charts/cloudpods/values-prod.yaml
  localPathCSI:
 +  # 根据 k8s 集群的 CSI 部署情况，选择是否要部署默认的 local-path CSI
 +  # 如果 k8s 集群已经有稳定的 CSI ，就可以设置这个值为 false ，不部署该组件
@@ -108,13 +110,13 @@ $ kubectl exec -ti -n onecloud $(kubectl get pods -n onecloud | grep climc | awk
 
 ```bash
 # 创建 admin 用户，设置密码为 admin@123 ，根据需求自己调整
-[in-climc-pods]$ climc user-create --password 'admin@123' --enabled admin
+[in-climc-pod]$ climc user-create --password 'admin@123' --enabled admin
 
 # 允许 web 登陆
-[in-climc-pods]$ climc user-update --allow-web-console admin
+[in-climc-pod]$ climc user-update --allow-web-console admin
 
 # 将 admin 用户加入 system project 赋予管理员权限
-[in-climc-pods]$ climc project-add-user system admin admin
+[in-climc-pod]$ climc project-add-user system admin admin
 ```
 
 ## 访问前端
