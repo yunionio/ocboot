@@ -1,8 +1,10 @@
 # Cloudpods Helm Chart
 
-使用 Helm 安装 Cloudpods CMP 多云管理版本 [Cloudpods](https://cloudpods.org)
+使用 [Helm](https://helm.sh/) 安装 Cloudpods CMP 多云管理版本 [Cloudpods](https://cloudpods.org)
 
 ## 安装部署
+
+安装 helm 工具请参考 https://helm.sh/docs/intro/install/ 。
 
 ### clone chart
 
