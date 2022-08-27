@@ -69,7 +69,7 @@
   - non_iso_mode is defined
 
 - name: install packages via loop
-  package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*"
+  package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*" state="latest"
   with_items:
   - "{{ common_packages }}"
   when:
