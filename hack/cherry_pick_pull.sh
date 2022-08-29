@@ -157,7 +157,7 @@ hub pull-request -F "${prtext}" -h "${GITHUB_USER}:${NEWBRANCH}" -b "${MAIN_REPO
 }
 
 function python_bin() {
-    command -v python3 >/dev/null 2>&1 && echo python3 || python
+    command -v python3 >/dev/null 2>&1 && echo python3 || echo python
 }
 
 function extract-subject {
