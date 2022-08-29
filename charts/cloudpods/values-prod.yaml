@@ -31,7 +31,7 @@ operator:
     repository: "registry.cn-beijing.aliyuncs.com/yunionio/onecloud-operator"
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v3.9-lzx-helm.1"
+    tag: "v3.9-0829.0"
 
   imagePullSecrets: []
 
@@ -201,6 +201,9 @@ cluster:
   webconsole:
     service:
       nodePort: 30899
+  yunionagent:
+    service:
+      nodePort: 30898
   yunionconf:
     service:
       nodePort: 30889
