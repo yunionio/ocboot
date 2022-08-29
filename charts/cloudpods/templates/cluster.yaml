@@ -115,6 +115,11 @@ spec:
   webconsole:
     service:
       nodePort: {{ int $cluster.webconsole.service.nodePort }}
+  yunionagent:
+    service:
+      nodePort: {{ int $cluster.yunionagent.service.nodePort }}
   yunionconf:
     service:
       nodePort: {{ int $cluster.yunionconf.service.nodePort }}
+  monitorStack:
+    disable: true
