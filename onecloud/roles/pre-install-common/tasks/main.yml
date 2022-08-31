@@ -33,56 +33,6 @@
   args:
     warn: no
 
-- name: yum install cloud packages; it should take a few minutes...
-  package: name="{{ item }}" state="present" disablerepo="*" enablerepo="yunion-*"
-  with_items:
-    - ansible
-    - autogen-libopts
-    - bash-completion
-    - bridge-utils
-#    - ceph-common # 无yunion源。等做好之后再enable
-    - conntrack-tools
-    - container-selinux
-    - containerd.io
-    - cri-tools
-    - docker-ce
-    - fuse
-    - fuse-devel
-    - fuse-libs
-    - htop
-    - ipvsadm
-    - jq
-    - kmod-openvswitch
-    - kubeadm-1.15.12-0
-    - kubectl-1.15.12-0
-    - kubelet-1.15.12-0
-    - kubernetes-cni
-    - libaio
-    - libusb
-    - lvm2
-    - nc
-    - net-tools
-    - ntp
-    - ntpdate
-    - oniguruma
-    - openvswitch
-    - pciutils
-    - rsync
-    - socat
-    - spice
-    - spice-protocol
-    - sysstat
-    - tcpdump
-    - usbredir
-    - wget
-    - yunion-climc
-    - yunion-executor
-    - yunion-fetcherfs
-    - yunion-ocadm
-    - "{{ yunion_qemu_package }}"
-  when:
-  - is_centos_based is defined
-
 - name: config ntpd service
   template: src=ntp.conf dest=/etc/ntp.conf
   when: ntpd_server is defined

@@ -1,0 +1,8 @@
+- name: Install Cloud Kernel
+  yum:
+    enablerepo: "yunion*"
+    disablerepo: "*"
+    name:
+      - kernel-4.14.0-115.8.2.el7a.yn20210924
+      - kernel-devel-4.14.0-115.8.2.el7a.yn20210924
+      - kernel-headers-4.14.0-115.8.2.el7a.yn20210924

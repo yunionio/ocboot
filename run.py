@@ -1,10 +1,14 @@
 #!/usr/bin/env python
+# encoding: utf-8
+from __future__ import unicode_literals
+from __future__ import absolute_import
 
 import os
 import os.path
+from os import path
 import sys
 import re
-
+import argparse
 from lib import install
 
 
@@ -163,8 +167,7 @@ def gen_config(ipaddr):
     import os
     config_dir = os.getenv("OCBOOT_CONFIG_DIR")
     image_repository = os.getenv('IMAGE_REPOSITORY')
-    if image_repository not in ['', None, 'none']:
-        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion', image_repository)
+
     cur_path = os.path.abspath(os.path.dirname(__file__))
     if not config_dir:
         config_dir = cur_path
@@ -172,6 +175,12 @@ def gen_config(ipaddr):
     verf = os.path.join(cur_path, "VERSION")
     with open(verf, 'r') as f:
         ver = f.read().strip()
+
+    # parameter first; then daily build; at last official build
+    if image_repository not in ['', None, 'none'] :
+        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion', image_repository)
+    elif re.search(r'\b\d{8}\.\d$', ver):
+        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion', 'registry.cn-beijing.aliyuncs.com/yunionio')
 
     if os.path.exists(temp):
         with open(temp, 'r') as stream:
@@ -190,18 +199,45 @@ def gen_config(ipaddr):
     return temp
 
 
+parser = None
+
+def get_args():
+    """show argpase snippets"""
+    global parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('IP_CONF', nargs=1, type=str, help="Input the target IPv4 or Config file")
+    parser.add_argument('--offline-data-path', nargs='?', help="offline packages location")
+    return parser.parse_args()
+
+
 def main():
+    args = get_args()
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    ip_conf = str(args.IP_CONF[0])
 
-    if len(sys.argv) != 2:
-        show_usage()
-        sys.exit(1)
+    # 1. try to get offline data path from optional args
+    # 2. if not exist, try to get from os env
+    # 3. if got one, save to env for later use.
+    offline_data_path = None
+    if args.offline_data_path and os.path.isdir(args.offline_data_path):
+        offline_data_path = os.path.realpath(args.offline_data_path)
+    elif os.environ.get('OFFLINE_DATA_PATH') and os.path.isdir(os.environ.get('OFFLINE_DATA_PATH')):
+        offline_data_path = os.path.realpath(os.environ.get('OFFLINE_DATA_PATH'))
 
-    if match_ip4addr(sys.argv[1]):
-        check_env(sys.argv[1])
-        conf = gen_config(sys.argv[1])
+    if offline_data_path:
+        os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
-        conf = sys.argv[1]
+        os.environ['OFFLINE_DATA_PATH'] = ''
+
+    if match_ip4addr(ip_conf):
+        check_env(ip_conf)
+        conf = gen_config(ip_conf)
+    elif path.isfile(ip_conf):
+        conf = ip_conf
+    else:
+        print("Wrong args!")
+        parser.print_help()
+        exit()
     return install.start(conf)
 
 
