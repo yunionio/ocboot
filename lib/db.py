@@ -26,7 +26,7 @@ class DB():
                 passwd=values['db_password'],
                 db=database,
                 charset='utf8',
-                port=values['db_port'],
+                port=int(values['db_port']),
             )
         elif host:
             keys = ['host', 'user', 'passwd', 'db', 'charset', 'port']
