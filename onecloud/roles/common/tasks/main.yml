@@ -5,7 +5,7 @@
 
 - name: Set facts
   set_fact:
-    major_version_task_file: "{{ onecloud_major_version }}.yml"
+    major_version_task_file: "{{ onecloud_major_version }}_{{ online_status }}.yml"
 
 - name: Import task "{{ major_version_task_file }}"
   include_tasks: "{{ major_version_task_file }}"
@@ -66,14 +66,27 @@
   when:
   - extra_packages is defined
   - common_packages is defined
-  - non_iso_mode is defined
 
-- name: install packages via loop
-  package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*"
+- name: install common packages via loop
+  package:
+    name: "{{ item }}"
+    disablerepo: "*"
+    enablerepo: "yunion-*"
   with_items:
   - "{{ common_packages }}"
   when:
   - common_packages is defined
+
+- name: install latest packages via loop
+  package:
+    name: "{{ item }}"
+    disablerepo: "*"
+    enablerepo: "yunion-*"
+    state: latest
+  with_items:
+  - "{{ latest_packages }}"
+  when:
+  - latest_packages is defined
 
 - name: install misc obsolete packages
   package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*"
@@ -81,7 +94,6 @@
   - yunion-qemu-2.12.1
   when:
   - is_centos_x86 is defined
-  - non_iso_mode is defined
 
 - name: Check that if selinux config exists
   stat:
@@ -91,17 +103,33 @@
 - name: Turn off selinux
   selinux:
     state: disabled
-  when: selinux_conf_exists.stat.exists
+  when:
+    - selinux_conf_exists.stat.exists
+    - is_kylin_arm64 |default(false)|bool == false
+
+- name: Turn off selinux for kylin arm64
+  selinux:
+    state: disabled
+  vars:
+    ansible_python_interpreter: '/usr/bin/python3'
+  when:
+  - selinux_conf_exists.stat.exists
+  - is_kylin_arm64 |default(false)|bool == true
 
 - name: Gather service facts
   service_facts:
 
-- name: Disable systemd services
+# 目标：在centos 7 arm 禁用 firewalld
+# 但是 对于没有安装这个服务的场景，不能用stopped.
+# 最好用stopped || absent. TODO: 优化这里
+- name: Disable unnecessary services
   service:
     name: "{{ item }}"
     enabled: no
     state: stopped
-  when: "item + '.service' in ansible_facts.services"
+  when:
+  - is_centos_aarch64 |default(false)|bool == false
+  - "item + '.service' in ansible_facts.services"
   loop:
   - firewalld
 
@@ -186,7 +214,7 @@
   command: swapoff -a
   when: ansible_swaptotal_mb > 0
 
-- name: Create a directory if it does not exist
+- name: Create sysconfig directory if does not exist
   file:
     path: /etc/sysconfig/modules/
     state: directory
@@ -206,16 +234,6 @@
 
 # docker
 - block:
-  - name: Install docker
-    yum:
-      name:
-        - docker-ce
-        - docker-ce-cli
-        - containerd.io
-      disablerepo: "*"
-      enablerepo: "yunion-*"
-    when:
-    - is_centos_based is defined
 
   - name: Make /etc/docker dir
     file:

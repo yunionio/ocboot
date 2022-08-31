@@ -1,0 +1,9 @@
+- name: Install mariadb
+  package:
+    name: "{{ item }}"
+    state: "present"
+    disablerepo: "*"
+    enablerepo: "yunion-*"
+  with_items:
+    - mariadb-server
+    - MySQL-python
