@@ -9,14 +9,9 @@ primary_master_node:
   db_host: 10.127.10.158
   db_user: root
   db_password: your-sql-password
-  onecloud_version: v3.4.15
+  onecloud_version: v3.9.1
   onecloud_user: demo
   onecloud_user_password: demo@123
   controlplane_host: 10.127.10.158
   controlplane_port: "6443"
   as_host: true
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
-  - https://lms7sxqp.mirror.aliyuncs.com
-  insecure_registries:
-  - 192.168.222.172:3000
