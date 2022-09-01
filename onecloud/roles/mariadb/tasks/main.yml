@@ -35,7 +35,6 @@
     enabled: yes
     state: started
 
-
 - name: mariadb hack for uos
   shell: |
     if [ ! -d /etc/my.cnf.d ] && [ -d /etc/mysql ]; then
@@ -51,13 +50,13 @@
 
 - name: Change root password
   mysql_user:
-    name: "{{ db_user }}"
+    login_user: "{{ db_user }}"
     password: "{{ db_password }}"
-  changed_when: false
-  failed_when: false
+    name: "{{ db_user}}"
+    priv: '*.*:ALL,GRANT'
+    host: "{{ item }}"
+    check_implicit_admin: true
+  loop:
+    - "{{ db_host }}"
+    - "%"
 
-- name: Allow remote root access with grant priv with raw mysql
-  shell: |
-      mysql -u {{ db_user }} -p{{ db_password }} -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;'
-  args:
-    executable: /bin/bash
