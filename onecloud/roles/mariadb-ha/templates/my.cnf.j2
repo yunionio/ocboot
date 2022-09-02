@@ -19,6 +19,7 @@ expire_logs_days=30
 innodb_file_per_table=ON
 max_connections = 300
 max_allowed_packet=20M
+default_time_zone='+00:00'
 
 {% if inventory_hostname == groups['mariadb_ha_nodes'][0] %}
 server-id = 1
