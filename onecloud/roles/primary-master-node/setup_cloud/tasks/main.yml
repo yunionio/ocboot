@@ -175,6 +175,9 @@
 
 - name: "post install scripts"
   shell: |
+    if [ ! -d /opt/yunion/upgrade/post-install ]; then
+      exit
+    fi
     find /opt/yunion/upgrade/post-install -name '*.sh' -type f| while read line
     do
       echo "processing $line ... "
