@@ -15,12 +15,12 @@
     offline_data_path={{ offline_data_path }}
     if [ ! -d $offline_data_path/images ]; then
       echo "no images path found under the offline data path. "
-      exit 1
+      exit 0
     fi
     count=$(find $offline_data_path/images -maxdepth 1 -type f -name '*tar.xz' |wc -l)
     if [ "$count" -eq 0 ]; then
       echo "no images to load. "
-      exit 1
+      exit 0
     fi
     if [ -x /usr/bin/parallel ]; then
       parallel --will-cite docker load -i ::: $offline_data_path/images/*.tar.xz
