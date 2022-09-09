@@ -57,6 +57,7 @@ common_packages:
   - unbound
   - unbound-libs
   - usbredir
+  - usbutils
   - wget
   - yunion-climc
   - yunion-executor
