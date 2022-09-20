@@ -11,7 +11,7 @@
 
 - name: Add cloud rpm repository for Kylin
   get_url:
-    url: https://iso.yunion.cn/kylin/v10/3.9/{{ansible_architecture}}/kylin-yunion.repo
+    url: https://iso.yunion.cn/kylin/v10-{{ansible_distribution_release|lower}}/3.9/{{ansible_architecture}}/kylin-yunion.repo
     dest: /etc/yum.repos.d/kylin-yunion.repo
     validate_certs: no
   become: yes
