@@ -45,7 +45,7 @@ common_packages:
   - libusb
   - libusbx
   - libverto-libevent
-  - lm_sensors-libs
+# - lm_sensors-libs # kylin sp1 conflict; not important; fix later
   - nfs-utils
   - nmap-ncat
   - openvswitch
