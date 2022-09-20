@@ -1,23 +1,24 @@
 ---
+- name: ansible version
+  set_fact:
+    supported_ansible_version: "2.9.27"
 
-# - name: Checking Important Ports
-#   wait_for:
-#     port: "{{ item  }}"
-#     state: stopped
-#     timeout: 3
-#   with_items:
-#     - 80
-#     - 443
-#     - 6443
-#     - 8080
+- block:
+
+  - name: test ansible version expecting {{ supported_ansible_version }}, got {{ ansible_version.full }}
+    fail:
+      msg: "Expected ansible version: {{supported_ansible_version}}. Current ansible version is {{ ansible_version.full }}. Please uninstall the old ansible `yum remove -y ansible` or `pip uninstall ansible`, and install the latest ansible as root: `yum install -y python3-pip; python3 -m pip install --upgrade pip setuptools wheel; python3 -m pip install --upgrade ansible`"
+
+  - meta: end_play
+
+  when: ansible_version.full is version(supported_ansible_version, '<')
 
 - block:
 
   - name: print hostname msg
-    debug:
+    fail:
       msg: "Host name can not contain 'localhost'!"
 
-  - name: check hostname
-    shell: exit 1
+  - meta: end_play
 
   when: ansible_hostname | regex_search('localhost', ignorecase=True)
