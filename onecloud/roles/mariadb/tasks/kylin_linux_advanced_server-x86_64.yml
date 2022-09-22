@@ -6,5 +6,4 @@
      enablerepo: "yunion-*"
    with_items:
     - mariadb-server
-    - python2-PyMySQL
     - python3-PyMySQL

@@ -23,17 +23,18 @@ common_packages:
   - kubeadm=1.15.12-00 #
   - kubectl=1.15.12-00 #
   - kubelet=1.15.12-00 #
-  - libusb-1.0-0
-  - libusbredirparser1
   - librbd1
   - libspice-server1
+  - libusb-1.0-0
+  - libusbredirparser1
   - nfs-common
   - ntp
+  - openvswitch-switch
+  - ovmf
+  - parallel
   - python-selinux
   - software-properties-common
   - wget
-  - ovmf
-  - openvswitch-switch
   - yunion-climc
   - yunion-executor
   - yunion-ocadm
@@ -43,3 +44,12 @@ common_packages:
 common_services:
     - ntp
     - yunion-executor
+
+latest_packages:
+    - ca-certificates
+    - yunion-climc
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
+      #    - yunion-ovmfrpm # 缺乏 相关包
+
