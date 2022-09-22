@@ -25,26 +25,6 @@
   when:
   - is_centos_based is defined
 
-- name: init apt cache for debian
-  get_url:
-    url: https://iso.yunion.cn/uos/buster/{{ debian_based_arch }}/3.8/yunion.gpg-key.asc
-    dest: /tmp/yunion.gpg-key.asc
-    validate_certs: no
-  become: yes
-  when:
-  - is_debian_based is defined
-
-- name: apply debian sig key
-  shell: |
-    echo "deb [trusted=yes] https://iso.yunion.cn/uos/buster/{{ debian_based_arch }}/3.8 ./" > /etc/apt/sources.list.d/yunion.list;
-    apt-key add /tmp/yunion.gpg-key.asc;
-    apt-get update -y;
-    rm -f /tmp/yunion.gpg-key.asc
-  args:
-    executable: /bin/bash
-  when:
-  - is_debian_based is defined
-
 - name: install libselinux-python for arm64 centos
   yum:
     name: libselinux-python
