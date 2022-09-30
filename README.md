@@ -19,13 +19,23 @@ ocboot 使用 ansible 来部署服务，所以请先在自己的系统上安装 
 
 ```bash
 # centos install ansible
-$ yum install -y ansible
+$ yum install -y epel-release git python3-pip
+$ python3 -m pip install --upgrade pip setuptools wheel
+$ python3 -m pip install --upgrade ansible
+
+# kylin install ansible
+$ yum install -y git python3-pip
+$ python3 -m pip install --upgrade pip setuptools wheel
+$ python3 -m pip install --upgrade ansible
 
 # archlinux install ansible
-$ pacman -S ansible
+$ pacman -S python3-pip
+$ python3 -m pip install --upgrade pip setuptools wheel
+$ python3 -m pip install --upgrade ansible
 
 # others
-$ pip install ansible
+$ python3 -m pip install --upgrade pip setuptools wheel
+$ python3 -m pip install --upgrade ansible
 ```
 
 ## clone 代码
@@ -331,7 +341,7 @@ optional arguments:
 
 ### 命令行参数
 
-```bash 
+```bash
 usage: ocboot.py restore [-h] [--backup-path BACKUP_PATH]
                          [--install-db-to-localhost]
                          [--master-node-ips MASTER_NODE_IPS]
@@ -382,7 +392,7 @@ optional arguments:
 
 * `--install-db-to-localhost`，是否在本机（`primary`节点） 安装数据库。默认为否。如果选择了`--install-db-to-localhost`，则会在本机安装数据(`mariadb-server` 的稳定版)，并自动赋予下列参数以默认值：
 
-  * ```bash 
+  * ```bash
     --mysql-host=127.0.0.1
     --mysql-user=root
     --mysql-password=<继承备份文件里 mysql 的密码>
