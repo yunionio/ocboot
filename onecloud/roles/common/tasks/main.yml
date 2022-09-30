@@ -10,22 +10,8 @@
 - name: Import task "{{ major_version_task_file }}"
   include_tasks: "{{ major_version_task_file }}"
 
-- name: config iptables for debian likely OS
-  shell: |
-    if iptables -V |grep -wq nf_tables && ls -l /usr/sbin/iptables |grep -wq alternatives; then
-      update-alternatives --set iptables /usr/sbin/iptables-legacy
-      update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-      update-alternatives --set arptables /usr/sbin/arptables-legacy
-      update-alternatives --set ebtables /usr/sbin/ebtables-legacy
-      if [ -x /usr/bin/aptitude ] && [ ! -x /usr/sbin/nft ]; then
-          aptitude install nftables -y
-          nft flush ruleset
-      fi
-    fi
-  when:
-  - is_debian_based is defined
-  args:
-    executable: /bin/bash
+- name: Import OS Arch tasks
+  include_tasks: "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_version |lower }}_{{ ansible_architecture }}.yml"
 
 - name: reset iptables rules
   shell: |
@@ -60,68 +46,13 @@
   args:
     executable: /bin/bash
 
-- name: append packages to common_packages
-  set_fact:
-    common_packages: "{{ common_packages + extra_packages }}"
-  when:
-  - extra_packages is defined
-  - common_packages is defined
-
-- name: install common packages via loop
-  package:
-    name: "{{ item }}"
-    disablerepo: "*"
-    enablerepo: "yunion-*"
-  with_items:
-  - "{{ common_packages }}"
-  when:
-  - common_packages is defined
-
-- name: install latest packages via loop
-  package:
-    name: "{{ item }}"
-    disablerepo: "*"
-    enablerepo: "yunion-*"
-    state: latest
-  with_items:
-  - "{{ latest_packages }}"
-  when:
-  - latest_packages is defined
-
-- name: install misc obsolete packages
-  package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*"
-  with_items:
-  - yunion-qemu-2.12.1
-  when:
-  - is_centos_x86 is defined
-
-- name: Check that if selinux config exists
-  stat:
-    path: /etc/selinux/config
-  register: selinux_conf_exists
-
-- name: Turn off selinux
-  selinux:
-    state: disabled
-  when:
-    - selinux_conf_exists.stat.exists
-    - is_kylin_arm64 |default(false)|bool == false
-
-- name: Turn off selinux for kylin arm64
-  selinux:
-    state: disabled
-  vars:
-    ansible_python_interpreter: '/usr/bin/python3'
-  when:
-  - selinux_conf_exists.stat.exists
-  - is_kylin_arm64 |default(false)|bool == true
-
 - name: Gather service facts
   service_facts:
 
 # 目标：在centos 7 arm 禁用 firewalld
 # 但是 对于没有安装这个服务的场景，不能用stopped.
 # 最好用stopped || absent. TODO: 优化这里
+# #TODO mute error output
 - name: Disable unnecessary services
   service:
     name: "{{ item }}"
@@ -132,6 +63,10 @@
   - "item + '.service' in ansible_facts.services"
   loop:
   - firewalld
+  failed_when: true
+  ignore_errors: true
+  args:
+    warn: no
 
 - name: Config NetworkManager
   include_role:

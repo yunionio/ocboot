@@ -5,7 +5,6 @@ common_packages:
   - apt-transport-https
   - bash-completion
   - bridge-utils
-  - ca-certificates
   - ceph-common
   - chntpw
   - conntrack
@@ -29,17 +28,23 @@ common_packages:
   - libspice-server1
   - nfs-common
   - ntp
+  - openvswitch-switch
+  - ovmf
+  - parallel
   - python-selinux
   - software-properties-common
+  - usbutils
   - wget
-  - ovmf
-  - openvswitch-switch
-  - yunion-climc
-  - yunion-executor
-  - yunion-ocadm
   - "{{ yunion_qemu_package }}"
-  - yunion-fetcherfs
 
 common_services:
     - ntp
     - yunion-executor
+
+latest_packages:
+    - ca-certificates
+    - yunion-climc
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
+  # - yunion-ovmfrpm
