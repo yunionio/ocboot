@@ -53,6 +53,7 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
         cmd.extend(["-e", "@%s" % vars_f])
 
     cmd.extend(["-i", hosts_f, playbook_f])
+    cmd.extend(["-e", "ansible_python_interpreter=/usr/bin/python3"])
 
     if len(debug_flag) > 0:
         cmd.append(debug_flag)

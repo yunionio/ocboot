@@ -1,6 +1,5 @@
 # encoding: utf-8
 from datetime import datetime, tzinfo, timedelta
-import yaml
 
 def ensure_ascii(s):
     if not isinstance(s, str):
@@ -63,6 +62,7 @@ def is_below_v3_9(ver):
 
 
 def to_yaml(data):
+    import yaml
     return yaml.dump(data, default_flow_style=False)
 
 def print_title(title):

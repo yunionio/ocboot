@@ -25,34 +25,55 @@ def match_ip4addr(string):
     global IPADDR_REG
     return IPADDR_REG.match(string) is not None
 
+def versiontuple(v):
+    return tuple(map(int, (v.split("."))))
 
-def check_ansible():
-    ret = os.system("ansible-playbook --version")
+def version_ge(v1, v2):
+    return versiontuple(v1) >= versiontuple(v2)
+
+def check_pip3():
+    ret = os.system("pip3 --version >/dev/null 2>&1")
     if ret == 0:
         return
-    print("Ansible not installed, to install ansible...")
+    if install_packages(['python3-pip']) == 0:
+        return
+    raise Exception("install python3-pip failed")
+
+def check_ansible():
+    minimal_ansible_version = '2.9.27'
+    ret = os.system("ansible-playbook --version >/dev/null 2>&1")
+    if ret == 0:
+        ansible_version = os.popen("""ansible-playbook --version | head -1 | grep -oP '[0-9.]+' """).read().strip()
+        if version_ge(ansible_version, minimal_ansible_version):
+            print("current ansible version: %s. PASS" % ansible_version)
+            return
+        else:
+            print("Current ansible version (%s) is lower than expected(%s). upgrading ... " % (ansible_version, minimal_ansible_version))
+    else:
+        print("No ansible found. Installing ... ")
     try:
         install_ansible()
     except Exception as e:
         print("Install ansible failed, please try to install ansible manually")
         raise e
 
-
 def install_packages(pkgs):
-    if os.path.exists("/etc/redhat-release"):
-        return os.system("yum install -y epel-release %s" % (" ".join(pkgs)))
-    elif os.path.exists("/etc/lsb-release"):
+    if os.system('grep -Pq "Kylin Linux Advanced Server|CentOS Linux" /etc/os-release') == 0:
+        return os.system("yum install -y %s" % (" ".join(pkgs)))
+    elif os.system('grep -wq "Debian GNU/Linux" /etc/os-release') == 0:
         return os.system("apt install -y %s" % (" ".join(pkgs)))
     else:
         print("Unsupported OS")
         return 255
 
-
 def install_ansible():
-    ret = install_packages(["ansible"])
+    install_packages(['python2-pyyaml'])
+    ret = os.system('python3 -m pip install --upgrade pip setuptools wheel')
     if ret != 0:
-        raise Exception("install_ansible failed")
-
+        raise Exception("Install/updrade pip3 failed. ")
+    ret = os.system('python3 -m pip install --upgrade ansible')
+    if ret != 0:
+        raise Exception("Install ansible failed. ")
 
 def check_passless_ssh(ipaddr):
     cmd = "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr)
@@ -89,6 +110,7 @@ def install_passless_ssh(ipaddr):
 
 
 def check_env(ipaddr):
+    check_pip3()
     check_ansible()
     check_passless_ssh(ipaddr)
 

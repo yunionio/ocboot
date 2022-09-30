@@ -109,12 +109,16 @@
     /opt/yunion/bin/climc user-list | grep -w {{ onecloud_user }} | wc -l
   register: OC_USER_COUNT
   ignore_errors: yes
+  retries: 3
+  delay: 10
 
 - name: "Create onecloud web login user {{ onecloud_user }}"
   shell: |
    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
    /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
   ignore_errors: yes
+  retries: 3
+  delay: 10
   args:
     executable: /bin/bash
   when:
@@ -125,6 +129,8 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
+  retries: 3
+  delay: 10
   args:
     executable: /bin/bash
   when:

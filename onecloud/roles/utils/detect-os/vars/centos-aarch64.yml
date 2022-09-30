@@ -45,6 +45,7 @@ common_packages:
   - librados2
   - librbd1
   - libref_array
+  - libselinux-python3
   - libtirpc
   - libusb
   - libusbx
