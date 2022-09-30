@@ -109,10 +109,11 @@ def install_passless_ssh(ipaddr):
         raise Exception("check passwordless ssh login failed")
 
 
-def check_env(ipaddr):
+def check_env(ipaddr=None):
     check_pip3()
     check_ansible()
-    check_passless_ssh(ipaddr)
+    if ipaddr:
+        check_passless_ssh(ipaddr)
 
 
 def random_password(num):
@@ -255,6 +256,7 @@ def main():
         check_env(ip_conf)
         conf = gen_config(ip_conf)
     elif path.isfile(ip_conf):
+        check_env()
         conf = ip_conf
     else:
         print("Wrong args!")
