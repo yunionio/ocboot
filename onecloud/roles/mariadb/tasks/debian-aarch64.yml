@@ -4,7 +4,11 @@
     state: "present"
   with_items:
     - mariadb-server
-    - python3-pymysql
+      #    - python3-pymysql
+
+- name: python pip
+  pip:
+    name: PyMySQL
 
 - name: Allow remote hosts to connect (Debian)
   lineinfile:
