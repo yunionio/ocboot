@@ -4,7 +4,10 @@
     state: "present"
   with_items:
     - mariadb-server
-    - python3-pymysql
+
+- name: pips for mysql/mariadb
+  pip:
+    name: PyMySQL
 
 - name: Allow remote hosts to connect (Debian)
   lineinfile:
@@ -25,4 +28,3 @@
     name: mariadb
     state: restarted
     enabled: yes
-

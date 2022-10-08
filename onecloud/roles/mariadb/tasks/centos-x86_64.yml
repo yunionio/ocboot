@@ -6,4 +6,7 @@
     enablerepo: "yunion-*"
   with_items:
     - mariadb-server
-    - python36-PyMySQL
+
+- name: pips for mysql/mariadb
+  pip:
+    name: PyMySQL
