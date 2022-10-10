@@ -103,6 +103,8 @@ primary_master_node:
   pod_network_cidr: 10.40.0.0/16
   # k8s service CIDR
   service_cidr: 10.96.0.0/12
+  # k8s service DNS domain
+  service_dns_domain: 'cluster.local'
 EOF
 
 # 开始部署
