@@ -15,8 +15,16 @@
     default_ip: "{{ default_ip_ret.stdout }}"
 
 - name: "Get default ip address {{ default_ip }} masklen"
-  shell: "ip route list | grep -w {{ default_ip }} | head -n 1 | awk '{print $1}' | cut -d '/' -f 2"
+  shell: |
+    masklen="$(ip route list | grep -w {{ default_ip }} | head -n 1 | awk '{print $1}' | cut -d '/' -f 2)"
+    if [[ "$masklen" =~ ^[0-9]+$ ]]; then
+      echo "$masklen"
+    else
+      echo "30"
+    fi
   register: default_masklen_ret
+  args:
+    executable: /bin/bash
 
 - name: Set default ip masklen
   set_fact:
