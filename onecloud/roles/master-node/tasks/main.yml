@@ -136,7 +136,7 @@
 
   - name: disable-resource-management for join
     set_fact:
-      init_cluster_args: "{{ init_cluster_args }} --disable-resource-management"
+      init_cluster_args: "{{ join_args }} --disable-resource-management"
     when:
     - is_kylin_based is defined
     - is_kylin_based |default(false)|bool == true
