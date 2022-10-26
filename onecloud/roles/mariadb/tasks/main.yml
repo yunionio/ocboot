@@ -29,6 +29,8 @@
     - "%"
     - "::1"
     - "127.0.0.1"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   when:
     - is_centos_based |default(false)|bool == true
 
@@ -51,3 +53,5 @@
     - "127.0.0.1"
   when:
     - is_debian_based |default(false)|bool == true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
