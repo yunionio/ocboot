@@ -22,6 +22,12 @@
   failed_when: false
   loop: "{{ mariadb_package_info.pkgs }}"
 
+- name: pips for mysql/mariadb
+  pip:
+    name: PyMySQL
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
 - name: copy my.cnf
   template:
     src: my.cnf.j2
@@ -51,14 +57,44 @@
 
 - name: Change root password
   mysql_user:
-    name: "{{ db_user }}"
+    login_user: "{{ db_user }}"
+    login_port: "{{ db_port | default(3306) }}"
+    login_password: "{{ db_password }}"
     password: "{{ db_password }}"
-  ignore_errors: yes
+    name: "{{ db_user }}"
+    priv: '*.*:ALL,GRANT'
+    host: "{{ item }}"
+    check_implicit_admin: true
+  loop:
+    - "localhost"
+    - "%"
+    - "::1"
+    - "127.0.0.1"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  when:
+    - is_centos_based |default(false)|bool == true
 
-- name: Allow remote root access with grant priv with raw mysql
-  shell: mysql -u {{ db_user }} -p{{ db_password }} -e 'grant all privileges on *.* to `{{ db_user }}`@`%` identified by "{{ db_password }}" with grant option; FLUSH PRIVILEGES;'
-  args:
-    executable: /bin/bash
+- name: Change root password for debian
+  mysql_user:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: "{{ db_user }}"
+    login_port: "{{ db_port | default(3306) }}"
+    login_password: "{{ db_password }}"
+    password: "{{ db_password }}"
+    name: "{{ db_user }}"
+    priv: '*.*:ALL,GRANT'
+    host: "{{ item }}"
+    check_implicit_admin: true
+  loop:
+    - "localhost"
+    - "%"
+    - "::1"
+    - "127.0.0.1"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  when:
+    - is_debian_based |default(false)|bool == true
 
 - name: Remove all anonymous user accounts
   mysql_user:

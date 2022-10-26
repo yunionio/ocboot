@@ -21,6 +21,12 @@
   delegate_to: "{{ groups['mariadb_ha_nodes'][0] }}"
   register: repl_info
 
+- name: Stop slave
+  mysql_replication:
+    mode: stopslave
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+
 - name: Change master to db01 for db02
   mysql_replication:
     mode: changemaster
