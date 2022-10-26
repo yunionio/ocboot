@@ -64,6 +64,7 @@ common_packages:
     - parallel
     - pciutils
     - pixman
+    - python3-pip
     - quota
     - quota-nls
     - rpcbind
