@@ -46,25 +46,14 @@
   args:
     executable: /bin/bash
 
-- name: Gather service facts
-  service_facts:
-
-# 目标：在centos 7 arm 禁用 firewalld
-# 但是 对于没有安装这个服务的场景，不能用stopped.
-# 最好用stopped || absent. TODO: 优化这里
-# #TODO mute error output
-- name: Disable unnecessary services
-  service:
-    name: "{{ item }}"
-    enabled: no
-    state: stopped
-  when:
-  - is_centos_aarch64 |default(false)|bool == false
-  - "item + '.service' in ansible_facts.services"
-  loop:
-  - firewalld
-  failed_when: true
-  ignore_errors: true
+- name: Stop/Disable Depreciated Services If Any
+  shell: |
+    for service in yunion-host-image yunion-host-sdnagent firewalld
+    do
+      if [ -f /usr/lib/systemd/system/$service.service ]; then
+        systemctl disable --now $service
+      fi
+    done
   args:
     warn: no
 

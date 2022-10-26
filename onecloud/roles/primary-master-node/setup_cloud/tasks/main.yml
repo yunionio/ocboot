@@ -51,14 +51,14 @@
   set_fact:
     init_cluster_args: ""
 
-- name: construct create cluster args
+- name: construct create cluster args use-ee
   set_fact:
     init_cluster_args: "--use-ee"
   when:
   - use_ee is defined
   - use_ee|default(false)|bool == true
 
-- name: construct create cluster args
+- name: construct create cluster args disable-resource-management
   set_fact:
     init_cluster_args: "{{ init_cluster_args }} --disable-resource-management"
   when:
