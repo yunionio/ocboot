@@ -67,7 +67,8 @@ def install_packages(pkgs):
         return 255
 
 def install_ansible():
-    install_packages(['python2-pyyaml'])
+    for pkg in ['python2-pyyaml', 'PyYAML']:
+        install_packages([pkg])
     ret = os.system('python3 -m pip install --upgrade pip setuptools wheel')
     if ret != 0:
         raise Exception("Install/updrade pip3 failed. ")
