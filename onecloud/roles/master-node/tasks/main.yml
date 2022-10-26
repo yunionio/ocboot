@@ -109,6 +109,12 @@
     when:
       host_networks is defined
 
+  - name: construct hugepage args
+    set_fact:
+      join_args: "{{ join_args }} --enable-hugepage "
+    when:
+      enable_hugepage is defined
+
   - name: join node as onecloud controller
     set_fact:
       join_args: "{{ join_args }} --as-onecloud-controller"

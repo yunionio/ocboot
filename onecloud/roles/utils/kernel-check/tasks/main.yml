@@ -44,6 +44,46 @@
   - nbd_ok|default(false)|bool == false
   - is_yunion_kernel_installed.rc != 0
 
+# setup hugetlb
+- name: ensure hugetlb init dir exists
+  file:
+    path: /usr/local/hugetlb-init
+    state: directory
+
+- name: cp hugetlb setup script
+  become: yes
+  copy:
+    src: hugetlb_setup.sh
+    dest: /usr/local/hugetlb-init/hugetlb_setup.sh
+    owner: root
+    group: root
+    mode: preserve
+
+- name: hugetlb service
+  become: yes
+  copy:
+    src: oc-hugetlb-gigantic-pages.service
+    dest: /usr/lib/systemd/system/oc-hugetlb-gigantic-pages.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: hugetlb script
+  become: yes
+  copy:
+    src: oc-hugetlb-reserve-pages.sh
+    dest: /usr/lib/systemd/oc-hugetlb-reserve-pages.sh
+    owner: root
+    group: root
+    mode: 0644
+
+- name: init hugetlb
+  shell: bash /usr/local/hugetlb-init/hugetlb_setup.sh
+  args:
+    executable: /bin/bash
+    chdir: /usr/local/hugetlb-init
+  failed_when: false
+
   # TODO split for all arch, distribution, online/offline status
 
   # TODO

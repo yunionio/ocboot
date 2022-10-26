@@ -99,6 +99,8 @@ primary_master_node:
   onecloud_user_password: demo@123
   # 该节点作为 OneCloud 私有云计算节点
   as_host: true
+  # 是否宿主机开启大页内存(宿主机为 x86_64架构，且内存超过 30G时生效，预留内存为总内存的10%，最大预留20G内存)
+  enable_hugepage: false
   # k8s pod network CIDR:
   pod_network_cidr: 10.40.0.0/16
   # k8s service CIDR
@@ -169,10 +171,12 @@ worker_nodes:
     # 待部署节点 ssh 端口
     port: 22
     user: root
+    enable_hugepage: false
   - hostname: 10.127.10.160
     # 待部署节点 ssh 端口
     port: 22
     user: root
+    enable_hugepage: false
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
   as_host: true

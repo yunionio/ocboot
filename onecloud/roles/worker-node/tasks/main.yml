@@ -96,6 +96,12 @@
     when:
       host_networks is defined
 
+  - name: construct hugepage args
+    set_fact:
+      join_args: "{{ join_args }} --enable-hugepage "
+    when:
+      enable_hugepage is defined
+
   - name: "Use 'ocadm {{ join_args }}'"
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
     environment:

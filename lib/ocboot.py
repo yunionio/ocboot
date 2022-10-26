@@ -123,7 +123,7 @@ class OcbootConfig(object):
         return filepath
 
     def get_login_info(self):
-	    # TODO 验证接口、参数是否 OK
+        # TODO 验证接口、参数是否 OK
         if self.primary_master_config is None:
             return None
         p_master_config = self.primary_master_config
@@ -186,6 +186,7 @@ class Node(object):
         self.user = config.get('user', 'root')
         self.port = config.get('port', 22)
         self.host_networks = config.get('host_networks', None)
+        self.enable_hugepage = config.get('enable_hugepage', None)
         self.node_ip = config.get('node_ip', None)
         if not self.node_ip:
             self.node_ip = self.host
@@ -216,6 +217,8 @@ class Node(object):
             vars['ansible_connection'] = 'local'
         if self.host_networks:
             vars['host_networks'] = self.host_networks
+        if self.enable_hugepage:
+            vars['enable_hugepage'] = self.enable_hugepage
         if self.vrrp_interface or self.vrrp_vip:
             vars['vrrp_vip'] = self.vrrp_vip
             vars['vrrp_interface'] = self.vrrp_interface
