@@ -8,6 +8,8 @@
 - name: pips for mysql/mariadb
   pip:
     name: PyMySQL
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
 - name: Allow remote hosts to connect (Debian)
   lineinfile:
