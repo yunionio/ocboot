@@ -1,0 +1,12 @@
+mariadb_version: 10.3.9
+mariadb_package: mariadb-server
+
+mariadb_versioned_pkg:
+  'latest': "{{ mariadb_package }}"
+  '10.3.9': "{{ mariadb_package }}"
+
+mariadb_package_info:
+  pkgs:
+    - "{{ mariadb_versioned_pkg[mariadb_version | string] }}"
+    - "MySQL-python"
+    - "PyMySQL"
