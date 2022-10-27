@@ -3,6 +3,7 @@
   include_vars: "{{ item }}"
   with_first_found:
     - files:
+        - "{{ ansible_distribution|lower | replace(' ', '_')}}-{{ ansible_architecture }}.yml"
         - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
         - "{{ ansible_distribution|lower }}-{{ ansible_distribution_release|lower }}.yml"
         - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
@@ -11,7 +12,6 @@
         - "{{ ansible_distribution|lower| replace(' ', '_')| replace('_\"_', '') }}.yml"
       paths:
         - ../vars
-      skip: true
   tags:
     - facts
 
