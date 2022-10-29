@@ -1,0 +1,36 @@
+- name: init offline nodes list
+  set_fact:
+    offline_node_list: []
+
+- name: append offline_nodes
+  set_fact:
+    offline_node_list: "{{ offline_node_list + offline_nodes.split() }}"
+  when:
+  - offline_nodes is defined
+
+- name: offline_nodes type list
+  set_fact:
+    offline_node_list: "{{ offline_node_list + [ansible_default_ipv4.address] }}"
+  when:
+  - offline_data_path is defined
+
+- name: cp load-images.sh
+  copy:
+    owner: root
+    group: root
+    mode: "0755"
+    src: load-images.sh
+    dest: /tmp/load-images.sh
+  when:
+  - offline_node_list | length > 0
+  delegate_to: '{{ item }}'
+  with_items:
+  - "{{ offline_node_list }}"
+
+- name: loading images
+  shell: /tmp/load-images.sh
+  delegate_to: '{{ item }}'
+  with_items:
+  - "{{ offline_node_list }}"
+  when:
+  - offline_node_list | length > 0
