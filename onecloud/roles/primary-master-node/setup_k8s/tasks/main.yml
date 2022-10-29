@@ -10,67 +10,49 @@
   shell: /opt/yunion/bin/ocadm token list | cut -d  ' ' -f1 | sed -n '2p'
   register: K8S_TOKEN
 
-- block:
-  - name: load local images if exist; it might take a few minutes...
-    shell: |
-      offline_data_path={{ offline_data_path }}
-      if [ ! -d $offline_data_path/images ]; then
-        echo "no images path found under the offline data path. "
-        exit 0
-      fi
-      count=$(find $offline_data_path/images -maxdepth 1 -type f -name '*tar.xz' |wc -l)
-      if [ "$count" -eq 0 ]; then
-        echo "no images to load. "
-        exit 0
-      fi
-      if [ -x /usr/bin/parallel ]; then
-        parallel --will-cite docker load -i ::: $offline_data_path/images/*.tar.xz
-      else
-        for i in $offline_data_path/images/*.tar.xz
-        do
-          docker load -i $i
-        done
-      fi
-    args:
-      executable: /bin/bash
-
-  - name: tag and push images, it might take a few minutes...
-    shell: |
-      export version_file={{ offline_data_path }}/versions.json
-      if ! [ -f "$version_file" ]; then
-        echo "[ERROR] version file $version_file is empty! "
-        exit
-      fi
-      imgs=( $(cat $version_file |jq  '.dockers |to_entries[] |.key +":"+ .value' | xargs) )
-      echo imgs ${imgs[@]}
-
-      export registry=$(cat $version_file | jq .registry |xargs)
-      if [ -z "$registry" ]; then
-        echo "[ERROR] registry is empty!"
-        exit
-      fi
-      push_and_tag(){
-        local img_name_version=$1
-        docker tag registry.cn-beijing.aliyuncs.com/$registry/$img_name_version \
-          $insecure_registry/$registry/$img_name_version && \
-          docker push $insecure_registry/$registry/$img_name_version
-      }
-      export -f push_and_tag
-      for i in {{docker_insecure_registries | join(" ")}}
-      do
-        docker load -i $i
-        insecure_registry=$i parallel push_and_tag ::: "${imgs[@]}"
-       done
-    args:
-      executable: /bin/bash
-    when:
-    - docker_insecure_registries is defined
-    - docker_insecure_registries | length > 0
-
+- name: loading images
+  include_role:
+    name: utils/load-images
   when:
-    - online_status == "offline"
-    - offline_data_path is defined
-    - offline_data_path | length > 0
+  - online_status == "offline"
+  - offline_data_path | length > 0
+
+- name: Tag and push images for non-HA mode. It might take a few minutes...
+  shell: |
+    export version_file={{ offline_data_path }}/versions.json
+    if ! [ -f "$version_file" ]; then
+      echo "[ERROR] version file $version_file is empty! "
+      exit
+    fi
+    imgs=( $(cat $version_file |jq  '.dockers |to_entries[] |.key +":"+ .value' | xargs) )
+    echo imgs ${imgs[@]}
+
+    export registry=$(cat $version_file | jq .registry |xargs)
+    if [ -z "$registry" ]; then
+      echo "[ERROR] registry is empty!"
+      exit
+    fi
+    push_and_tag(){
+      local img_name_version=$1
+      docker tag registry.cn-beijing.aliyuncs.com/$registry/$img_name_version \
+        $insecure_registry/$registry/$img_name_version && \
+        docker push $insecure_registry/$registry/$img_name_version
+    }
+    export -f push_and_tag
+    for i in {{docker_insecure_registries | join(" ")}}
+    do
+      docker load -i $i
+      insecure_registry=$i parallel push_and_tag ::: "${imgs[@]}"
+    done
+  args:
+    executable: /bin/bash
+  when:
+  - docker_insecure_registries is defined
+  - docker_insecure_registries | length > 0
+  - high_availability_vip is not defined
+  - online_status == "offline"
+  - offline_data_path is defined
+  - offline_data_path | length > 0
 
 - name: Pull ocadm images on node
   command: "/opt/yunion/bin/ocadm config images pull --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} --onecloud-version {{ onecloud_version | default('latest') }} --operator-version {{ onecloud_version | default('latest') }}"

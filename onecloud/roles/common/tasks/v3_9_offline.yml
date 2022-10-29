@@ -10,8 +10,9 @@
 - name: sync rpms to dest
   shell: |
     for i in {{ offline_nodes }}; do
-      rsync -Pvar {{offline_data_path}}/{rpms,repodata} $i:/opt/yunion/upgrade
+      rsync -Pvar {{offline_data_path}}/{rpms,repodata,images} $i:/opt/yunion/upgrade &
     done
+    wait
   args:
     executable: /bin/bash
   when:
