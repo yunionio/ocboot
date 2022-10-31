@@ -37,35 +37,14 @@
 
 - name: net ipv4 neigh default gc_thresh 2
   sysctl:
-    name: net.ipv4.neigh.default.gc_thresh1
+    name: net.ipv4.neigh.default.gc_thresh2
     value: "4096"
     reload: yes
     state: present
 
 - name: net ipv4 neigh default gc_thresh 3
   sysctl:
-    name: net.ipv4.neigh.default.gc_thresh1
-    value: "8192"
-    reload: yes
-    state: present
-
-- name: net ipv4 neigh default gc_thresh 1
-  sysctl:
-    name: net.ipv4.neigh.default.gc_thresh1
-    value: "1024"
-    reload: yes
-    state: present
-
-- name: net ipv4 neigh default gc_thresh 2
-  sysctl:
-    name: net.ipv4.neigh.default.gc_thresh1
-    value: "4096"
-    reload: yes
-    state: present
-
-- name: net ipv4 neigh default gc_thresh 3
-  sysctl:
-    name: net.ipv4.neigh.default.gc_thresh1
+    name: net.ipv4.neigh.default.gc_thresh3
     value: "8192"
     reload: yes
     state: present
