@@ -20,6 +20,8 @@
   package:
     name: "{{ item }}"
     state: latest
+    disablerepo: "*"
+    enablerepo: "yunion-*"
   with_items:
   - "{{ latest_packages }}"
   when:
