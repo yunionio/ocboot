@@ -65,6 +65,12 @@
   - is_kylin_based is defined
   - is_kylin_based |default(alse)|bool == true
 
+- name: add sync-user option
+  include_role:
+    name: utils/sync-user/on
+  when:
+  -  keepalived_version_tag is defined
+
 - name: Create essential services, wait for a few minutes...
   shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait"
   retries: 6
@@ -74,6 +80,12 @@
   ignore_errors: yes
   when:
   - OC_CLUSTER_COUNT.stdout|int == 0
+
+- name: rm sync-user option
+  include_role:
+    name: utils/sync-user/off
+  when:
+  -  keepalived_version_tag is defined
 
 - name: Enable minio S3 object storage for services
   environment:
