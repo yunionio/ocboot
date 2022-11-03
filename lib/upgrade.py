@@ -72,6 +72,10 @@ def add_command(subparsers):
                         default=consts.REGISTRY_ALI_YUNION,
                         help="specify 3rd party image and namespace")
 
+    parser.add_argument("--offline-data-path",
+                        dest="offline_data_path",
+                        default="",
+                        help="offline rpm repo path for upgrade mode")
 
     parser.set_defaults(func=do_upgrade)
 
@@ -103,11 +107,16 @@ def do_upgrade(args):
         vars['image_repository'] = args.image_repository
 
     # start run upgrade playbook
+    if args.offline_data_path:
+        vars['offline_data_path'] = args.offline_data_path
+        vars['primary_master_host'] = args.primary_master_host
+
     return_code = run_ansible_playbook(
         inventory_f,
         './onecloud/upgrade-cluster.yml',
         vars=vars,
     )
+
     if return_code is not None and return_code != 0:
         return return_code
     cluster.set_current_version(args.version)
