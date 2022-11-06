@@ -23,25 +23,25 @@ common_packages:
   - kubeadm=1.15.12-00 #
   - kubectl=1.15.12-00 #
   - kubelet=1.15.12-00 #
-  - libusb-1.0-0
-  - libusbredirparser1
   - librbd1
   - libspice-server1
+  - libusb-1.0-0
+  - libusbredirparser1
   - nfs-common
   - ntp
+  - openvswitch-switch
+  - ovmf
   - python-pymysql
   - python-selinux
   - python-yaml
   - python3-pip
   - software-properties-common
   - wget
-  - ovmf
-  - openvswitch-switch
   - yunion-climc
   - yunion-executor
+  - yunion-fetcherfs
   - yunion-ocadm
   - "{{ yunion_qemu_package }}"
-  - yunion-fetcherfs
 
 common_services:
     - ntp

@@ -322,6 +322,7 @@ class OnecloudConfig(object):
         self.controlplane_host = config.ensure_get('controlplane_host')
         self.controlplane_port = config.get('controlplane_port', '6443')
         self.as_host = config.get('as_host', None)
+        self.as_host_on_vm = config.get('as_host_on_vm', None)
 
         self.registry_mirrors = config.get('registry_mirrors', [])
         self.insecure_registries = config.get('insecure_registries', [])
@@ -347,6 +348,7 @@ class OnecloudConfig(object):
             'k8s_controlplane_host': self.controlplane_host,
             'k8s_controlplane_port': self.controlplane_port,
             'k8s_node_as_oc_host': self.as_host,
+            'k8s_node_as_oc_host_on_vm': self.as_host_on_vm,
             'enable_eip_man': self.enable_eip_man,
             'offline_deploy': self.offline_deploy
         }
@@ -504,6 +506,8 @@ class WorkerConfig(OnecloudJointConfig):
         super(WorkerConfig, self).__init__(config)
         if self.as_host is None:
             self.as_host = True
+        if self.as_host_on_vm is None:
+            self.as_host_on_vm = True
         self.nodes = get_nodes(config, bastion_host)
 
     @classmethod
