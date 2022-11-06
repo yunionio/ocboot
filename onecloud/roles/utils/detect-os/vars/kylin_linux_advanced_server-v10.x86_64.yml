@@ -68,13 +68,13 @@ common_packages:
   - "{{ yunion_qemu_package }}"
 
 common_services:
-    - ntpd
-    - yunion-executor
+  - ntpd
+  - yunion-executor
 
 latest_packages:
-    - ca-certificates
-    - yunion-climc
-    - yunion-executor
-    - yunion-fetcherfs
-    - yunion-ocadm
-    - yunion-ovmfrpm
+  - ca-certificates
+  - yunion-climc
+  - yunion-executor
+  - yunion-fetcherfs
+  - yunion-ocadm
+  - yunion-ovmfrpm

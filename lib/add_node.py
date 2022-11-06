@@ -88,6 +88,7 @@ class AddNodesConfig(object):
             'controlplane_host': controlplane_host,
             'ad_controller': False,
             'as_host': True,
+            'as_host_on_vm': True,
             'controlplane_ssh_port': controlplane_ssh_port,
         }
         self.worker_config = WorkerConfig(Config(woker_config_dict))

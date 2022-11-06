@@ -97,8 +97,12 @@ primary_master_node:
   onecloud_user: demo
   # onecloud 登录用户密码
   onecloud_user_password: demo@123
-  # 该节点作为 OneCloud 私有云计算节点
+  # 该节点作为 OneCloud 私有云计算节点（默认为 false）
   as_host: true
+  # 虚拟机强行作为 OneCloud 私有云计算节点（默认为 false）。开启此项时，请确保as_host: true
+  as_host_on_vm: true
+  # 是否宿主机开启大页内存(宿主机为 x86_64架构，且内存超过 30G时生效，预留内存为总内存的10%，最大预留20G内存)
+  enable_hugepage: false
   # k8s pod network CIDR:
   pod_network_cidr: 10.40.0.0/16
   # k8s service CIDR

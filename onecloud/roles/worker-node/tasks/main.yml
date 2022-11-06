@@ -82,7 +82,7 @@
     set_fact:
       join_args: "{{ join_args }} --enable-host-agent"
     when:
-    - k8s_node_as_oc_host|default(false)|bool == true
+    - join_as_host | default(false)|bool == true
 
   - name: join node for node-ip
     set_fact:
