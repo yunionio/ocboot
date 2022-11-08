@@ -154,7 +154,7 @@
     set_fact:
       init_args: "{{ init_args }} --enable-host-agent"
     when:
-    - k8s_node_as_oc_host|default(false)|bool == true
+    - join_as_host | default(false)|bool == true
 
 - name: Use ocadm init first master node
   command: "/opt/yunion/bin/ocadm {{ init_args }}"
