@@ -15,3 +15,4 @@ primary_master_node:
   controlplane_host: 10.127.10.158
   controlplane_port: "6443"
   as_host: true
+  as_host_on_vm: true # only for vm.

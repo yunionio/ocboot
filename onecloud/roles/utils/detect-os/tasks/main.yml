@@ -28,4 +28,30 @@
 - name: will start {{ online_status | upper }} deploy
   shell: exit 0
 
+- name: detect if running on VM
+  set_fact:
+    is_running_on_vm: true
+  when:
+  - ansible_virtualization_type is defined
+  - ansible_virtualization_type != ''
+  - ansible_virtualization_type != 'NA'
+
+- name: join as host condition
+  set_fact:
+    join_as_host: false
+
+- name: vm node join as host agent
+  set_fact:
+    join_as_host: true
+  when:
+  - k8s_node_as_oc_host|default(false)|bool == true
+  - k8s_node_as_oc_host_on_vm | default(false)|bool == true
+  - is_running_on_vm | default(false)|bool == true
+
+- name: physical node join as host agent
+  set_fact:
+    join_as_host: true
+  when:
+  - k8s_node_as_oc_host|default(false)|bool == true
+  - is_running_on_vm | default(false)|bool == false
 
