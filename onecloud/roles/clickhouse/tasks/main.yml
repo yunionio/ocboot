@@ -1,0 +1,30 @@
+# clickhouse 的安装方式比较简单，只需要分ansible_distribution，
+# 不需要区分详细的 ansible_distribution_major_version, 以及 ansible_architecture
+# 因此简单复用。如果后续clickhouse有重大版本升级，或者对于os有不同的安装变更，此处再随之改变
+- name: Import OS Specific tasks
+  include_tasks: "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
+
+- name: Change empty password
+  replace:
+    path: /etc/clickhouse-server/users.xml
+    regexp: '^\s+<password></password>'
+    replace: '        <password>{{ ch_password }}</password>'
+    backup: yes
+  notify: restart clickhouse-server
+
+- name: Allow remote hosts connect to clickhouse (config.xml)
+  lineinfile:
+    path: /etc/clickhouse-server/config.xml
+    regexp: '^    <listen_host>127.0.0.1</listen_host>'
+    line: '    <listen_host>0.0.0.0</listen_host>'
+    state: present
+    backup: yes
+  notify: restart clickhouse-server
+
+- name: Allow remote hosts connect to clickhouse (users.xml)
+  replace:
+    path: /etc/clickhouse-server/users.xml
+    regexp: '<ip>::/0</ip>\n\s+</networks>'
+    replace: '<ip>::/0</ip>\n                <ip>0.0.0.0</ip>\n            </networks>'
+    backup: yes
+  notify: restart clickhouse-server

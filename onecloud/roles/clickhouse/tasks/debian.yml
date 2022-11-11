@@ -1,0 +1,8 @@
+- name: Install clickhouse for Debian
+  package:
+    name: "{{ item }}"
+    state: "present"
+  with_items:
+  - clickhouse-server
+  - clickhouse-client
+
