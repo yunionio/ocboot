@@ -1,0 +1,10 @@
+- name: Install clickhouse services
+  package:
+    name: "{{ item }}"
+    state: "present"
+    disablerepo: "*"
+    enablerepo: "yunion-*"
+  with_items:
+  - clickhouse-server
+  - clickhouse-client
+

@@ -43,7 +43,6 @@ common_packages:
   - yunion-ocadm
   - "{{ yunion_qemu_package }}"
 
-
 common_services:
   - ntp
   - yunion-executor

@@ -145,7 +145,16 @@ def random_password(num):
     return npass
 
 
-conf = """# mariadb_node indicates the node where the mariadb service needs to be deployed
+conf = """
+# # clickhouse_node indicates the node where the clickhouse service needs to be deployed
+# clickhouse_node:
+#   # IP of the machine to be deployed
+#   hostname: 10.127.10.158
+#   # SSH Login username of the machine to be deployed
+#   user: root
+#   # Password of clickhouse
+#   ch_password: your-clickhouse-password
+# mariadb_node indicates the node where the mariadb service needs to be deployed
 mariadb_node:
   # IP of the machine to be deployed
   hostname: 10.127.10.158
@@ -217,9 +226,13 @@ def gen_config(ipaddr):
             except yaml.YAMLError as exc:
                 raise Exception("paring %s error: %s" % (temp, exc))
 
-    mypass = random_password(12)
+    mypass_clickhouse = random_password(12)
+    mypass_mariadb  = random_password(12)
     with open(temp, 'w') as f:
-        f.write(conf.replace('10.127.10.158', ipaddr).replace('your-sql-password', mypass).replace('v3.4.12', ver))
+        f.write(conf.replace('10.127.10.158', ipaddr)
+                .replace('your-sql-password', mypass_mariadb)
+                .replace('your-clickhouse-password', mypass_clickhouse)
+                .replace('v3.4.12', ver))
     return temp
 
 

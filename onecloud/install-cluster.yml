@@ -11,6 +11,10 @@
   roles:
     - mariadb
 
+- hosts: clickhouse_node
+  roles:
+    - clickhouse
+
 - hosts: registry_node
   roles:
     - registry
