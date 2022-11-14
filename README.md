@@ -77,6 +77,11 @@ mariadb_node:
   db_user: root
   # mariadb 用户密码
   db_password: your-sql-password
+# clickhouse_node 表示运行 clickhouse 服务的节点  
+clickhouse_node:
+  use_local: true
+  user: root
+  ch_password: "your-clickhouse-password"
 # primary_master_node 表示运行 k8s 和 onecloud 服务的节点
 primary_master_node:
   hostname: 10.127.10.158

@@ -10,6 +10,7 @@ from . import consts
 
 GROUP_MARIADB_NODE = "mariadb_node"
 GROUP_MARIADB_HA_NODES = "mariadb_ha_nodes"
+GROUP_CLICKHOUSE_NODE = "clickhouse_node"
 GROUP_REGISTRY_NODE="registry_node"
 GROUP_PRIMARY_MASTER_NODE = "primary_master_node"
 GROUP_MASTER_NODES = "master_nodes"
@@ -52,6 +53,7 @@ class OcbootConfig(object):
 
         self.mariadb_config = self._fetch_conf(MariadbConfig)
         self.mariadb_ha_config = self._fetch_conf(MariadbHAConfig)
+        self.clickhouse_config = self._fetch_conf(ClickhouseConfig)
         self.registry_config = self._fetch_conf(RegistryConfig)
         self.primary_master_config = self._fetch_conf(PrimaryMasterConfig)
         self.master_config = self._fetch_conf(MasterConfig)
@@ -94,7 +96,7 @@ class OcbootConfig(object):
         return config_cls(Config(group_config), self.bastion_host)
 
     def get_onecloud_version(self):
-        for node in [self.mariadb_config, self.mariadb_ha_config, self.registry_config, self.primary_master_config, self.master_config, self.worker_config]:
+        for node in [self.mariadb_config, self.mariadb_ha_config, self.clickhouse_config, self.registry_config, self.primary_master_config, self.master_config, self.worker_config]:
             if not node:
                 continue
             version = getattr(node, 'onecloud_version', None)
@@ -109,6 +111,7 @@ class OcbootConfig(object):
         return ansible.get_inventory_config(
             self.mariadb_config,
             self.mariadb_ha_config,
+            self.clickhouse_config,
             self.registry_config,
             self.primary_master_config,
             self.master_config,
@@ -291,6 +294,26 @@ class MariadbHAConfig(object):
         if self.db_vip:
             vars['db_vip'] = self.db_vip
             vars['db_nic'] = self.db_nic
+        return vars
+
+
+class ClickhouseConfig(object):
+
+    def __init__(self, config, bastion_host=None):
+        self.node = Node(config).with_bastion(bastion_host)
+        self.ch_password = config.ensure_get('ch_password')
+
+    @classmethod
+    def get_group(cls):
+        return GROUP_CLICKHOUSE_NODE
+
+    def get_nodes(self):
+        return [self.node]
+
+    def ansible_vars(self):
+        vars = {
+            "ch_password": self.ch_password,
+        }
         return vars
 
 

@@ -15,6 +15,10 @@
   roles:
     - mariadb-ha
 
+- hosts: clickhouse_node
+  roles:
+    - clickhouse
+
 - hosts: registry_node
   roles:
     - registry
