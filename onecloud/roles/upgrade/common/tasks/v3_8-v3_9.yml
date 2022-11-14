@@ -15,6 +15,7 @@
     - "{{ offline_data_path }}/repodata/"
     - "{{ offline_data_path }}/rpms/"
   when:
+  - primary_master_host is defined
   - primary_master_host != ansible_default_ipv4.address
 
 - name: "Add cloud rpm repository {{ yunion_yum_repo }}"
