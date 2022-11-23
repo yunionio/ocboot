@@ -13,7 +13,7 @@
 
 - hosts: clickhouse_node
   roles:
-    - clickhouse
+    - clickhouse/install
 
 - hosts: registry_node
   roles:
@@ -44,6 +44,10 @@
   roles:
     - primary-master-node/setup_cloud
     - utils/enable-eip
+
+- hosts: clickhouse_node
+  roles:
+    - clickhouse/deploy
 
 - hosts: worker_nodes
   roles:
