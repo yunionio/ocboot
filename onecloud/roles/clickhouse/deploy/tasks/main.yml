@@ -1,0 +1,12 @@
+- name: generate clickhouse spec conf
+  template:
+    src: clickhouse.spec.j2
+    dest: /tmp/clickhouse.spec.yaml
+
+- name: Apply modifications for clickhouse
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl patch onecloudclusters -n onecloud default --patch "$(cat /tmp/clickhouse.spec.yaml)" --type merge && rm -f /tmp/clickhouse.spec.yaml
+  args:
+    executable: /bin/bash
