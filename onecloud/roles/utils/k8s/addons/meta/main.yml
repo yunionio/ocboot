@@ -1,0 +1,4 @@
+---
+dependencies:
+  - role: utils/k8s/addons/coredns
+  - role: utils/k8s/addons/calico
