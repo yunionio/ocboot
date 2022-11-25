@@ -302,6 +302,7 @@ class ClickhouseConfig(object):
     def __init__(self, config, bastion_host=None):
         self.node = Node(config).with_bastion(bastion_host)
         self.ch_password = config.ensure_get('ch_password')
+        self.ch_port = config.get('ch_port', 9000)
 
     @classmethod
     def get_group(cls):
@@ -313,6 +314,7 @@ class ClickhouseConfig(object):
     def ansible_vars(self):
         vars = {
             "ch_password": self.ch_password,
+            "ch_port": self.ch_port,
         }
         return vars
 
