@@ -1,0 +1,6 @@
+- name: patch calico-kube-controllers deployment
+  include_role:
+    name: utils/k8s/addons/patch
+  vars:
+    resource_name: calico-kube-controllers
+
