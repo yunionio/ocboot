@@ -28,6 +28,10 @@
 - name: will start {{ online_status | upper }} deploy
   shell: exit 0
 
+- name: set default fact is_running_on_vm
+  set_fact:
+    is_running_on_vm: false
+
 - name: detect if running on VM
   set_fact:
     is_running_on_vm: true
@@ -35,6 +39,7 @@
   - ansible_virtualization_type is defined
   - ansible_virtualization_type != ''
   - ansible_virtualization_type != 'NA'
+  - ansible_virtualization_role | default("") != "host"
 
 - name: join as host condition
   set_fact:
@@ -54,4 +59,3 @@
   when:
   - k8s_node_as_oc_host|default(false)|bool == true
   - is_running_on_vm | default(false)|bool == false
-
