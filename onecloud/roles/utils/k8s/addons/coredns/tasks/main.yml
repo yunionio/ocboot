@@ -1,0 +1,5 @@
+- name: patch coredns deployment
+  include_role:
+    name: utils/k8s/addons/patch
+  vars:
+    resource_name: coredns

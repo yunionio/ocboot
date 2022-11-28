@@ -1,0 +1,12 @@
+- name: copy {{ resource }} {{ namespace }}/{{ resource_name }} patch to /tmp/{{ resource_name }}.patch.yml
+  copy:
+    src: "{{ resource }}.patch.yml"
+    dest: "/tmp/{{ resource_name }}.patch.yml"
+
+- name: patch {{ resource }} {{ namespace }}/{{ resource_name }} onecloud.yunion.io/controller node selector
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl patch {{ resource }} -n {{ namespace }} {{ resource_name }} --patch "$(cat /tmp/{{ resource_name }}.patch.yml)" --type merge && rm -f /tmp/{{ resource_name }}.patch.yml
+  args:
+    executable: /bin/bash

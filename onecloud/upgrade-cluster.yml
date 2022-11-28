@@ -6,6 +6,7 @@
 - hosts: primary_master_node
   roles:
     - { role: upgrade/primary_master_node }
+    - { role: utils/k8s/addons }
 
 - hosts: master_nodes
   roles:
