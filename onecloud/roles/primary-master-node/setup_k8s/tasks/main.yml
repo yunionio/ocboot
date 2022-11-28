@@ -197,3 +197,7 @@
 - name: Include utils/k8s/kubelet/extra-args tasks
   include_role:
     name: utils/k8s/kubelet/extra-args
+
+- name: Include utils/k8s/addons tasks
+  include_role:
+    name: utils/k8s/addons
