@@ -64,3 +64,13 @@
   - is_centos_based is defined
   - is_kylin_based|default(false)|bool == false
 
+# to "ignore Running reboot with local connection would reboot the control node"
+# warning
+- name: force reboot the primary node if applicable
+  shell: reboot
+  when:
+  - must_reboot |default(false)|bool == true
+  - is_yunion_kernel_running.rc != 0
+  - k8s_node_as_oc_host|default(false)|bool == true
+  - is_centos_based is defined
+  - is_kylin_based|default(false)|bool == false
