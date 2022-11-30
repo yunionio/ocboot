@@ -8,5 +8,10 @@
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
     kubectl patch onecloudclusters -n onecloud default --patch "$(cat /tmp/clickhouse.spec.yaml)" --type merge && rm -f /tmp/clickhouse.spec.yaml
+    for i in cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
+    do
+      kubectl delete configmap -n onecloud default-$i
+      kubectl rollout restart deployment -n onecloud  default-$i
+    done
   args:
     executable: /bin/bash
