@@ -39,7 +39,7 @@
 - name: "uninstall old rpms"
   shell: |
     # TODO 3.6 => 3\.[678]
-    rpms=$(rpm -qa |grep yunion|grep -v fetcherfs |grep 3.8| xargs)
+    rpms=$(rpm -qa |grep yunion|grep -v fetcherfs |grep 3.9| xargs)
     if [ -n "$rpms" ]; then
       yum remove -y $rpms
     fi
