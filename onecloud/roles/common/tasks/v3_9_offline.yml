@@ -26,4 +26,3 @@
     yum -y --disablerepo='*' --enablerepo='yunion-repo-offline' makecache
   when:
   - is_centos_based is defined
-
