@@ -77,6 +77,10 @@ def add_command(subparsers):
                         default="",
                         help="offline rpm repo path for upgrade mode")
 
+    parser.add_argument("--primary-node-ip",
+                        dest="primary_node_ip",
+                        default="",
+                        help="offline rpm repo path for upgrade mode")
     parser.set_defaults(func=do_upgrade)
 
 
@@ -110,6 +114,10 @@ def do_upgrade(args):
     if args.offline_data_path:
         vars['offline_data_path'] = args.offline_data_path
         vars['primary_master_host'] = args.primary_master_host
+
+    # for sync files. no ha ip.
+    if args.primary_node_ip:
+        vars['primary_node_ip'] = args.primary_node_ip
 
     return_code = run_ansible_playbook(
         inventory_f,
