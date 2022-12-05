@@ -10,6 +10,7 @@ import sys
 import re
 import argparse
 from lib import install
+from lib import cmd
 
 
 def show_usage():
@@ -41,6 +42,7 @@ def check_pip3():
 
 def check_ansible():
     minimal_ansible_version = '2.9.27'
+    cmd.init_ansible_playbook_path()
     ret = os.system("ansible-playbook --version >/dev/null 2>&1")
     if ret == 0:
         ansible_version = os.popen("""ansible-playbook --version | head -1 | grep -oP '[0-9.]+' """).read().strip()
