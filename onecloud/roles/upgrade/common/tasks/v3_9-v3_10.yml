@@ -9,14 +9,14 @@
     dest: "{{ item }}"
     delete: yes
     recursive: yes
-  delegate_to: "{{ primary_master_host }}"
+  delegate_to: "{{ primary_node_ip }}"
   with_items:
     - /etc/yum.repos.d/yunion.repo
     - "{{ offline_data_path }}/repodata/"
     - "{{ offline_data_path }}/rpms/"
   when:
-  - primary_master_host is defined
-  - primary_master_host != ansible_default_ipv4.address
+  - primary_node_ip is defined
+  - primary_node_ip != ansible_default_ipv4.address
 
 - name: "Add cloud rpm repository {{ yunion_yum_repo }}"
   get_url:
