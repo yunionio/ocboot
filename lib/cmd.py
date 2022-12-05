@@ -4,6 +4,10 @@ import os
 
 from lib import utils
 
+def init_ansible_playbook_path():
+    if '/usr/local/bin' not in os.environ.get('PATH', '').split(':'):
+        os.environ['PATH'] = '/usr/local/bin:' + os.environ.get('PATH', '')
+
 
 def get_ansible_config_path():
     return os.path.join(os.getcwd(), 'onecloud/ansible.cfg')
@@ -17,6 +21,7 @@ def _run_cmd(cmds):
     if not os.path.exists(config_file):
         raise Exception("Not found file %s" % config_file)
     os.environ['ANSIBLE_CONFIG'] = get_ansible_config_path()
+    init_ansible_playbook_path()
     proc = subprocess.Popen(
         shell_cmd,
         shell=True,
