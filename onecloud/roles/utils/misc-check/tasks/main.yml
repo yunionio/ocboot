@@ -20,5 +20,4 @@
       msg: "Host name can not contain 'localhost'!"
 
   - meta: end_play
-
-  when: ansible_hostname | regex_search('localhost', ignorecase=True)
+  when: ansible_hostname | regex_search('^localhost|^\d', ignorecase=True)
