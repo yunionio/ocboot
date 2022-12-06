@@ -28,10 +28,10 @@ operator:
   affinity: {}
 
   image:
-    repository: "registry.cn-beijing.aliyuncs.com/yunionio/onecloud-operator"
+    repository: "registry.cn-beijing.aliyuncs.com/yunion/onecloud-operator"
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v3.9.2-lzx-20220830.0"
+    tag: "v3.9.4"
 
   imagePullSecrets: []
 
