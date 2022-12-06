@@ -14,10 +14,8 @@
 - block:
 
   - name: print hostname msg
-    debug:
-      msg: "Host name cat not contain 'localhost'!"
+    fail:
+      msg: "Host name can not contain 'localhost'!"
 
-  - name: check hostname
-    shell: exit 1
-
-  when: ansible_hostname | regex_search('localhost', ignorecase=True)
+  - meta: end_play
+  when: ansible_hostname | regex_search('^localhost|^\d', ignorecase=True)
