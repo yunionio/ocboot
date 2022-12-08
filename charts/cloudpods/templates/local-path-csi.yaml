@@ -1,3 +1,10 @@
+{{ $cluster := .Values.cluster }}
+{{ $mysql := $cluster.mysql }}
+{{ $mysqlSs := $mysql.statefulset }}
+{{ $mysqlSsEnabled := $mysqlSs.enabled }}
+{{ $mysqlStorageClass := $mysqlSs.persistence.storageClass }}
+{{ $clusterStorageClass := $cluster.storageClass }}
+{{- if (or (and $mysqlSsEnabled (eq $mysqlStorageClass "")) (eq $clusterStorageClass "")) -}}
 ---
 # deploy local path storage CSI component
 apiVersion: v1
@@ -127,3 +134,4 @@ data:
       - name: helper-pod
         image: {{ .Values.localPathCSI.helperPod.image }}
         imagePullPolicy: {{ .Values.localPathCSI.helperPod.pullPolicy }}
+{{- end -}}
