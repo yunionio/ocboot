@@ -267,6 +267,7 @@ def main():
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
+        install_packages(['python3-pip', 'python2-pyyaml', 'PyYAML'])
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf)
