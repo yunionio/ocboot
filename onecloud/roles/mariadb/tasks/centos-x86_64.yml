@@ -23,4 +23,5 @@
     ansible_python_interpreter: /usr/bin/python3
   when:
   - online_status == "offline"
-  - offline_data_path is defined | length > 0
+  - offline_data_path is defined
+  - offline_data_path | length > 0
