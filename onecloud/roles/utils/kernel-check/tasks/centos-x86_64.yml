@@ -5,7 +5,10 @@
     enablerepo: "yunion*"
     disablerepo: "*"
     name:
-    - kernel-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
-    - kernel-devel-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
-    - kernel-headers-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
+    - kernel-5.4.130-1.yn20221208.el7
+    - kernel-devel-5.4.130-1.yn20221208.el7
+    - kernel-headers-5.4.130-1.yn20221208.el7
+    # - kernel-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
+    # - kernel-devel-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
+    # - kernel-headers-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
 
