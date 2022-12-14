@@ -51,13 +51,30 @@ ocboot 的运行方式很简单，只需要按自己机器的规划写好 yaml �
 
 ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以同时在多台机器上部署大规模集群，以下举例说明使用方法和配置文件的编写。
 
-
 ### 快速开始
 
 如果只想在一个节点上部署一个当前最新版本的AllInOne demo，可以用如下命令快速开始。其中ip为待部署节点的用于通信的IP地址。
 
 ```bash
 ./run.py <ip>
+```
+
+对于某些网络环境，registry.cn-beijing.aliyuncs.com 访问缓慢或不可达，在版本 `v3.9.5`之后（含），可指定镜像源：docker.io](http://docker.io) 来安装。命令如下：
+```bash
+IMAGE_REPOSITORY=docker.io/yunion ./run.py <ip>
+```
+
+也可在修改文件的`primary_master_node`节点的 `image_repository`字段为 `docker.io/yunion`。
+
+样例配置片段：
+
+```yaml
+primary_master_node:
+  hostname: 10.127.10.158
+  ...
+  onecloud_version: 'v3.9.5'
+  ...
+  image_repository: docker.io/yunion
 ```
 
 ### 单节点 all in one 部署
