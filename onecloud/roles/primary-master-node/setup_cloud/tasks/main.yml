@@ -19,8 +19,21 @@
     masklen="$(ip route list | grep -w {{ default_ip }} | head -n 1 | awk '{print $1}' | cut -d '/' -f 2)"
     if [[ "$masklen" =~ ^[0-9]+$ ]]; then
       echo "$masklen"
-    else
-      echo "30"
+      exit 0
+    fi
+    c=$(echo {{ default_ip }} |awk -F. '{print $1}')
+    #  8 for class A
+    # 16 for class B
+    # 24 for class C
+    if [[ "$c" -le 127 ]]; then
+      echo 8
+      exit 0
+    elif [[ "$c" -ge 128 ]] && [[ "$c" -le 191 ]]; then
+      echo 16
+      exit 0
+    elif [[ "$c" -ge 192 ]] && [[ "$c" -le 223 ]]; then
+      echo 24
+      exit 0
     fi
   register: default_masklen_ret
   args:
@@ -193,9 +206,10 @@
 - name: "Register adm0 network for {{ default_ip }}/{{ default_masklen }}, gateway {{ default_gateway }}"
   shell: |
     source ~/.onecloud_rcadmin
-    /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }}
-    /opt/yunion/bin/climc network-private adm0
+    /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} || :
+    /opt/yunion/bin/climc network-private adm0 || :
   when: network_admin_exist.rc != 0 and admin_network_count|int == 0
+  ignore_errors: yes
   args:
     executable: /bin/bash
 
