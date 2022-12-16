@@ -1,61 +1,81 @@
 # clickhouse 的安装方式比较简单，只需要分ansible_distribution，
 # 不需要区分详细的 ansible_distribution_major_version, 以及 ansible_architecture
 # 因此简单复用。如果后续clickhouse有重大版本升级，或者对于os有不同的安装变更，此处再随之改变
-- name: Import OS Specific tasks
-  include_tasks: "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
 
-- name: Mkdir for data path
-  ansible.builtin.file:
-    path: /opt/clickhouse
-    state: directory
-    owner: clickhouse
-    group: clickhouse
+- block:
+  - name: Import OS Specific tasks
+    include_tasks: "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
 
-- name: Change data path
-  replace:
-    path: /etc/clickhouse-server/config.xml
-    regexp: 'path>/var/lib/clickhouse/'
-    replace: 'path>/opt/clickhouse/'
-    backup: yes
+  - name: Ensure group "clickhouse" exists
+    ansible.builtin.group:
+      name: clickhouse
+      state: present
 
-- name: Change default port password
-  replace:
-    path: /etc/clickhouse-server/config.xml
-    regexp: '^    <tcp_port>9000</tcp_port>'
-    replace: '    <tcp_port>{{ ch_port }}</tcp_port>'
-    backup: yes
+  - name: create clickhouse user and password in os if not present
+    user:
+      name: clickhouse
+      group: clickhouse
+      shell: /bin/false
+      create_home: false
+      state: present
 
-- name: Change empty password
-  replace:
-    path: /etc/clickhouse-server/users.xml
-    regexp: '^\s+<password></password>'
-    replace: '        <password>{{ ch_password }}</password>'
-    backup: yes
+  - name: Mkdir for data path
+    ansible.builtin.file:
+      path: /opt/clickhouse
+      state: directory
+      owner: clickhouse
+      group: clickhouse
 
-- name: Allow remote hosts connect to clickhouse (config.xml)
-  lineinfile:
-    path: /etc/clickhouse-server/config.xml
-    insertafter: '<!-- Default values - try listen localhost on IPv4 and IPv6. -->'
-    line: '    <listen_host>0.0.0.0</listen_host>'
-    state: present
-    backup: yes
+  - name: Change data path
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: 'path>/var/lib/clickhouse/'
+      replace: 'path>/opt/clickhouse/'
+      backup: yes
 
-- name: Allow remote hosts connect to clickhouse (users.xml)
-  replace:
-    path: /etc/clickhouse-server/users.xml
-    regexp: '<ip>::/0</ip>\n\s+</networks>'
-    replace: '<ip>::/0</ip>\n                <ip>0.0.0.0</ip>\n            </networks>'
-    backup: yes
+  - name: Change default port password
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '^    <tcp_port>9000</tcp_port>'
+      replace: '    <tcp_port>{{ ch_port }}</tcp_port>'
+      backup: yes
 
-- name: Allow rUser can create other users and grant rights to them (users.xml)
-  replace:
-    path: /etc/clickhouse-server/users.xml
-    regexp: '<!-- <access_management>1</access_management> -->'
-    replace: '<access_management>1</access_management>'
-    backup: yes
+  - name: Change empty password
+    replace:
+      path: /etc/clickhouse-server/users.xml
+      regexp: '^\s+<password></password>'
+      replace: '        <password>{{ ch_password }}</password>'
+      backup: yes
 
-- name: restart clickhouse-server
-  service:
-    name: clickhouse-server
-    state: restarted
-    enabled: yes
+  - name: Allow remote hosts connect to clickhouse (config.xml)
+    lineinfile:
+      path: /etc/clickhouse-server/config.xml
+      insertafter: '<!-- Default values - try listen localhost on IPv4 and IPv6. -->'
+      line: '    <listen_host>0.0.0.0</listen_host>'
+      state: present
+      backup: yes
+
+  - name: Allow remote hosts connect to clickhouse (users.xml)
+    replace:
+      path: /etc/clickhouse-server/users.xml
+      regexp: '<ip>::/0</ip>\n\s+</networks>'
+      replace: '<ip>::/0</ip>\n                <ip>0.0.0.0</ip>\n            </networks>'
+      backup: yes
+
+  - name: Allow rUser can create other users and grant rights to them (users.xml)
+    replace:
+      path: /etc/clickhouse-server/users.xml
+      regexp: '<!-- <access_management>1</access_management> -->'
+      replace: '<access_management>1</access_management>'
+      backup: yes
+
+  - name: restart clickhouse-server
+    service:
+      name: clickhouse-server
+      state: restarted
+      enabled: yes
+  when:
+  - offline_data_path is defined
+  - offline_data_path | length > 0
+  - is_centos_x86 | default(false) | bool == true
+
