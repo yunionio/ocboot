@@ -33,17 +33,17 @@
       replace: 'path>/opt/clickhouse/'
       backup: yes
 
-  - name: Change default port password
+  - name: Change default port
     replace:
       path: /etc/clickhouse-server/config.xml
-      regexp: '^    <tcp_port>9000</tcp_port>'
+      regexp: '^    <tcp_port>[^<>]*</tcp_port>'
       replace: '    <tcp_port>{{ ch_port }}</tcp_port>'
       backup: yes
 
-  - name: Change empty password
+  - name: Change clickhouse password
     replace:
       path: /etc/clickhouse-server/users.xml
-      regexp: '^\s+<password></password>'
+      regexp: '^\s+<password>[^<>]*</password>'
       replace: '        <password>{{ ch_password }}</password>'
       backup: yes
 
@@ -62,7 +62,7 @@
       replace: '<ip>::/0</ip>\n                <ip>0.0.0.0</ip>\n            </networks>'
       backup: yes
 
-  - name: Allow rUser can create other users and grant rights to them (users.xml)
+  - name: Allow User can create other users and grant rights to them (users.xml)
     replace:
       path: /etc/clickhouse-server/users.xml
       regexp: '<!-- <access_management>1</access_management> -->'
