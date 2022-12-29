@@ -5,8 +5,8 @@ import argparse
 
 from lib import install, upgrade
 from lib import backup, restore
-from lib import ansible
 from lib import add_node
+from lib import stop, start
 
 
 def main():
@@ -19,8 +19,13 @@ def main():
     add_node.add_command(subparsers)
     backup.add_command(subparsers)
     restore.add_command(subparsers)
+    stop.add_command(subparsers)
+    start.add_command(subparsers)
     args = parser.parse_args()
-    args.func(args)
+    if not args.subcmd:
+        parser.print_help()
+    else:
+        args.func(args)
 
 
 if __name__ == "__main__":
