@@ -1,0 +1,5 @@
+- name: Stop container {{ container_info }}
+  shell: |
+    docker stop "{{ container_info.split()[-1] }}"
+  args:
+    executable: /bin/bash
