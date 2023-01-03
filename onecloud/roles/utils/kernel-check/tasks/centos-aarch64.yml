@@ -3,5 +3,5 @@
     enablerepo: "yunion*"
     disablerepo: "*"
     name:
-      - kernel-4.14.0-115.8.2.el7a.yn20210924
+      - kernel-5.4.199-200.yn20221212.el7
 
