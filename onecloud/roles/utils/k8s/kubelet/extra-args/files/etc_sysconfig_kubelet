@@ -1,1 +1,1 @@
-KUBELET_EXTRA_ARGS="--pod-max-pids=1024 --feature-gates=\"SupportPodPidsLimit=true\""
+KUBELET_EXTRA_ARGS="--pod-max-pids=1024 --feature-gates=\"SupportPodPidsLimit=true\" --runtime-cgroups=/systemd/system.slice --kubelet-cgroups=/systemd/system.slice"
