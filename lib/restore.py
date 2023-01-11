@@ -103,10 +103,10 @@ def restore_db(args):
     global EXTRA_CMDS
     from glob import glob
     os.chdir(args.backup_path)
-    db_file_tar = os.path.join(args.backup_path, 'onecloud.sql.tgz')
+    db_file_tar = os.path.join(args.backup_path, 'onecloud.sql.gz')
     source_db_files(args, db_file_tar)
-    extra_files = glob('%s/*.sql.tgz' % args.backup_path)
-    extra_files = [i for i in extra_files if not i.endswith('/onecloud.sql.tgz')]
+    extra_files = glob('%s/*.sql.gz' % args.backup_path)
+    extra_files = [i for i in extra_files if not i.endswith('/onecloud.sql.gz')]
     if extra_files:
         for i in extra_files:
             EXTRA_CMDS += [source_db_files(args, i, i.split('/')[-1].split('.')[0], dry_run=1)]

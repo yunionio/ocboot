@@ -48,11 +48,14 @@ class DB():
         self.cursor.execute(sql)
         return self.cursor.fetchall()
 
-    def get_databases(self):
+    def get_databases(self, light=False):
         if self.database:
             return [self.database]
         ret = [i[0] for i in self.fetchall('show databases')]
-        return sorted(list(set(ret) - set(['information_schema', 'mysql', 'performance_schema', 'test'])))
+        ret = sorted(list(set(ret) - set(['information_schema', 'mysql', 'performance_schema', 'test'])))
+        if light == True:
+            ret = sorted(list(set(ret) - set(['yunionmeter', 'yunionlogger'])))
+        return ret
 
     def get_tables(self, exclude_prefix=''):
         ret = [i[0] for i in self.fetchall('show tables')]
@@ -63,7 +66,7 @@ class DB():
 
     def gen_export_args(self):
         ret = []
-        for i in self.get_tables('opslog_tbl_'):
+        for i in self.get_tables('opslog_tbl_') + self.get_tables('task'):
             ret.append('--ignore-table=%s.%s' % (self.database, i))
         return ' '.join(ret)
 
@@ -98,8 +101,9 @@ def gen_db_config_args(config):
 
 
 def backup_db_table(config, db, table):
+
     fn = '%s.%s.sql' % (db, table)
-    tgz = '%s.%s.sql.tgz' % (db, table)
+    tgz = '%s.%s.sql.gz' % (db, table)
     _db = DB(config)
     db_size = _db.get_db_size([db], [table])
     db_args = gen_db_config_args(config)
@@ -112,7 +116,8 @@ def backup_db_table(config, db, table):
         'name': db + '.' + table,
     }
     cmd += '| gzip -c > %(tgz)s' % locals()
-    run_bash_cmd(cmd)
+    print('backup cmd: `%s`' % cmd)
+    # run_bash_cmd(cmd)
 
 
 def backup_db(config, backup_path, light=False):
@@ -123,18 +128,13 @@ def backup_db(config, backup_path, light=False):
     mysql_backup_args = MYSQL_BACKUP_ARGS
 
     if light is True:
-        backup_db_table(config, 'yunionmeter', 'bills_tbl')
-        backup_db_table(config, 'notify', 'tasks_tbl')
-        for dbname in dbs.get_databases():
+        for dbname in dbs.get_databases(light):
             db = DB(config, dbname)
             ignores += ' ' + db.gen_export_args()
 
-        ignores += ' --ignore-table=yunionmeter.bills_tbl '
-        ignores += ' --ignore-table=notify.tasks_tbl '
+    db_name_str = ' '.join(dbs.get_databases(light))
 
-    db_name_str = ' '.join(dbs.get_databases())
-
-    tgz = '%s/onecloud.sql.tgz' % backup_path
+    tgz = '%s/onecloud.sql.gz' % backup_path
     cmd = 'mysqldump %(mysql_backup_args)s --databases ' % locals() + db_name_str + ' ' \
         + gen_db_config_args(config) + ignores
 
@@ -146,7 +146,7 @@ def backup_db(config, backup_path, light=False):
     cmd += ' | gzip -c > %s' % tgz
 
     run_bash_cmd(cmd)
-    run_bash_cmd('ls -lah %s/*tgz' % backup_path)
+    run_bash_cmd('ls -lah %s/*gz' % backup_path)
 
 
 def backup_config(src, dest):
