@@ -75,7 +75,7 @@
     dest: /usr/lib/systemd/oc-hugetlb-reserve-pages.sh
     owner: root
     group: root
-    mode: 0644
+    mode: 0755
 
 - name: init hugetlb
   shell: bash /usr/local/hugetlb-init/hugetlb_setup.sh
