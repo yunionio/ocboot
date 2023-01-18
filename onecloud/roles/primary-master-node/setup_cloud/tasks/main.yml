@@ -52,13 +52,11 @@
   register: result
   until: result.rc == 0
 
-
 - name: Check onecloud cluster exists
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: "kubectl get onecloudcluster -n onecloud | grep default | wc -l"
   register: OC_CLUSTER_COUNT
-
 
 - name: Init construct create cluster args
   set_fact:
@@ -66,9 +64,16 @@
 
 - name: construct create cluster args use-ee
   set_fact:
-    init_cluster_args: "--use-ee"
+    init_cluster_args: "{{ init_cluster_args }} --use-ee"
   when:
   - use_ee is defined
+  - use_ee|default(false)|bool == true
+
+- name: construct create cluster use hyper image
+  set_fact:
+    init_cluster_args: "{{ init_cluster_args }} --use-hyper-image"
+  when:
+  - online_status | default("") == "offline"
   - use_ee|default(false)|bool == true
 
 - name: construct create cluster args disable-resource-management
@@ -77,6 +82,10 @@
   when:
   - is_kylin_based is defined
   - is_kylin_based |default(alse)|bool == true
+
+- name: show create cluster args
+  debug:
+    msg: "create cluster cmdline: `/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait`"
 
 - name: add sync-user option
   include_role:
