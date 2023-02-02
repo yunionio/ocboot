@@ -13,6 +13,28 @@
   when:
   - is_centos_based is defined
 
+- name: Backup current onecloud cluster and operator resource to /tmp/ocboot-upgrade.*
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    bk_dir=/tmp/ocboot-upgrade-`date +%Y.%m.%d-%H:%M:%S`
+    mkdir -p $bk_dir
+    kubectl get deployment -n onecloud onecloud-operator -o yaml > $bk_dir/operator.yml
+    kubectl get oc -n onecloud default -o yaml > $bk_dir/oc.yml
+
+- name: Copy turn-on-operator-clear-component patch to /tmp/turn-on-operator-clear-component.patch.yml
+  copy:
+    src: "turn-on-operator-clear-component.patch.yml"
+    dest: "/tmp/turn-on-operator-clear-component.patch.yml"
+
+- name: Turn on operator -clear-component option
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl patch deployment -n onecloud onecloud-operator --patch "$(cat /tmp/turn-on-operator-clear-component.patch.yml)" && rm -f /tmp/turn-on-operator-clear-component.patch.yml
+  args:
+    executable: /bin/bash
+
 # use async task to upgrade, ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_async.html
 - name: primary master node | Use ocadm upgrade version "{{ current_onecloud_version }}" to "{{ upgrade_onecloud_version }}"
   shell: |
@@ -37,3 +59,17 @@
   until: ocadm_update_result.finished
   retries: 30
   delay: 60
+
+- name: Copy turn-off-operator-clear-component patch to /tmp/turn-off-operator-clear-component.patch.yml
+  copy:
+    src: "turn-off-operator-clear-component.patch.yml"
+    dest: "/tmp/turn-off-operator-clear-component.patch.yml"
+
+- name: Turn off operator -clear-component option
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl patch deployment -n onecloud onecloud-operator --patch "$(cat /tmp/turn-off-operator-clear-component.patch.yml)" && rm -f /tmp/turn-off-operator-clear-component.patch.yml
+  args:
+    executable: /bin/bash
+
