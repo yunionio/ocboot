@@ -1,0 +1,7 @@
+spec:
+  template:
+    spec:
+      containers:
+      - command:
+        - /bin/onecloud-controller-manager
+        name: onecloud-operator
