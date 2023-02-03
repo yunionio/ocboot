@@ -1,0 +1,8 @@
+spec:
+  template:
+    spec:
+      containers:
+      - command:
+        - /bin/onecloud-controller-manager
+        - -clear-component
+        name: onecloud-operator
