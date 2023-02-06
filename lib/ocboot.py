@@ -533,7 +533,7 @@ class WorkerConfig(OnecloudJointConfig):
         if self.as_host is None:
             self.as_host = True
         if self.as_host_on_vm is None:
-            self.as_host_on_vm = True
+            self.as_host_on_vm = False
         self.nodes = get_nodes(config, bastion_host)
 
     @classmethod
