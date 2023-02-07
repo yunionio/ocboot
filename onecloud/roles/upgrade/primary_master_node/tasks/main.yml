@@ -22,6 +22,18 @@
     kubectl get deployment -n onecloud onecloud-operator -o yaml > $bk_dir/operator.yml
     kubectl get oc -n onecloud default -o yaml > $bk_dir/oc.yml
 
+- name: update operator only
+  shell: |
+      pkill -9 ocadm || :
+      /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} \
+        --version {{ upgrade_onecloud_version }} \
+        --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} \
+        --operator-only \
+        --wait
+  # 30 minutes timeout
+  async: 1800
+  poll: 0
+
 - name: Copy turn-on-operator-clear-component patch to /tmp/turn-on-operator-clear-component.patch.yml
   copy:
     src: "turn-on-operator-clear-component.patch.yml"
@@ -35,10 +47,20 @@
   args:
     executable: /bin/bash
 
+- name: patch hyper image for ee mode
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/useHyperImage", "value": true}]'
+  args:
+    executable: /bin/bash
+  when:
+  - offline_data_path |default("") | length > 0
+
 # use async task to upgrade, ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_async.html
 - name: primary master node | Use ocadm upgrade version "{{ current_onecloud_version }}" to "{{ upgrade_onecloud_version }}"
   shell: |
-      pkill ocadm
+      pkill -9 ocadm || :
       /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} \
         --version {{ upgrade_onecloud_version }} \
         --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} \
@@ -72,4 +94,3 @@
     kubectl patch deployment -n onecloud onecloud-operator --patch "$(cat /tmp/turn-off-operator-clear-component.patch.yml)" && rm -f /tmp/turn-off-operator-clear-component.patch.yml
   args:
     executable: /bin/bash
-
