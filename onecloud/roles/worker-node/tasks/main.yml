@@ -110,6 +110,12 @@
   when:
     kubelet_result.rc != 0
 
+- name: Include worker-node/lbagent tasks
+  include_role:
+    name: worker-node/lbagent
+  when:
+    enable_lbagent
+
 - name: Include utils/k8s/kubelet/extra-args tasks
   include_role:
     name: utils/k8s/kubelet/extra-args

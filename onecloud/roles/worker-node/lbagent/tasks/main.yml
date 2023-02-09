@@ -1,0 +1,31 @@
+- name: "set lbagent_listen_interface to {{ ansible_default_ipv4.interface }}"
+  set_fact:
+    lbagent_listen_interface: "{{ ansible_default_ipv4.interface }}"
+
+- name: "set lbagent_access_ip to {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+  set_fact:
+    lbagent_access_ip: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+
+- name: copy lbagent configuration file
+  template:
+    dest: /etc/yunion/lbagent.conf
+    src: lbagent.conf.j2
+    mode: '0755'
+
+- name: enable openvswitch
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+  - openvswitch
+
+- name: add label onecloud.yunion.io/lbagent=enable to {{ ansible_hostname }}
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: kubectl label node "{{ ansible_hostname }}" onecloud.yunion.io/lbagent=enable
+  delegate_to: "{{ k8s_controlplane_host }}"
+  run_once: yes
+  environment:
+    http_proxy: ''
+    https_proxy: ''

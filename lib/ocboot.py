@@ -366,6 +366,7 @@ class OnecloudConfig(object):
         self.iso_install_mode = config.get('iso_install_mode', False)
         self.enable_eip_man = config.get('enable_eip_man', False)
         self.offline_deploy = config.get('offline_deploy', False) or os.environ.get('OFFLINE_DEPLOY') == 'true'
+        self.enable_lbagent = config.get('enable_lbagent', False)
 
     def ansible_vars(self):
         vars = {
@@ -376,7 +377,8 @@ class OnecloudConfig(object):
             'k8s_node_as_oc_host': self.as_host,
             'k8s_node_as_oc_host_on_vm': self.as_host_on_vm,
             'enable_eip_man': self.enable_eip_man,
-            'offline_deploy': self.offline_deploy
+            'offline_deploy': self.offline_deploy,
+            'enable_lbagent': self.enable_lbagent,
         }
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip
