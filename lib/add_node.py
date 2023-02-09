@@ -51,6 +51,10 @@ def add_command(subparsers):
                         default="22",
                         help=help_d("worker node host ssh port"))
 
+    parser.add_argument("--enable-host-on-vm",
+                        dest="enable_host_on_vm",
+                        action="store_true", default=False)
+
     parser.set_defaults(func=do_add_node)
 
 
@@ -66,14 +70,15 @@ def do_add_node(args):
                            args.ssh_user,
                            args.ssh_private_file,
                            args.ssh_port,
-                           args.ssh_node_port)
+                           args.ssh_node_port,
+                           args.enable_host_on_vm)
     config.run()
 
 
 class AddNodesConfig(object):
 
     def __init__(self, cluster, target_nodes, ssh_user, ssh_private_file,
-            controlplane_ssh_port, ssh_port):
+            controlplane_ssh_port, ssh_port, enable_host_on_vm=False):
         target_nodes = list(set(target_nodes))
         for target_node in target_nodes:
             node = cluster.find_node_by_ip_or_hostname(target_node)
@@ -87,8 +92,8 @@ class AddNodesConfig(object):
             'hosts': nodes_conf,
             'controlplane_host': controlplane_host,
             'ad_controller': False,
-            'as_host': False,
-            'as_host_on_vm': False,
+            'as_host': True,
+            'as_host_on_vm': enable_host_on_vm,
             'controlplane_ssh_port': controlplane_ssh_port,
         }
         self.worker_config = WorkerConfig(Config(woker_config_dict))
