@@ -6,6 +6,7 @@ import argparse
 from lib import install, upgrade
 from lib import backup, restore
 from lib import add_node
+from lib import add_lbagent
 from lib import stop, start
 
 
@@ -17,6 +18,7 @@ def main():
     install.add_command(subparsers)
     upgrade.add_command(subparsers)
     add_node.add_command(subparsers)
+    add_lbagent.add_command(subparsers)
     backup.add_command(subparsers)
     restore.add_command(subparsers)
     stop.add_command(subparsers)

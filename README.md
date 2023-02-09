@@ -311,6 +311,21 @@ $ ./ocboot.py add-node --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
 $ ./ocboot.py add-node --help
 ```
 
+## 添加 lbagent 节点
+
+添加节点使用 add-lbagent 子命令把运行 lb agent 服务的节点加入到已有集群。
+
+```bash
+# 比如把节点 192.168.121.62 加入到已有集群 192.168.121.21
+$ ./ocboot.py add-lbagent 192.168.121.21 192.168.121.62
+
+# 可以一次添加多个节点，格式如下
+$ ./ocboot.py add-lbagent $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
+
+# 把 $node_ip ssh 端口 2222 的节点加入到 $PRIMARY_IP ssh 端口 4567 的集群
+$ ./ocboot.py add-lbagent --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
+```
+
 ## 升级节点
 
 ```bash
