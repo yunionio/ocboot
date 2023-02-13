@@ -24,7 +24,7 @@ declare -A NEW_KERNEL_PARAMS=(
     [nouveau.modeset]=0
 )
 
-declare -A OLD_KERNEL_PARAMS
+OLD_KERNEL_PARAMS_FILE="/tmp/ocboot_gpusetup_old_kernel_params_file.txt"
 
 export LC_CTYPE="en_US.UTF-8"
 ################################################
@@ -71,6 +71,7 @@ ensure_file_readable() {
 # }
 
 _fill_old_kernel_params() {
+    rm -rf $OLD_KERNEL_PARAMS_FILE && touch $OLD_KERNEL_PARAMS_FILE
     local cmdline_param=$*
     for param in $cmdline_param; do
         local key
@@ -78,37 +79,27 @@ _fill_old_kernel_params() {
         key=${param%=*}
         val=${param#*=}
         if [[ "$key" == "$val" ]]; then
-            OLD_KERNEL_PARAMS["$key"]=''
+            echo "$key" >> $OLD_KERNEL_PARAMS_FILE
         else
-            OLD_KERNEL_PARAMS["$key"]="$val"
+            echo "$key=$val" >> $OLD_KERNEL_PARAMS_FILE
         fi
     done
 }
 
 _merge_new_kernel_params() {
     local new_tmp_val
-    local old_tmp_val
-	for key in "${!NEW_KERNEL_PARAMS[@]}"; do
+    for key in "${!NEW_KERNEL_PARAMS[@]}"; do
         new_tmp_val="${NEW_KERNEL_PARAMS[$key]}"
-        old_tmp_val="${OLD_KERNEL_PARAMS[$key]}"
-        if [ "$new_tmp_val" != "$old_tmp_val" ]; then
-            OLD_KERNEL_PARAMS[$key]="$new_tmp_val"
+        if grep -q "^$key=" $OLD_KERNEL_PARAMS_FILE; then
+            sed -i "s|^$key=.*|$key=$new_tmp_val|g" $OLD_KERNEL_PARAMS_FILE
+        else
+            echo "$key=$new_tmp_val" >> $OLD_KERNEL_PARAMS_FILE
         fi
     done
 }
 
 _generate_kernel_cmdline() {
-    local cmdline=""
-    local val=""
-    for key in "${!OLD_KERNEL_PARAMS[@]}"; do
-        val="${OLD_KERNEL_PARAMS[$key]}"
-        if [ -z "$val" ]; then
-            cmdline="$cmdline $key"
-        else
-            cmdline="$cmdline $key=$val"
-        fi
-    done
-    echo "$cmdline" | cut -c2-
+    cat $OLD_KERNEL_PARAMS_FILE | tr '\n' ' '
 }
 
 mk_grub(){
