@@ -47,13 +47,25 @@
   args:
     executable: /bin/bash
 
-- name: patch hyper image for ee mode
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  shell: |
-    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/useHyperImage", "value": true}]'
-  args:
-    executable: /bin/bash
+- block:
+  - name: test if version file contains cloudpods-ee image
+    shell: |
+      cat "{{ offline_data_path }}/versions.json" |jq  '.dockers |to_entries[]' |grep -wq cloudpods-ee
+    register: has_cloudpack_image
+    failed_when: false
+    args:
+      executable: /bin/bash
+
+  - name: patch hyper image for ee mode
+    environment:
+      KUBECONFIG: /etc/kubernetes/admin.conf
+    shell: |
+      kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/useHyperImage", "value": true}]'
+    args:
+      executable: /bin/bash
+    when:
+    - has_cloudpack_image.rc == 0
+
   when:
   - offline_data_path |default("") | length > 0
 
