@@ -69,11 +69,25 @@
   - use_ee is defined
   - use_ee|default(false)|bool == true
 
-- name: construct create cluster use hyper image
-  set_fact:
-    init_cluster_args: "{{ init_cluster_args }} --use-hyper-image"
+- block:
+
+  - name: test if version file contains cloudpods-ee image
+    shell: |
+      cat "{{ offline_data_path }}/versions.json" |jq  '.dockers |to_entries[]' |grep -wq cloudpods-ee
+    register: has_cloudpack_image
+    failed_when: false
+    args:
+      executable: /bin/bash
+
+  - name: construct create cluster use hyper image
+    set_fact:
+      init_cluster_args: "{{ init_cluster_args }} --use-hyper-image"
+    when:
+    - has_cloudpack_image.rc == 0
+
   when:
   - online_status | default("") == "offline"
+  - offline_data_path | length > 0
   - use_ee|default(false)|bool == true
 
 - name: construct create cluster args disable-resource-management
