@@ -13,14 +13,19 @@
   when:
   - is_centos_based is defined
 
+- name: Copy clean_k8s_obj.sed script to /tmp
+  copy:
+    src: "clean_k8s_obj.sed"
+    dest: "/tmp/clean_k8s_obj.sed"
+
 - name: Backup current onecloud cluster and operator resource to /opt/yunion/ocboot/_upgrade/.*
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
     bk_dir=/opt/yunion/ocboot/_upgrade/`date +%Y.%m.%d-%H:%M:%S`
     mkdir -p $bk_dir
-    kubectl get deployment -n onecloud onecloud-operator -o yaml > $bk_dir/operator.yml
-    kubectl get oc -n onecloud default -o yaml > $bk_dir/oc.yml
+    kubectl get deployment -n onecloud onecloud-operator -o yaml | sed -f /tmp/clean_k8s_obj.sed > $bk_dir/operator.yml
+    kubectl get oc -n onecloud default -o yaml | sed -f /tmp/clean_k8s_obj.sed > $bk_dir/oc.yml
 
 - name: update operator only
   shell: |
