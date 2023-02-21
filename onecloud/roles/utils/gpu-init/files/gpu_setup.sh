@@ -22,6 +22,7 @@ declare -A NEW_KERNEL_PARAMS=(
     [vfio_iommu_type1.allow_unsafe_interrupts]=1
     [rdblacklist]=nouveau
     [nouveau.modeset]=0
+    [mgag200.modeset]=0
 )
 
 OLD_KERNEL_PARAMS_FILE="/tmp/ocboot_gpusetup_old_kernel_params_file.txt"
