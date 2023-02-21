@@ -159,6 +159,9 @@ class AddNodesConfig(object):
             'controlplane_ssh_port': controlplane_ssh_port,
             'enable_lbagent': enable_lbagent
         }
+        (repo, is_insecure) = cluster.get_repository()
+        if is_insecure:
+            woker_config_dict['insecure_registries'] = [repo]
         self.worker_config = WorkerConfig(Config(woker_config_dict))
         print("Get current cluster %s version: %s" % (controlplane_host, self.current_version))
 
