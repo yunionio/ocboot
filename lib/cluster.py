@@ -63,6 +63,21 @@ class OnecloudCluster(object):
     def get_spec(self):
         return self.cluster.get_spec()
 
+    def get_image_repository(self):
+        img_repo = self.get_spec().get('imageRepository')
+        return img_repo
+
+    def get_repository(self):
+        img_repo = self.get_image_repository()
+        if img_repo is None:
+            raise Exception("Not found imageRepository from cluster spec")
+        import re
+        IPADDR_REG_PATTERN = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:'
+        IPADDR_REG = re.compile(IPADDR_REG_PATTERN)
+        parts = img_repo.split('/')
+        repo = parts[0]
+        return (repo, IPADDR_REG.match(repo) is not None)
+
     def get_current_version(self):
         version = self.get_annotations().get(A_OCBOOT_UPGRADE_CURRENT_VERSION, None)
         if version:
