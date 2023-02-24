@@ -13,7 +13,7 @@ from .ocboot import get_ansible_global_vars
 
 
 class BaseService(object):
-    
+
     def __init__(self, subparsers, action, help_text):
         self.action = action
         parser = subparsers.add_parser(
@@ -46,6 +46,19 @@ class Service(BaseService):
                              args.ssh_port)
         config.run(self.action)
 
+
+class RoutineInspectionService(Service):
+    def __init__(self, subparsers, action, *args):
+        super(Service, self).__init__(subparsers, action, "%s services of hosts" % action)
+
+    def inject_options(self, parser):
+        pass # inject_ssh_hosts_options(parser)
+
+    def do_action(self, args):
+        import os
+        os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+        config = NodesConfig(['10.127.100.212'], 'root', '/root/.ssh/id_rsa.pub', 22)
+        config.run(self.action)
 
 class NodesConfig(object):
 

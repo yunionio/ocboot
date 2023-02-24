@@ -8,6 +8,7 @@ from lib import backup, restore
 from lib import add_node
 from lib import add_lbagent
 from lib import stop, start
+from lib import routine_inspection
 
 
 def main():
@@ -23,6 +24,8 @@ def main():
     restore.add_command(subparsers)
     stop.add_command(subparsers)
     start.add_command(subparsers)
+    routine_inspection.add_command(subparsers)
+
     args = parser.parse_args()
     if not args.subcmd:
         parser.print_help()
