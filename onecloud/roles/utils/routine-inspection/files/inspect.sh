@@ -11,12 +11,10 @@ if [[ "$DEBUG" == "true" ]]; then
     set -ex ;export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 fi
 
-
 ### helpers
 lines_2_json(){
 	local lines="$1"
 	local len="${#keys[@]}"
-    local
 
     if [ -z "$lines" ]; then
         echo "[]"
@@ -47,10 +45,10 @@ lines_2_json(){
 }
 
 get_node_name(){
-    kubectl get nodes -o wide  | awk ' NR>1  {print $1}'
+    hostname
 }
 get_node_ip(){
-    kubectl get nodes -o wide  | awk ' NR>1  {print $6}'
+    ip route get 1  |head -1 |awk '{print $7}'
 }
 
 get_qemu_version(){
@@ -89,13 +87,10 @@ disk_usage_json(){
 }
 
 get_disk_usage_above_70(){
-    local percent="$1"; shift
     local keys=( Filesystem              Type      Size  Used Avail Use% "Mounted on" )
     lines_2_json "$(_get_disk_usage| awk '$(NF-1) >= 70')"
 }
-
 get_disk_usage_above_90(){
-    local percent="$1"; shift
     local keys=( Filesystem              Type      Size  Used Avail Use% "Mounted on" )
     lines_2_json "$(_get_disk_usage| awk '$(NF-1) >= 90')"
 }
@@ -127,10 +122,10 @@ disk_io(){
 ## DB stat
 get_db_account(){
     local content="$(kubectl get onecloudcluster -n onecloud default -o yaml |grep -A 5 -w mysql)"
-    export DB_HOST=$(echo "$content" |grep -w host |awk '{print $(NF)}')
-    export DB_USER=$(echo "$content" |grep -w username |awk '{print $(NF)}')
-    export DB_PSWD=$(echo "$content" |grep -w password |awk '{print $(NF)}')
-    export DB_PORT=$(echo "$content" |grep -w port |awk '{print $(NF)}')
+    export DB_HOST=$(echo "$content" |grep -w host: |awk '{print $(NF)}')
+    export DB_USER=$(echo "$content" |grep -w username: |awk '{print $(NF)}')
+    export DB_PSWD=$(echo "$content" |grep -w password: |awk '{print $(NF)}')
+    export DB_PORT=$(echo "$content" |grep -w port: |awk '{print $(NF)}')
     export DB_PORT=${DB_PORT:-3306}
 }
 
@@ -251,7 +246,6 @@ k8s_cert_status(){
         echo "ERROR"
     fi
 }
-
 cat << EOF
 {
     "nodes": [
