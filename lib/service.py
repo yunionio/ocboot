@@ -55,10 +55,11 @@ class RoutineInspectionService(Service):
         pass # inject_ssh_hosts_options(parser)
 
     def do_action(self, args):
-        import os
-        os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-        config = NodesConfig(['10.127.100.212'], 'root', '/root/.ssh/id_rsa.pub', 22)
-        config.run(self.action)
+        pass
+        # import os
+        # os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+        # config = NodesConfig(['10.127.100.212'], 'root', '/root/.ssh/id_rsa.pub', 22)
+        # config.run(self.action)
 
 class NodesConfig(object):
 

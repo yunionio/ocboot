@@ -59,4 +59,5 @@
 
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:
+    - utils/routine-inspection
     - primary-master-node/reboot

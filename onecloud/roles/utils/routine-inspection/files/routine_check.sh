@@ -6,6 +6,7 @@ export DB_HOST=
 export DB_USER=
 export DB_PSWD=
 export DB_PORT=
+export MAX_SEC_ALLOWED=300
 
 if [[ "$DEBUG" == "true" ]]; then
     set -ex ;export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -246,12 +247,30 @@ k8s_cert_status(){
         echo "ERROR"
     fi
 }
+
+
+ntp_status(){
+    local secs=$(hwclock |awk '{print $(NF-1)}' |tr -d '-' |sed -e 's#\.[0-9]*##' )
+    if [[ "$secs" -gt $MAX_SEC_ALLOWED ]]; then
+        echo "ERROR"
+    else
+        echo "OK"
+    fi
+}
+
+ntp_details(){
+    hwclock
+}
+
+
 cat << EOF
 {
     "nodes": [
         {
             "nodeName": "$(get_node_name)"
             , "nodeIp": "$(get_node_ip)"
+	    , "ntpStatus": "$(ntp_status)"
+	    , "ntpDetails": "$(ntp_details)"
             , "qemuVersion": ["$(get_qemu_version)"]
             , "last5MinLoadPerCPU": "$(get_cpu_load_percentage)"
             , "memUsage": "$(get_mem_usage)"

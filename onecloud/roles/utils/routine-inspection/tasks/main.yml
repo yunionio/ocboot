@@ -1,3 +1,4 @@
+---
 - name: ensure routine inspection directory exists
   file:
     path: /opt/yunion/scripts/tools/
@@ -15,6 +16,7 @@
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc-ee sshkeypair-show |grep '^ssh-rsa' >> /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
   args:
     executable: /bin/bash
