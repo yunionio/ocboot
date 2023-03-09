@@ -1,5 +1,6 @@
 - name: remove sync-user option
   shell: |
+    export KUBECONFIG=/etc/kubernetes/admin.conf
     tmp=$(mktemp).yaml
     kubectl get deployment onecloud-operator -n onecloud -o yaml > $tmp
     sed -i '/sync-user$/d' $tmp
