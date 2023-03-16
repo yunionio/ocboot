@@ -12,18 +12,27 @@ export LC_CTYPE="en_US.UTF-8"
 
 . $CUR_DIR/functions
 
+is_intel_cpu() {
+    grep -m 1 'model name' /proc/cpuinfo | grep -qi intel
+    return $?
+}
+
 PCIIDS_FILE=${PCIIDS_FILE:-$CUR_DIR/pci.ids}
 VFIO_PCI_OVERRIDE_TOOL=/usr/bin/vfio-pci-override.sh
 
 declare -A NEW_KERNEL_PARAMS=(
     [crashkernel]=auto
-    [intel_iommu]=on
     [iommu]=pt
     [vfio_iommu_type1.allow_unsafe_interrupts]=1
     [rdblacklist]=nouveau
     [nouveau.modeset]=0
     [mgag200.modeset]=0
 )
+
+if is_intel_cpu; then
+    info "enable intel_iommu=on"
+    NEW_KERNEL_PARAMS[intel_iommu]=on
+fi
 
 OLD_KERNEL_PARAMS_FILE="/tmp/ocboot_gpusetup_old_kernel_params_file.txt"
 
