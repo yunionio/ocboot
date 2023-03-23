@@ -8,6 +8,7 @@ from lib import backup, restore
 from lib import add_node
 from lib import add_lbagent
 from lib import stop, start
+from lib import ce, ee
 
 
 def main():
@@ -23,6 +24,9 @@ def main():
     restore.add_command(subparsers)
     stop.add_command(subparsers)
     start.add_command(subparsers)
+    start.add_command(subparsers)
+    ce.add_command(subparsers)
+    ee.add_command(subparsers)
     args = parser.parse_args()
     if not args.subcmd:
         parser.print_help()
