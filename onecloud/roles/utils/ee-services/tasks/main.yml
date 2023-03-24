@@ -1,0 +1,28 @@
+---
+- name: switch to EE
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+    PATH: /opt/yunion/bin:{{ ansible_env.PATH }}
+  shell: |
+      source <(/opt/yunion/bin/ocadm cluster rcadmin)
+      ocadm cluster update --use-ee --wait
+      kubectl delete configmap -n onecloud default-web
+      kubectl rollout restart deployment -n onecloud default-web
+      sleep 3
+      while true; do
+        pod=$(kubectl -n onecloud get pods |grep -v '^NAME' |grep -vi run |awk '{print $1}')
+        if [ -z "$pod" ]; then
+          echo all running
+          break
+        else
+          echo "still updating"
+        fi
+        sleep 3
+      done
+      climc-ee infos-update \
+        --name "云联壹云" \
+        --name-en "Yunion Cloud" \
+        --copyright "北京云联壹云技术有限公司" \
+        --copyright-en "Yunion"
+  args:
+    executable: /bin/bash
