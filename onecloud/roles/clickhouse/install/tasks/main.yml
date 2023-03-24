@@ -55,6 +55,13 @@
       state: present
       backup: yes
 
+  - name: Enlarge max mem usage (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '^\s+<max_server_memory_usage_to_ram_ratio>0\.\d+</max_server_memory_usage_to_ram_ratio>'
+      replace: '    <max_server_memory_usage_to_ram_ratio>2</max_server_memory_usage_to_ram_ratio>'
+      backup: yes
+
   - name: Allow remote hosts connect to clickhouse (users.xml)
     replace:
       path: /etc/clickhouse-server/users.xml
@@ -78,4 +85,3 @@
   - offline_data_path is defined
   - offline_data_path | length > 0
   - is_centos_x86 | default(false) | bool == true
-
