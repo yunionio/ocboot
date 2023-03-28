@@ -56,6 +56,7 @@
       - yunion-climc-ee
       - yunion-executor
       - yunion-qemu-4.2.0
+      - openvswitch
     disablerepo: "*"
     enablerepo: "yunion-*"
     state: latest
