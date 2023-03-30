@@ -16,6 +16,9 @@ SVC_PORT_REGION = 30888
 SVC_SCHEDULER = "scheduler"
 SVC_PORT_SCHEDULER = 30887
 
+SVC_SCHEDULEDTASK = "scheduledtask"
+SVC_PORT_SCHEDULEDTASK = 30978
+
 SVC_GLANCE = "glance"
 SVC_PORT_GLANCE = 30292
 
@@ -33,6 +36,12 @@ SVC_PORT_ANSIBLESERVER = 30890
 
 SVC_MONITOR = "monitor"
 SVC_PORT_MONITOR = 30093
+
+SVC_LOGGER = "logger"
+SVC_PORT_LOGGER = 30999
+
+SVC_NOTIFY = "notify"
+SVC_PORT_NOTIFY = 30777
 
 
 def new_cloud_service(name, version, port,
@@ -63,6 +72,13 @@ def new_scheduler_service(version, db_svc, region_svc):
     return svc
 
 
+def new_scheduledtask_service(version, db_svc, region_svc):
+    svc = new_cloud_service(SVC_SCHEDULEDTASK, version, SVC_PORT_SCHEDULEDTASK, db_svc,
+                            depend_svc=region_svc,
+                            disable_auto_sync_table=True)
+    return svc
+
+
 def new_glance_service(version, db_svc, keystone_svc):
     svc = new_cloud_service(SVC_GLANCE, version, SVC_PORT_GLANCE, db_svc, keystone_svc)
     svc.add_volume(ServiceDataVolume("/opt/cloud/workspace/data/glance"))
@@ -88,3 +104,11 @@ def new_ansibleserver_service(version, db_svc, keystone_svc):
 def new_monitor_service(version, db_svc, region_svc):
     svc = new_cloud_service(SVC_MONITOR, version, SVC_PORT_MONITOR, db_svc, depend_svc=region_svc)
     return svc
+
+
+def new_logger_service(version, db_svc, keystone_svc):
+    return new_cloud_service(SVC_LOGGER, version, SVC_PORT_LOGGER, db_svc, keystone_svc)
+
+
+def new_notify_service(version, db_svc, keystone_svc):
+    return new_cloud_service(SVC_NOTIFY, version, SVC_PORT_NOTIFY, db_svc, keystone_svc)
