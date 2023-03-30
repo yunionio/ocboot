@@ -17,3 +17,6 @@ VERSION ?= $(shell git describe --exact-match 2> /dev/null || \
 image:
 	docker buildx build --platform linux/arm64,linux/amd64 --push \
 		-t $(REGISTRY)/ocboot:$(VERSION) -f ./Dockerfile .
+
+generate-docker-compose-manifests:
+	python3 ./generate-compose.py > ./compose/docker-compose.yml
