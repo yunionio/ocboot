@@ -1,0 +1,90 @@
+from lib.compose.object import ServiceVolume, ServiceDataVolume
+from lib.compose.services.cluster_service import ClusterService, ComposeServiceInitService, ClusterCommonService
+from lib.compose.services.mysql import MysqlService
+from lib.compose.services.etcd import EtcdService
+from lib.compose.services.climc import ClimcService
+from lib.compose.services.kubeserver import KubeServerService
+from lib.compose.services.web import WebService
+from lib.compose.services.influxdb import InfluxdbService
+
+SVC_KEYSTONE = "keystone"
+SVC_PORT_KEYSTONE = 30500
+
+SVC_REGION = "region"
+SVC_PORT_REGION = 30888
+
+SVC_SCHEDULER = "scheduler"
+SVC_PORT_SCHEDULER = 30887
+
+SVC_GLANCE = "glance"
+SVC_PORT_GLANCE = 30292
+
+SVC_APIGATEWAY = "apigateway"
+SVC_PORT_APIGATEWAY = 30300
+
+SVC_WEBCONSOLE = "webconsole"
+SVC_PORT_WEBCONSOLE = 30899
+
+SVC_YUNIONCONF = "yunionconf"
+SVC_PORT_YUNIONCONF = 30889
+
+SVC_ANSIBLESERVER = "ansibleserver"
+SVC_PORT_ANSIBLESERVER = 30890
+
+SVC_MONITOR = "monitor"
+SVC_PORT_MONITOR = 30093
+
+
+def new_cloud_service(name, version, port,
+                      db_svc=None,
+                      keystone_svc=None,
+                      depend_svc=None,
+                      disable_auto_sync_table=False):
+    return ClusterCommonService(name, version, db_svc,
+                                port=port, keystone_svc=keystone_svc,
+                                depend_svc=depend_svc,
+                                disable_auto_sync_table=disable_auto_sync_table)
+
+
+def new_keystone_service(version, db_svc, etcd_svc):
+    svc = new_cloud_service(SVC_KEYSTONE, version, SVC_PORT_KEYSTONE, db_svc)
+    svc.depend_on_health(etcd_svc)
+    return svc
+
+
+def new_region_service(version, db_svc, keystone_svc):
+    return new_cloud_service(SVC_REGION, version, SVC_PORT_REGION, db_svc, keystone_svc)
+
+
+def new_scheduler_service(version, db_svc, region_svc):
+    svc = new_cloud_service(SVC_SCHEDULER, version, SVC_PORT_SCHEDULER, db_svc,
+                            depend_svc=region_svc,
+                            disable_auto_sync_table=True)
+    return svc
+
+
+def new_glance_service(version, db_svc, keystone_svc):
+    svc = new_cloud_service(SVC_GLANCE, version, SVC_PORT_GLANCE, db_svc, keystone_svc)
+    svc.add_volume(ServiceDataVolume("/opt/cloud/workspace/data/glance"))
+    return svc
+
+
+def new_apigateway_service(version, keystone_svc):
+    return new_cloud_service(SVC_APIGATEWAY, version, SVC_PORT_APIGATEWAY, keystone_svc=keystone_svc)
+
+
+def new_webconsole_service(version, db_svc, keystone_svc):
+    return new_cloud_service(SVC_WEBCONSOLE, version, SVC_PORT_WEBCONSOLE, db_svc, keystone_svc)
+
+
+def new_yunionconf_service(version, db_svc, keystone):
+    return new_cloud_service(SVC_YUNIONCONF, version, SVC_PORT_YUNIONCONF, db_svc, keystone)
+
+
+def new_ansibleserver_service(version, db_svc, keystone_svc):
+    return new_cloud_service(SVC_ANSIBLESERVER, version, SVC_PORT_ANSIBLESERVER, db_svc, keystone_svc)
+
+
+def new_monitor_service(version, db_svc, region_svc):
+    svc = new_cloud_service(SVC_MONITOR, version, SVC_PORT_MONITOR, db_svc, depend_svc=region_svc)
+    return svc
