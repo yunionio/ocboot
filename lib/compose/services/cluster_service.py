@@ -24,7 +24,7 @@ class ComposeServiceInitService(ClusterService):
                  db_svc=None,
                  keystone_svc=None,
                  depend_svc=None,
-                 version="v0.0.1"):
+                 version="v3.10-lzx.1"):
         super().__init__(f"{component_name}-{step}", version, image_name='compose-service-init')
 
         if not step:
@@ -122,8 +122,7 @@ class ClusterCommonService(ClusterService):
             self.STEP_INIT,
             self.db_svc,
             keystone_svc=self.keystone_svc,
-            depend_svc=self.depend_svc,
-            version="v0.0.1-amd64")
+            depend_svc=self.depend_svc)
         return init_svc
 
     def get_init_service(self):
@@ -132,8 +131,7 @@ class ClusterCommonService(ClusterService):
     def _get_post_init_service(self):
         post_init_svc = ComposeServiceInitService(self.get_component_name(),
                                                   self.STEP_POST_INIT,
-                                                  self.db_svc,
-                                                  version="v0.0.1-amd64")
+                                                  self.db_svc)
         post_init_svc.set_restart(SERVICE_RESTART_ON_FAILURE)
         post_init_svc.depend_on(self, DependOn.CONDITION_SERVICE_HEALTHY)
         return post_init_svc
