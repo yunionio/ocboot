@@ -74,9 +74,9 @@ cluster:
       # 生产环境部署这里需要设置成 false ，不然会在 k8s 集群里面部署一个 mysql ，然后连接使用这个 statefulset mysql
       enabled: false
       image:
-        repository: "registry.cn-beijing.aliyuncs.com/yunionio/mysql"
+        repository: "registry.cn-beijing.aliyuncs.com/yunionio/mariadb"
         pullPolicy: IfNotPresent
-        tag: "5.6"
+        tag: "10.5.19"
       persistence:
         storageClass: ""
         accessMode: ReadWriteOnce

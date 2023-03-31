@@ -63,6 +63,12 @@ spec:
               value: {{ $mysql.password | quote }}
             - name: MYSQL_TCP_PORT
               value: {{ $mysql.port | quote }}
+            - name: MYSQL_ROOT_HOST
+              value: "%"
+            - name: MARIADB_AUTO_UPGRADE
+              value: "true"
+            - name: MARIADB_DISABLE_UPGRADE_BACKUP
+              value: "true"
           ports:
             - containerPort: {{ int $mysql.port }}
               name: mysql
