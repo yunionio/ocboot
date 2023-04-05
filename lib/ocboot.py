@@ -503,3 +503,19 @@ class WorkerConfig(OnecloudJointConfig):
 
     def get_nodes(self):
         return self.nodes
+
+
+class NodeConfig(object):
+
+    def __init__(self, config, bastion_host=None):
+        self.nodes = get_nodes(config, bastion_host)
+
+    @classmethod
+    def get_group(cls):
+        return GROUP_NODES
+
+    def get_nodes(self):
+        return self.nodes
+
+    def ansible_vars(self):
+        return {}
