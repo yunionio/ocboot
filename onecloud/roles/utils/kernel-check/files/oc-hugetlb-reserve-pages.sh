@@ -31,9 +31,9 @@ fi
 if [ "$total" -lt "10" ]; then
     reserved=1
 else
-    reserved=$((total/10))
-    if [ "$reserved" -gt "20" ]; then
-        reserved=20
+    reserved=$((total/5))
+    if [ "$reserved" -gt "32" ]; then
+        reserved=32
     fi
 fi
 

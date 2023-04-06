@@ -190,7 +190,7 @@ class Node(object):
         self.user = config.get('user', 'root')
         self.port = config.get('port', 22)
         self.host_networks = config.get('host_networks', None)
-        self.enable_hugepage = config.get('enable_hugepage', None)
+        self.enable_hugepage = config.get('enable_hugepage', True)
         self.node_ip = config.get('node_ip', None)
         if not self.node_ip:
             self.node_ip = self.host
