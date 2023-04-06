@@ -124,7 +124,7 @@ primary_master_node:
   as_host: true
   # 虚拟机强行作为 OneCloud 私有云计算节点（默认为 false）。开启此项时，请确保as_host: true
   as_host_on_vm: true
-  # 是否宿主机开启大页内存(宿主机为 x86_64架构，且内存超过 30G时生效，预留内存为总内存的10%，最大预留20G内存)
+  # 是否宿主机开启大页内存(宿主机为 x86_64 架构非控制节点默认开启，且内存超过 30G时生效，预留内存为总内存的10%，最大预留20G内存)
   enable_hugepage: false
   # k8s pod network CIDR:
   pod_network_cidr: 10.40.0.0/16
@@ -196,12 +196,10 @@ worker_nodes:
     # 待部署节点 ssh 端口
     port: 22
     user: root
-    enable_hugepage: false
   - hostname: 10.127.10.160
     # 待部署节点 ssh 端口
     port: 22
     user: root
-    enable_hugepage: false
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
   as_host: true
