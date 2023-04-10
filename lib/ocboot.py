@@ -14,6 +14,7 @@ GROUP_REGISTRY_NODE="registry_node"
 GROUP_PRIMARY_MASTER_NODE = "primary_master_node"
 GROUP_MASTER_NODES = "master_nodes"
 GROUP_WORKER_NODES = "worker_nodes"
+GROUP_NODES = "nodes"
 
 
 def load_config(config_file):
