@@ -9,17 +9,27 @@
     environment:
       KUBECONFIG: /etc/kubernetes/admin.conf
     shell: |
-      kubectl patch onecloudclusters -n onecloud default --patch "$(cat /tmp/clickhouse.spec.yaml)" --type merge && rm -f /tmp/clickhouse.spec.yaml
+      kubectl patch onecloudclusters -n onecloud default --patch "$(cat /tmp/clickhouse.spec.yaml)" --type merge
       for i in cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
       do
         kubectl delete configmap -n onecloud default-$i
         kubectl rollout restart deployment -n onecloud  default-$i
       done
+      sleep 30
+      kubectl -n onecloud get configmap default-meter -o yaml | grep -qP '^\s+clickhouse: tcp'
     args:
       executable: /bin/bash
+    retries: 10
+    register: clickhouse_result
+    delay: 30
+    ignore_errors: true
+    until: clickhouse_result.rc == 0
+
+  - name: clean tmp files
+    shell: |
+      rm -f /tmp/clickhouse.spec.yaml
 
   when:
   - offline_data_path is defined
   - offline_data_path | length > 0
   - is_centos_x86 | default(false) | bool == true
-
