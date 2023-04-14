@@ -13,10 +13,16 @@
       for i in cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
       do
         kubectl delete configmap -n onecloud default-$i
-        kubectl rollout restart deployment -n onecloud  default-$i
+        kubectl rollout restart deployment -n onecloud default-$i
       done
+
       sleep 30
-      kubectl -n onecloud get configmap default-meter -o yaml | grep -qP '^\s+clickhouse: tcp'
+
+      # check all services that use clickhouse
+      for i in cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
+      do
+        kubectl -n onecloud get configmap default-$i -o yaml | grep -qP '^\s+clickhouse: tcp'
+      done
     args:
       executable: /bin/bash
     retries: 10
