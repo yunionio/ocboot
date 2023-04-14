@@ -82,7 +82,6 @@ def inject_add_hostagent_options(parser):
 
 
 def inject_auto_backup_options(parser):
-    parser.add_argument('config', help="config yaml file", nargs='?')
     parser.add_argument(
         '--backup-path', help="backup path, default: /opt/yunion/backup", default="/opt/yunion/backup")
     parser.add_argument('--light', action='store_true', default=True,
