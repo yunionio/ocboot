@@ -12,5 +12,5 @@
     name: "Backup DB Daily"
     special_time: daily
     user: root
-    job: "BKUP_PATH={{ backup_path}} MAX_BKUP={{ max_backups }} LIGHT_BKUP={{light_backup}} MAX_DISK_PERCENTAGE={{ max_disck_percentage }} /opt/yunion/scripts/db_backup.sh"
+    job: "BKUP_PATH={{ backup_path | default('/opt/yunion/backup')}} MAX_BKUP={{ max_backups|default(10) }} LIGHT_BKUP={{light_backup|default('true')}} MAX_DISK_PERCENTAGE={{ max_disck_percentage|default(75) }} /opt/yunion/scripts/db_backup.sh"
     cron_file: yunion_audo_db_backup
