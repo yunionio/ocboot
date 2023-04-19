@@ -25,3 +25,7 @@
   - online_status == "offline"
   - offline_data_path is defined
   - offline_data_path | length > 0
+
+- name: set fact for socket
+  set_fact:
+    login_unix_socket: /var/lib/mysql/mysql.sock

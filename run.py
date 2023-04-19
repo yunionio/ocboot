@@ -22,15 +22,20 @@ Usage: %s [master_ip|<config_file>.yml]
 
 IPADDR_REG_PATTERN = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 IPADDR_REG = re.compile(IPADDR_REG_PATTERN)
+
+
 def match_ip4addr(string):
     global IPADDR_REG
     return IPADDR_REG.match(string) is not None
 
+
 def versiontuple(v):
     return tuple(map(int, (v.split("."))))
 
+
 def version_ge(v1, v2):
     return versiontuple(v1) >= versiontuple(v2)
+
 
 def check_pip3():
     ret = os.system("pip3 --version >/dev/null 2>&1")
@@ -40,17 +45,20 @@ def check_pip3():
         return
     raise Exception("install python3-pip failed")
 
+
 def check_ansible():
     minimal_ansible_version = '2.9.27'
     cmd.init_ansible_playbook_path()
     ret = os.system("ansible-playbook --version >/dev/null 2>&1")
     if ret == 0:
-        ansible_version = os.popen("""ansible-playbook --version | head -1 | grep -oP '[0-9.]+' """).read().strip()
+        ansible_version = os.popen(
+            """ansible-playbook --version | head -1 | grep -oP '[0-9.]+' """).read().strip()
         if version_ge(ansible_version, minimal_ansible_version):
             print("current ansible version: %s. PASS" % ansible_version)
             return
         else:
-            print("Current ansible version (%s) is lower than expected(%s). upgrading ... " % (ansible_version, minimal_ansible_version))
+            print("Current ansible version (%s) is lower than expected(%s). upgrading ... " % (
+                ansible_version, minimal_ansible_version))
     else:
         print("No ansible found. Installing ... ")
     try:
@@ -59,8 +67,9 @@ def check_ansible():
         print("Install ansible failed, please try to install ansible manually")
         raise e
 
+
 def install_packages(pkgs):
-    if os.system('grep -Pq "Kylin Linux Advanced Server|CentOS Linux" /etc/os-release') == 0:
+    if os.system('grep -Pq "Kylin Linux Advanced Server|CentOS Linux|openEuler" /etc/os-release') == 0:
         return os.system("yum install -y %s" % (" ".join(pkgs)))
     elif os.system('grep -wq "Debian GNU/Linux" /etc/os-release') == 0:
         return os.system("apt install -y %s" % (" ".join(pkgs)))
@@ -68,23 +77,31 @@ def install_packages(pkgs):
         print("Unsupported OS")
         return 255
 
+
 def install_ansible():
     for pkg in ['python2-pyyaml', 'PyYAML']:
         install_packages([pkg])
-    ret = os.system('python3 -m pip install --upgrade pip setuptools wheel')
-    if ret != 0:
-        raise Exception("Install/updrade pip3 failed. ")
+
+    if os.system('rpm -qa |grep -q python3-pip') != 0:
+        ret = os.system(
+            'python3 -m pip install --upgrade pip setuptools wheel')
+        if ret != 0:
+            raise Exception("Install/updrade pip3 failed. ")
+    os.system('python3 -m pip install --upgrade pip')
     ret = os.system('python3 -m pip install --upgrade ansible')
     if ret != 0:
         raise Exception("Install ansible failed. ")
 
+
 def check_passless_ssh(ipaddr):
-    cmd = "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr)
+    cmd = "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (
+        ipaddr)
     ret = os.system(cmd)
     if ret == 0:
         return
     else:
-        raise Exception("Passwordless ssh failed, please configure passwordless ssh to root@%s" % (ipaddr))
+        raise Exception(
+            "Passwordless ssh failed, please configure passwordless ssh to root@%s" % (ipaddr))
     try:
         install_passless_ssh(ipaddr)
     except Exception as e:
@@ -107,7 +124,8 @@ def install_passless_ssh(ipaddr):
     ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub root@%s" % (ipaddr))
     if ret != 0:
         raise Exception("ssh-copy-id")
-    ret = os.system("ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr))
+    ret = os.system(
+        "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr))
     if ret != 0:
         raise Exception("check passwordless ssh login failed")
 
@@ -124,7 +142,7 @@ def random_password(num):
     digits = r'23456789'
     letters = r'abcdefghjkmnpqrstuvwxyz'
     uppers = letters.upper()
-    punc = r'' # !$@#%^&*-=+?;'
+    punc = r''  # !$@#%^&*-=+?;'
     chars = digits + letters + uppers + punc
     npass = None
     while True:
@@ -195,11 +213,25 @@ primary_master_node:
   image_repository: registry.cn-beijing.aliyuncs.com/yunion
 """
 
+
+def dynamic_load():
+    import glob
+    paths = glob.glob('/usr/local/lib64/python3.?/site-packages/') + \
+        glob.glob('/usr/local/lib64/python3.??/site-packages/')
+    print("loading path:")
+    for p in paths:
+        if os.path.isdir(p) and p not in sys.path:
+            sys.path.append(p)
+            print("\t%s" % p)
+
+
 def gen_config(ipaddr):
     global conf
     import os.path
-    import yaml
     import os
+    dynamic_load()
+    import yaml
+
     config_dir = os.getenv("OCBOOT_CONFIG_DIR")
     image_repository = os.getenv('IMAGE_REPOSITORY')
 
@@ -212,10 +244,12 @@ def gen_config(ipaddr):
         ver = f.read().strip()
 
     # parameter first; then daily build; at last official build
-    if image_repository not in ['', None, 'none'] :
-        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion', image_repository)
+    if image_repository not in ['', None, 'none']:
+        conf = conf.replace(
+            'registry.cn-beijing.aliyuncs.com/yunion', image_repository)
     elif re.search(r'\b\d{8}\.\d$', ver):
-        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion', 'registry.cn-beijing.aliyuncs.com/yunionio')
+        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion',
+                            'registry.cn-beijing.aliyuncs.com/yunionio')
 
     if os.path.exists(temp):
         with open(temp, 'r') as stream:
@@ -229,7 +263,7 @@ def gen_config(ipaddr):
                 raise Exception("paring %s error: %s" % (temp, exc))
 
     mypass_clickhouse = random_password(12)
-    mypass_mariadb  = random_password(12)
+    mypass_mariadb = random_password(12)
     with open(temp, 'w') as f:
         f.write(conf.replace('10.127.10.158', ipaddr)
                 .replace('your-sql-password', mypass_mariadb)
@@ -240,12 +274,15 @@ def gen_config(ipaddr):
 
 parser = None
 
+
 def get_args():
     """show argpase snippets"""
     global parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('IP_CONF', nargs=1, type=str, help="Input the target IPv4 or Config file")
-    parser.add_argument('--offline-data-path', nargs='?', help="offline packages location")
+    parser.add_argument('IP_CONF', nargs=1, type=str,
+                        help="Input the target IPv4 or Config file")
+    parser.add_argument('--offline-data-path', nargs='?',
+                        help="offline packages location")
     return parser.parse_args()
 
 
@@ -261,7 +298,8 @@ def main():
     if args.offline_data_path and os.path.isdir(args.offline_data_path):
         offline_data_path = os.path.realpath(args.offline_data_path)
     elif os.environ.get('OFFLINE_DATA_PATH') and os.path.isdir(os.environ.get('OFFLINE_DATA_PATH')):
-        offline_data_path = os.path.realpath(os.environ.get('OFFLINE_DATA_PATH'))
+        offline_data_path = os.path.realpath(
+            os.environ.get('OFFLINE_DATA_PATH'))
 
     if offline_data_path:
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path

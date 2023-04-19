@@ -31,4 +31,3 @@
   when:
   - is_centos_aarch64 is defined
 
-
