@@ -72,7 +72,7 @@ IMAGE_REPOSITORY=docker.io/yunion ./run.py <ip>
 primary_master_node:
   hostname: 10.127.10.158
   ...
-  onecloud_version: 'v3.9.5'
+  onecloud_version: 'v3.9.8'
   ...
   image_repository: docker.io/yunion
 ```
@@ -105,7 +105,7 @@ primary_master_node:
   hostname: 10.127.10.158
   user: root
   # onecloud 版本
-  onecloud_version: v3.8.8
+  onecloud_version: v3.9.8
   # 数据库连接地址
   db_host: 10.127.10.158
   # 数据库用户
@@ -167,7 +167,7 @@ mariadb_node:
   db_user: root
   db_password: your-sql-password
 primary_master_node:
-  onecloud_version: v3.8.8
+  onecloud_version: v3.9.8
   hostname: 10.127.10.156
   # 待部署节点 ssh 端口
   port: 22
@@ -241,7 +241,7 @@ primary_master_node:
   hostname: $PRIMARY_IP
   use_local: false
   user: root
-  onecloud_version: "v3.8.8"
+  onecloud_version: "v3.9.8"
   db_host: $DB_IP
   db_user: "$DB_USER"
   db_password: "$DB_PSWD"

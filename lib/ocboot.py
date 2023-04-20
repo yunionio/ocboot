@@ -14,6 +14,7 @@ GROUP_REGISTRY_NODE="registry_node"
 GROUP_PRIMARY_MASTER_NODE = "primary_master_node"
 GROUP_MASTER_NODES = "master_nodes"
 GROUP_WORKER_NODES = "worker_nodes"
+GROUP_NODES = "nodes"
 
 
 def load_config(config_file):
@@ -503,3 +504,19 @@ class WorkerConfig(OnecloudJointConfig):
 
     def get_nodes(self):
         return self.nodes
+
+
+class NodeConfig(object):
+
+    def __init__(self, config, bastion_host=None):
+        self.nodes = get_nodes(config, bastion_host)
+
+    @classmethod
+    def get_group(cls):
+        return GROUP_NODES
+
+    def get_nodes(self):
+        return self.nodes
+
+    def ansible_vars(self):
+        return {}
