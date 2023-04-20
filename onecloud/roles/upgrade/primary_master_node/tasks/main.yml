@@ -66,10 +66,18 @@
       KUBECONFIG: /etc/kubernetes/admin.conf
     shell: |
       kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/useHyperImage", "value": true}]'
+      kubectl rollout restart deployment -n onecloud  onecloud-operator
+      sleep 30
+      kubectl -n onecloud -o yaml get oc |grep 'useHyperImage: true'
     args:
       executable: /bin/bash
     when:
     - has_cloudpack_image.rc == 0
+    retries: 10
+    register: hyper_image_patch_result
+    delay: 30
+    ignore_errors: true
+    until: hyper_image_patch_result.rc == 0
 
   when:
   - offline_data_path |default("") | length > 0
