@@ -261,6 +261,8 @@ backup_k8s() {
     title "Backup K8s"
     kubectl -n onecloud -o yaml get deployment onecloud-operator >$BKUP_PATH/onecloud-operator.$BKUP_DATE.yml
     kubectl -n onecloud -o yaml get oc >$BKUP_PATH/oc.$BKUP_DATE.yml
+    sed -i -e '/^ *creationTimestamp:/d' -e '/^ *resourceVersion:/d' -e '/^ *selfLink:/d' -e '/^ *uid:/d' $BKUP_PATH/onecloud-operator.$BKUP_DATE.yml
+    sed -i -e '/^ *creationTimestamp:/d' -e '/^ *resourceVersion:/d' -e '/^ *selfLink:/d' -e '/^ *uid:/d' $BKUP_PATH/oc.$BKUP_DATE.yml
     __info "K8s backup files:"
     find $BKUP_PATH -name '*yml' -type f | xargs ls -lah
 }

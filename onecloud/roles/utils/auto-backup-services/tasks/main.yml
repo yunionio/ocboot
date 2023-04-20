@@ -7,10 +7,16 @@
     mode: 0755
   become: true
 
+- name: rm old auto backup cronjob if any
+  cron:
+    name: "Backup DB Daily"
+    state: absent
+    cron_file: yunion_audo_db_backup
+
 - name: add cronjob to backup db every day.
   cron:
     name: "Backup DB Daily"
     special_time: daily
     user: root
     job: "BKUP_PATH={{ backup_path | default('/opt/yunion/backup')}} MAX_BKUP={{ max_backups|default(10) }} LIGHT_BKUP={{light_backup|default('true')}} MAX_DISK_PERCENTAGE={{ max_disck_percentage|default(75) }} /opt/yunion/scripts/db_backup.sh"
-    cron_file: yunion_audo_db_backup
+    cron_file: yunion_auto_db_backup
