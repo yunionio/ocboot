@@ -16,6 +16,4 @@
   include_role:
     name: utils/auto-backup-services
   when:
-  - online_status | default("") == "offline"
   - offline_data_path | length > 0
-  - use_ee|default(false)|bool == true
