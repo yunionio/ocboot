@@ -15,6 +15,12 @@
   - "{{ common_packages }}"
   when:
   - common_packages is defined
+  async: 1200  # Maximum allowed time in Seconds
+  poll: 0 # Polling Interval in Seconds
+  register: package_install
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ item }}"
 
 - name: install latest packages via loop
   package:
@@ -24,6 +30,11 @@
     enablerepo: "yunion-*"
   with_items:
   - "{{ latest_packages }}"
+  retries: 6
+  delay: 10
+  register: latest_pkg_result
+  until: latest_pkg_result.rc == 0
+  ignore_errors: yes
   when:
   - latest_packages is defined
 
@@ -44,4 +55,3 @@
     state: disabled
   when:
     - selinux_conf_exists.stat.exists
-    - is_kylin_arm64 | default(false) | bool == false
