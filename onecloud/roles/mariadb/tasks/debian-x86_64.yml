@@ -30,3 +30,7 @@
     name: mariadb
     state: restarted
     enabled: yes
+
+- name: set fact for socket
+  set_fact:
+    login_unix_socket: /var/run/mysqld/mysqld.sock

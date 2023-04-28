@@ -1,4 +1,4 @@
-- name: Install mysql python for Kylin
+- name: Install mysql python for RedHat based OS
   package:
     name: "{{ item }}"
     state: installed
@@ -10,3 +10,7 @@
 - name: pips for mysql/mariadb
   pip:
     name: PyMySQL
+
+- name: set fact for socket
+  set_fact:
+    login_unix_socket: /var/lib/mysql/mysql.sock
