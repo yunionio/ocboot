@@ -19,4 +19,4 @@ image:
 		-t $(REGISTRY)/ocboot:$(VERSION) -f ./Dockerfile .
 
 generate-docker-compose-manifests:
-	python3 ./generate-compose.py > ./compose/docker-compose.yml
+	VERSION=$(VERSION) python3 ./generate-compose.py > ./compose/docker-compose.yml
