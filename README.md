@@ -76,6 +76,8 @@ $ ./ocboot.py add-node --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
 $ ./ocboot.py add-node --help
 ```
 
+具体操作可参考文档：[添加节点](https://www.cloudpods.org/zh/docs/setup/host/)。
+
 ### 添加 lbagent 节点
 
 添加节点使用 add-lbagent 子命令把运行 lb agent 服务的节点加入到已有集群。
@@ -90,6 +92,8 @@ $ ./ocboot.py add-lbagent $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
 # 把 $node_ip ssh 端口 2222 的节点加入到 $PRIMARY_IP ssh 端口 4567 的集群
 $ ./ocboot.py add-lbagent --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
 ```
+
+具体操作可参考文档：[部署Lbagent](https://www.cloudpods.org/zh/docs/function_principle/onpremise/lb/lbagent/#310%E5%90%AB%E4%B9%8B%E5%90%8E%E7%89%88%E6%9C%AC%E9%83%A8%E7%BD%B2lbagent)。
 
 ### 升级节点
 
