@@ -1,19 +1,19 @@
 # 介绍
 
-ocboot 能够快速的在 CentOS 7 或者 Debian 10 机器上搭建部署 [Cloudpods](https://github.com/yunionio/cloudpods) 服务。
+ocboot 能够快速的在 CentOS 7 、Kylin V10、Debian 10等机器上搭建部署 [Cloudpods](https://github.com/yunionio/cloudpods) 服务。
 
 ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
 
-# 依赖说明
+## 依赖说明
 
-- 操作系统: Centos 7.x 或者 Debian 10
-- 最低配置要求: 4核8G
+- 操作系统: Centos 7.x 、Kylin V10、Debian 10
+- 最低配置要求: 4 核 8G
 - 软件: ansible-2.9.25
 - 能够 ssh 免密登录待部署机器
 
-# 使用方法
+## 使用方法
 
-## 安装 ansible
+### 安装 ansible
 
 ocboot 使用 ansible 来部署服务，所以请先在自己的系统上安装 ansible ，可以使用发型版自带的包管理工具安装，或者直接使用 pip 安装。
 
@@ -38,20 +38,20 @@ $ python3 -m pip install --upgrade pip setuptools wheel
 $ python3 -m pip install --upgrade ansible
 ```
 
-## clone 代码
+### clone 代码
 
 ```bash
 $ git clone https://github.com/yunionio/ocboot.git
 $ cd ./ocboot & pip install -r ./requirements.txt
 ```
 
-## 部署服务
+### 部署服务
 
 ocboot 的运行方式很简单，只需要按自己机器的规划写好 yaml 配置文件，然后执行 `./ocboot.py install` 脚本，便会调用 ansible-playbook 在对应的机器上部署服务。
 
 ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以同时在多台机器上部署大规模集群，以下举例说明使用方法和配置文件的编写。
 
-### 快速开始
+#### 快速开始
 
 如果只想在一个节点上部署一个当前最新版本的AllInOne demo，可以用如下命令快速开始。其中ip为待部署节点的用于通信的IP地址。
 
@@ -60,11 +60,12 @@ ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以�
 ```
 
 对于某些网络环境，registry.cn-beijing.aliyuncs.com 访问缓慢或不可达，在版本 `v3.9.5`之后（含），可指定镜像源：docker.io](http://docker.io) 来安装。命令如下：
+
 ```bash
 IMAGE_REPOSITORY=docker.io/yunion ./run.py <ip>
 ```
 
-也可在修改文件的`primary_master_node`节点的 `image_repository`字段为 `docker.io/yunion`。
+也可在修改文件的 `primary_master_node` 节点的 `image_repository` 字段为 `docker.io/yunion`。
 
 样例配置片段：
 
@@ -77,7 +78,7 @@ primary_master_node:
   image_repository: docker.io/yunion
 ```
 
-### 单节点 all in one 部署
+#### 单节点 all in one 部署
 
 假设已经准备好了 1 台 Centos 7 机器，它的 ip 是 `10.127.10.158`，我想在这台机器上 allinone 安装 OneCloud v3.8.8 版本。
 
@@ -146,7 +147,7 @@ User: demo
 Password: demo@123
 ```
 
-### 多节点部署
+#### 多节点部署
 
 假设已经准备好了 4 台 Centos 7 机器，它的 ip 是 `10.127.10.156-160`，各个节点做出以下的规划：
 
@@ -209,7 +210,8 @@ EOF
 $ ./ocboot.py install ./config-nodes.yml
 ```
 
-### 高可用部署
+#### 高可用部署
+
 假设准备好了 3 台 CentOS7 机器，安装的成高可用的模式，以及双主的高可用数据库。规划如下：
 
 role              | ip            | interface    |  note
@@ -291,7 +293,7 @@ EOF
 $ ./ocboot.py install ./config-k8s-ha.yml
 ```
 
-## 添加节点
+### 添加节点
 
 添加节点使用 add-node 子命令把节点加入到已有集群。
 
@@ -309,7 +311,7 @@ $ ./ocboot.py add-node --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
 $ ./ocboot.py add-node --help
 ```
 
-## 添加 lbagent 节点
+### 添加 lbagent 节点
 
 添加节点使用 add-lbagent 子命令把运行 lb agent 服务的节点加入到已有集群。
 
@@ -324,7 +326,7 @@ $ ./ocboot.py add-lbagent $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
 $ ./ocboot.py add-lbagent --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
 ```
 
-## 升级节点
+### 升级节点
 
 ```bash
 # 执行升级
@@ -350,13 +352,13 @@ optional arguments:
   --as-bastion, -B      use primary master node as ssh bastion host to run ansible
 ```
 
-## 备份节点
+### 备份节点
 
-### 原理
+#### 原理
 
-备份流程会备份当前系统的配置文件（`config.yml`） 以及使用`mysqldump` 来备份数据库。
+备份流程会备份当前系统的配置文件（`config.yml`） 以及使用 `mysqldump` 来备份数据库。
 
-### 命令行参数
+#### 命令行参数
 
 ```bash
 usage: ocboot.py backup [-h] [--backup-path BACKUP_PATH] [--light] config
@@ -372,30 +374,32 @@ optional arguments:
                         tables start with 'opslog' and 'task'.
 ```
 
-### 注意事项
+#### 注意事项
 
 下面详细介绍各个参数的作用和注意事项。
 
-* `config`是必选参数，即，需要备份的配置文件名称，例如`config-allinone.yml, config-nodes.yml, config-k8s-ha.yml，`以及使用快速安装时会生成的`config-allinone-current.yml`，因此备份命令不对配置文件名称作假设，**需由使用者自行输入配置文件名称**。
-* `--backup-path` 这个参数记录备份的目标目录。备份的内容包括配置文件（几 `k` 级别），以及`mysqldump`命令备份的数据库文件临时文件：`onecloud.sql`，然后会将该文件压缩为`onecloud.sql.tgz`，并删除临时文件。用户需确保 `/opt/backup` 目录存在且可写且磁盘空间足够。
-* `--light` 这个选项用来做精简备份，原理是在备份过程中，忽略掉一些尺寸较大的特定文件，主要是账单、操作日志等相关的文件。默认保留。
-* 备份后的配置文件名称为`config.yml`。
-* 备份的流程全部采用命令行参数接受输入，备份过程中无交互。因此支持 `crontab`方式自动备份。但备份程序本身不支持版本 `rotate`，用户可以使用 `logrotate` 之类的工具来做备份管理。
+- `config`是必选参数，即，需要备份的配置文件名称，例如 `config-allinone.yml, config-nodes.yml, config-k8s-ha.yml，` 以及使用快速安装时会生成的 `config-allinone-current.yml`，因此备份命令不对配置文件名称作假设，**需由使用者自行输入配置文件名称**。
+- `--backup-path` 这个参数记录备份的目标目录。备份的内容包括配置文件（几 `k` 级别），以及 `mysqldump` 命令备份的数据库文件临时文件：`onecloud.sql`，然后会将该文件压缩为 `onecloud.sql.tgz`，并删除临时文件。用户需确保 `/opt/backup` 目录存在且可写且磁盘空间足够。
+- `--light` 这个选项用来做精简备份，原理是在备份过程中，忽略掉一些尺寸较大的特定文件，主要是账单、操作日志等相关的文件。默认保留。
+- 备份后的配置文件名称为 `config.yml`。
+- 备份的流程全部采用命令行参数接受输入，备份过程中无交互。因此支持 `crontab`方式自动备份。但备份程序本身不支持版本 `rotate`，用户可以使用 `logrotate` 之类的工具来做备份管理。
 
-### FAQ
+#### FAQ
 
-* Q:  备份时提示缺`MySQLdb` 包怎么办？
+- Q:  备份时提示缺 `MySQLdb` 包怎么办？
 
-* A：在centos上，可以执行如下命令来安装（其他os发行版请酌情修改，或联系客服）：
+- A：在centos上，可以执行如下命令来安装（其他os发行版请酌情修改，或联系客服）：
+
   ```bash
   sudo yum install -y mariadb-devel python3-devel
   sudo yum groupinstall -y "Development Tools"
   sudo pip3 install mysqlclient
   ```
 
-* Q: 怎样查看、手工解压备份文件？
+- Q: 怎样查看、手工解压备份文件？
 
-* A：备份文件默认用户名为: `/opt/backup/onecloud.sql.gz`, 预览、手工解压的方式如下：
+- A：备份文件默认用户名为: `/opt/backup/onecloud.sql.gz`, 预览、手工解压的方式如下：
+
   ```bash
   # 预览该文件：
   gunzip --stdout /opt/backup/onecloud.sql.gz | less
@@ -407,19 +411,17 @@ optional arguments:
   gunzip -k /opt/backup/onecloud.sql.gz
   ```
 
+### 恢复节点
 
-
-## 恢复节点
-
-### 原理
+#### 原理
 
 恢复是备份的逆操作，流程包括：
 
-* 解压备份好的数据库文件；
-* 依照用户输入，或者在本机安装` mariadb-server`，并导入数据库；或者将备份的数据库 source 到指定的数据库中。
-* 根据之前备份好的` config.yml`，结合用户输入（当前机器 `ip`、`worker node ips`、`master node ips`），来重新生成 config.yml，然后提示用户重新安装云管系统。
+- 解压备份好的数据库文件；
+- 依照用户输入，或者在本机安装 `mariadb-server`，并导入数据库；或者将备份的数据库 source 到指定的数据库中。
+- 根据之前备份好的 `config.yml`，结合用户输入（当前机器 `ip`、`worker node ips`、`master node ips`），来重新生成 config.yml，然后提示用户重新安装云管系统。
 
-### 命令行参数
+#### 命令行参数
 
 ```bash
 usage: ocboot.py restore [-h] [--backup-path BACKUP_PATH]
@@ -464,30 +466,30 @@ optional arguments:
                         --install-db-to-localhost
 ```
 
-### 注意事项
+#### 注意事项
 
-* `primary_ip` 为必填项，作为位置参数传入。
+- `primary_ip` 为必填项，作为位置参数传入。
 
-* `--backup-path`，默认值为`/opt/backup`。
+- `--backup-path`，默认值为`/opt/backup`。
 
-* `--install-db-to-localhost`，是否在本机（`primary`节点） 安装数据库。默认为否。如果选择了`--install-db-to-localhost`，则会在本机安装数据(`mariadb-server` 的稳定版)，并自动赋予下列参数以默认值：
+- `--install-db-to-localhost`，是否在本机（`primary`节点） 安装数据库。默认为否。如果选择了`--install-db-to-localhost`，则会在本机安装数据(`mariadb-server` 的稳定版)，并自动赋予下列参数以默认值：
 
-  * ```bash
+  - ```bash
     --mysql-host=127.0.0.1
     --mysql-user=root
     --mysql-password=<继承备份文件里 mysql 的密码>
     --mysql-port=3306
     ```
 
-* `--mysql-host` 以及其他同类选项：不安装数据库，直接复用给定数据库。注意：`--install-db-to-localhost`参数与`--mysql-*`系列参数互斥，只能选择其中一种，要么本机安装数据库，要么给定具体参数。
+- `--mysql-host` 以及其他同类选项：不安装数据库，直接复用给定数据库。注意：`--install-db-to-localhost`参数与`--mysql-*`系列参数互斥，只能选择其中一种，要么本机安装数据库，要么给定具体参数。
 
-* `--master-node-ips`同时安装`master ` 节点。该参数是以半角逗号分隔的 `ip` 列表。适用于多节点模式。
+- `--master-node-ips`同时安装 `master` 节点。该参数是以半角逗号分隔的 `ip` 列表。适用于多节点模式。
 
-* `--master-node-as-host`安装`master`节点时，将其作为`host` 节点。
+- `--master-node-as-host`安装`master`节点时，将其作为`host` 节点。
 
-* `--worker-node-ips`、`--worker-node-as-host`，作用同上，如其名。
+- `--worker-node-ips`、`--worker-node-as-host`，作用同上，如其名。
 
-## 使用docker部署
+### 使用docker部署
 
 为了避免因为环境依赖产生的问题，我们也提供了使用容器来部署，由于部署过程中有重启容器引擎的操作，故**使用容器时只能以远程的方式部署(即部署的目标机器和运行 ocboot 容器的机器不能是同一台)**。使用容器时，只需要配置好 ssh 免密登录，按需创建配置文件，以及安装好 docker 即可开始部署。
 
