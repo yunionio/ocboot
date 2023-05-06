@@ -13,11 +13,6 @@
     enablerepo: "yunion-*"
   with_items:
   - "{{ common_packages }}"
-  when:
-  - common_packages is defined
-  async: 1200  # Maximum allowed time in Seconds
-  poll: 0 # Polling Interval in Seconds
-  register: package_install
   loop_control:
     index_var: item_index
     label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ item }}"
@@ -45,6 +40,12 @@
   when:
   - is_centos_x86 is defined
 
+- name: Selinux Status
+  shell: |
+    sestatus |grep '^SELinux status:' |awk '{print $3}'
+  register: selinux_status
+  ignore_errors: yes
+
 - name: Check that if selinux config exists
   stat:
     path: /etc/selinux/config
@@ -54,4 +55,5 @@
   selinux:
     state: disabled
   when:
+    - selinux_status.stdout | default("") != "disabled"
     - selinux_conf_exists.stat.exists
