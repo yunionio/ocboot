@@ -163,6 +163,21 @@
     when:
     - join_as_host | default(false)|bool == true
 
+  - block:
+    - name: Set cgroup driver to systemd in kubelet.service
+      lineinfile:
+        path: /usr/lib/systemd/system/kubelet.service
+        regexp: '^ExecStart=/usr/bin/kubelet$'
+        line: 'ExecStart=/usr/bin/kubelet --cgroup-driver=systemd'
+
+    - name: reload systemd
+      ansible.builtin.systemd:
+        name: kubelet
+        state: restarted
+        daemon_reload: true
+    when:
+       is_openeuler_x86 | default(false) | bool == true
+
 - name: show init args
   debug:
     msg: "/opt/yunion/bin/ocadm {{ init_args }}"
