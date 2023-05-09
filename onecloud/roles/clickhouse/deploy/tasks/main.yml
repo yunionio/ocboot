@@ -38,4 +38,4 @@
   when:
   - offline_data_path is defined
   - offline_data_path | length > 0
-  - is_centos_x86 | default(false) | bool == true
+  - (is_centos_x86 | default(false) | bool == true) or (is_openeuler_x86 | default(false) | bool == true)
