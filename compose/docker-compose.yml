@@ -522,7 +522,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   kubeserver:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/kubeserver:v3.9-compose.0
+    image: registry.cn-beijing.aliyuncs.com/yunionio/kubeserver:v3.10.1
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/kubeserver.conf:/etc/yunion/kubeserver.conf:ro
