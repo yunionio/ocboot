@@ -6,7 +6,7 @@ class KubeServerService(ClusterCommonService):
     SVC_PORT_KUBESERVER = 30442
 
     def __init__(self, version, db_svc, keystone_svc):
-        super().__init__(self.SVC_KUBESERVER, version="v3.9-compose.0",
+        super().__init__(self.SVC_KUBESERVER, version=version,
                          port=self.SVC_PORT_KUBESERVER,
                          db_svc=db_svc, keystone_svc=keystone_svc)
 
