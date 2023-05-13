@@ -1,5 +1,5 @@
-debian_based_arch: arm64
 is_debian_based: true
+debian_based_arch: arm64
 
 common_packages:
   - apt-transport-https
@@ -31,18 +31,25 @@ common_packages:
   - ntp
   - openvswitch-switch
   - ovmf
-  - python-pymysql
+  - parallel
   - python-selinux
-  - python-yaml
-  - python3-pip
   - software-properties-common
   - wget
   - yunion-climc
   - yunion-executor
-  - yunion-fetcherfs
   - yunion-ocadm
   - "{{ yunion_qemu_package }}"
+  - yunion-fetcherfs
 
 common_services:
     - ntp
     - yunion-executor
+
+latest_packages:
+    - ca-certificates
+    - yunion-climc
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
+    # - yunion-ovmfrpm # 缺乏相关包
+
