@@ -1,0 +1,34 @@
+- name: Install mariadb
+  package:
+    name: "{{ item }}"
+    state: "present"
+  with_items:
+    - mariadb-server
+
+- name: pips for mysql/mariadb
+  pip:
+    name: PyMySQL
+
+- name: Allow remote hosts to connect (Ubuntu)
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    backrefs: yes
+    regexp: '^bind-address'
+    line: 'bind-address            = 0.0.0.0'
+    state: present
+
+- name: make conf dir
+  file:
+    name: /etc/my.cnf.d
+    state: directory
+
+# restart the mariadb service asap to allow remote access
+- name: Restart Mariadb
+  systemd:
+    name: mariadb
+    state: restarted
+    enabled: yes
+
+- name: set fact for socket
+  set_fact:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
