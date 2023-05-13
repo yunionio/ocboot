@@ -71,7 +71,7 @@ def check_ansible():
 def install_packages(pkgs):
     if os.system('grep -Pq "Kylin Linux Advanced Server|CentOS Linux|openEuler" /etc/os-release') == 0:
         return os.system("yum install -y $(yum search pyyaml |grep -iP '^python3\d?-pyyaml\.'| awk '{print $1}') %s" % (" ".join(pkgs)))
-    elif os.system('grep -wq "Debian GNU/Linux" /etc/os-release') == 0:
+    elif os.system('grep -Pq "Debian GNU/Linux|Ubuntu" /etc/os-release') == 0:
         return os.system("apt install -y %s" % (" ".join(pkgs)))
     else:
         print("Unsupported OS")
@@ -79,8 +79,11 @@ def install_packages(pkgs):
 
 
 def install_ansible():
-    for pkg in ['python2-pyyaml', 'PyYAML']:
-        install_packages([pkg])
+    if os.system('grep -wq "Ubuntu" /etc/os-release') == 0:
+        install_packages(["python3-yaml"])
+    else:
+        for pkg in ['python2-pyyaml', 'PyYAML']:
+            install_packages([pkg])
 
     if os.system('rpm -qa |grep -q python3-pip') != 0:
         ret = os.system(
@@ -305,7 +308,10 @@ def main():
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
-        install_packages(['python3-pip', 'python2-pyyaml', 'PyYAML'])
+        if os.system('grep -wq "Ubuntu" /etc/os-release') == 0:
+            install_packages(['python3-pip', 'python3-yaml'])
+        else:
+            install_packages(['python3-pip', 'python2-pyyaml', 'PyYAML'])
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf)
