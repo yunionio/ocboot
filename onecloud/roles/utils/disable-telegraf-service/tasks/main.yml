@@ -1,0 +1,15 @@
+---
+- name: Check if telegraf service exists
+  stat:
+    path: /usr/lib/systemd/system/telegraf.service
+  register: telegraf_service_conf
+
+- name: Populate service facts
+  service_facts:
+
+- name: Disable Telegraf
+  systemd:
+    name: telegraf
+    state: stopped
+    enabled: false
+  when: "'telegraf.service' in services or 'telegraf' in services or telegraf_service_conf.stat.exists"

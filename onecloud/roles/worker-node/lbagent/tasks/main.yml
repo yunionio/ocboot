@@ -1,3 +1,7 @@
+- name: disable telegraf for host service
+  include_role:
+    name: utils/disable-telegraf-service
+
 - name: "set lbagent_listen_interface to {{ ansible_default_ipv4.interface }}"
   set_fact:
     lbagent_listen_interface: "{{ ansible_default_ipv4.interface }}"
