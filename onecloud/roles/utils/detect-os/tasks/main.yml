@@ -60,3 +60,8 @@
   - k8s_node_as_oc_host|default(false)|bool == true
   - is_running_on_vm | default(false)|bool == false
 
+- name: disable telegraf for host service
+  include_role:
+    name: utils/disable-telegraf-service
+  when:
+  - join_as_host | default(false)|bool == true
