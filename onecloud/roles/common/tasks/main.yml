@@ -12,7 +12,14 @@
 
 # onecloud/roles/common/tasks/
 - name: Import OS Arch tasks
-  include_tasks: "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}_{{ ansible_architecture }}.yml"
+  include_tasks: "{{ item }}"
+  with_first_found:
+  - files:
+    - "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}_{{ ansible_architecture }}.yml"
+    - "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}.yml"
+    - "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
+    paths:
+    - ../tasks
 
 - name: reset iptables rules
   shell: |
