@@ -24,7 +24,7 @@
 - name: init apt cache for uos
   shell: |
     echo "deb [trusted=yes] https://iso.yunion.cn/uos/buster/{{ debian_based_arch }}/3.7 ./" > /etc/apt/sources.list.d/yunion.list;
-    curl -k https://iso.yunion.cn/uos/buster/{{ debian_based_arch }}/3.7/yunion.gpg-key.asc -o yunion.gpg-key.asc;
+    curl -k https://iso.yunion.cn/uos/buster/{{ debian_based_arch }}/3.7/yunion.gpg-key.asc -o /tmp/yunion.gpg-key.asc;
     apt-key add yunion.gpg-key.asc;
     apt-get update -y;
     rm -f yunion.gpg-key.asc;
@@ -54,3 +54,4 @@
   when:
   - is_centos_aarch64 is defined
   - non_iso_mode is defined
+

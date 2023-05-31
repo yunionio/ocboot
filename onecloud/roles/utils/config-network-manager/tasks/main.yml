@@ -5,6 +5,14 @@
   failed_when: false
   changed_when: false
 
+- name: Check if NetworkManager service exists
+  systemd:
+    name: NetworkManager
+    state: started
+  register: nm_service
+  failed_when: "'Could not find the requested service' not in nm_service.msg"
+  ignore_errors: true
+
 - name: Ensure NetworkManager conf.id dir for Calico
   file:
     path: "/etc/NetworkManager/conf.d"
@@ -18,5 +26,8 @@
       [keyfile]
       unmanaged-devices=interface-name:cali*;interface-name:tunl*
     dest: /etc/NetworkManager/conf.d/calico.conf
-  when: nm_check.rc == 0
+  when: 
+  - nm_check.rc == 0
+  - nm_service is defined
+  - nm_service.state | default('stopped') == 'started'
   notify: Reload NetworkManager
