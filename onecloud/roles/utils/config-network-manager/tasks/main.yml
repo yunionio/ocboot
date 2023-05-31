@@ -10,7 +10,7 @@
     name: NetworkManager
     state: started
   register: nm_service
-  failed_when: "'Could not find the requested service' not in nm_service.msg"
+  failed_when: false
   ignore_errors: true
 
 - name: Ensure NetworkManager conf.id dir for Calico
@@ -28,6 +28,11 @@
     dest: /etc/NetworkManager/conf.d/calico.conf
   when: 
   - nm_check.rc == 0
+
+- name: reload NetworkManager
+  shell: |
+    echo "nm_service is defined? {{ nm_service is defined }}\nnm_service.state {{ nm_service.state | default('stopped') == 'started' }}"
+  when:
   - nm_service is defined
   - nm_service.state | default('stopped') == 'started'
   notify: Reload NetworkManager
