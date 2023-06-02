@@ -2,6 +2,8 @@
 - name: ansible version
   set_fact:
     supported_ansible_version: "2.9.27"
+    minimal_cpu: 4
+    minimal_mem: 8
 
 - block:
 
@@ -21,3 +23,12 @@
 
   - meta: end_play
   when: ansible_hostname | regex_search('^localhost|^\d', ignorecase=True)
+
+- name: Check Minimum Hardware Requirements
+  assert:
+    that:
+      - ansible_processor_vcpus >= minimal_cpu
+      - (ansible_memtotal_mb / 1024 +0.5) | round(1) | int >= minimal_mem
+    msg: |
+      cpu: got {{ ansible_processor_vcpus }} (req: {{minimal_cpu}} cores)
+      mem: got {{(ansible_memtotal_mb / 1024 +0.5) | round(1) | int}}GB (req: {{minimal_mem}}GB)
