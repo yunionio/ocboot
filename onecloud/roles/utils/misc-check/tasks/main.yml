@@ -3,7 +3,7 @@
   set_fact:
     supported_ansible_version: "2.9.27"
     minimal_cpu: 4
-    minimal_mem: 8
+    minimal_mem: 7
 
 - block:
 
@@ -24,11 +24,20 @@
   - meta: end_play
   when: ansible_hostname | regex_search('^localhost|^\d', ignorecase=True)
 
-- name: Check Minimum Hardware Requirements
-  assert:
-    that:
-      - ansible_processor_vcpus >= minimal_cpu
-      - (ansible_memtotal_mb / 1024 +0.5) | round(1) | int >= minimal_mem
-    msg: |
-      cpu: got {{ ansible_processor_vcpus }} (req: {{minimal_cpu}} cores)
-      mem: got {{(ansible_memtotal_mb / 1024 +0.5) | round(1) | int}}GB (req: {{minimal_mem}}GB)
+- block:
+  - name: set fact if ignore resource check
+    set_fact:
+      ignore_check: "{{ lookup('env', 'IGNORE_ALL_CHECKS') | default('false') | lower}}"
+
+  - name: Check Minimum Hardware Requirements
+    assert:
+      that:
+        - ansible_processor_vcpus >= minimal_cpu
+        - (ansible_memtotal_mb / 1024 +0.5) | round(1) | int >= minimal_mem
+      msg: |
+        cpu: got {{ ansible_processor_vcpus }} (req: {{minimal_cpu}} cores)
+        mem: got {{(ansible_memtotal_mb / 1024 +0.5) | round(1) | int}}GB (req: {{minimal_mem}}GB)
+        you may export IGNORE_ALL_CHECKS=true in test environment to ignore resource check.
+    when:
+    - ignore_check != True
+
