@@ -16,22 +16,16 @@
   shell: |
     yum clean all
     yum -y --disablerepo='*' --enablerepo='yunion*' makecache
-  args:
-    warn: no
   when:
   - is_centos_based is defined
 
 - name: make cache for debian like os
   shell: "apt-get update"
-  args:
-    warn: no
   when:
   - is_debian_based is defined
 
 - name: init dirs
   shell: "mkdir -p /etc/docker"
-  args:
-    warn: no
 
 - name: config ntpd service
   template: src=ntp.conf dest=/etc/ntp.conf
@@ -44,8 +38,6 @@
     ntpdate {{ ntpd_server }}; echo $?
     echo "[PASS] sync with ntpd {{ ntpd_server }}"
   when: ntpd_server is defined
-  args:
-    warn: no
   ignore_errors: yes
   changed_when: false
   failed_when: false
@@ -68,5 +60,4 @@
         systemctl disable --now $service
       fi
     done
-  args:
-    warn: no
+
