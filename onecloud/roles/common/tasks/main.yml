@@ -54,8 +54,6 @@
         systemctl disable --now $service
       fi
     done
-  args:
-    warn: no
 
 - name: Config NetworkManager
   include_role:

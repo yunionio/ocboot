@@ -8,8 +8,6 @@
   ignore_errors: yes
   no_log: true
   failed_when: false
-  args:
-    warn: no
 
 - name: nbd facts
   set_fact:
@@ -22,8 +20,6 @@
   register: is_yunion_kernel_running
   changed_when: false
   failed_when: false
-  args:
-    warn: no
 
 - name: Is cloud kernel installed
   shell: |
@@ -32,8 +28,6 @@
   register: is_yunion_kernel_installed
   changed_when: false
   failed_when: false
-  args:
-    warn: no
 
 - name: check is_yunion_kernel_installed.rc {{ is_yunion_kernel_installed.rc }}
   shell: echo is_yunion_kernel_installed.rc {{ is_yunion_kernel_installed.rc }}
