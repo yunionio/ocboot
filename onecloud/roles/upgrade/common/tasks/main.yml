@@ -14,3 +14,7 @@
   include_tasks: "{{ major_upgrade_task_file }}"
   when:
     - is_major_upgrade
+
+- name: checking ports
+  include_role:
+    name: utils/kernel-modules

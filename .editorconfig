@@ -1,0 +1,8 @@
+[*.sh]
+indent_style = space
+indent_size = 4
+
+[*.modules]
+indent_style = space
+indent_size = 4
+
