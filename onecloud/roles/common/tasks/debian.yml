@@ -129,3 +129,15 @@
   when:
     - selinux_conf_exists.stat.exists
 
+- name: fix ovmf path
+  shell: |
+    if [ ! -f /usr/share/ovmf/OVMF.fd ]; then 
+      exit 1
+    fi
+    mkdir -p /opt/cloud/contrib/
+    if [ ! -f /opt/cloud/contrib/OVMF.fd ]; then
+      ln -s /usr/share/ovmf/OVMF.fd /opt/cloud/contrib/OVMF.fd
+    fi
+  args:
+    executable: /bin/bash
+
