@@ -50,6 +50,11 @@ function error_exit() {
     exit 1
 }
 
+function info_exit() {
+    info "$@"
+    exit 0
+}
+
 function info() {
     echo
     echo -e "${GREEN}$@${NOCOLOR}"
@@ -107,7 +112,55 @@ _generate_kernel_cmdline() {
     cat $OLD_KERNEL_PARAMS_FILE | tr '\n' ' '
 }
 
-mk_grub() {
+
+get_distro() {
+    distro=($(awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }' | tr -d \"))
+    echo "${distro[@]}"
+}
+
+function findStringInArray() {
+    local search="$1"
+    shift
+
+    for element in "$@"; do
+        if [[ "$element" == "$search" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+env_check() {
+    if [[ "$(uname -m)" != "x86_64" ]]; then
+        info_exit "is not x86 machine"
+    fi
+
+    if [[ $EUID -ne 0 ]]; then
+        error_exit "You need sudo or root to run this script."
+    fi
+
+    local supported_distros=("centos" "debian")
+    local distros=($(get_distro))
+
+    local found_supported_distro=false
+    local unsupported_distros=()
+
+    for distro in "${distros[@]}"; do
+        if findStringInArray "${distro}" "${supported_distros[@]}"; then
+            found_supported_distro=true
+            echo "${distro}"
+            break
+        else
+            unsupported_distros+=("${distro}")
+        fi
+    done
+
+    if [[ $found_supported_distro == false ]]; then
+        error_exit "The following Linux distributions are not supported: ${unsupported_distros[*]}, only support ${supported_distros[*]}"
+    fi
+}
+
+mk_grub2(){
     if [ -d /sys/firmware/efi ]; then
         mkdir -p /boot/efi/EFI/centos
         grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
@@ -116,11 +169,27 @@ mk_grub() {
     fi
 }
 
+mk_grub_legacy(){
+    update-grub
+}
+
+mk_grub(){
+    local distro=${1}
+    if [[ "${distro}" == "centos" ]]; then
+        mk_grub2
+    elif [[ "${distro}" == "debian" ]]; then
+        mk_grub_legacy
+    else
+        error_exit "unsupport distro ${distro}!"
+    fi
+}
+
 grub_setup() {
     info "Configure grub option..."
     local grub_cfg="/etc/default/grub"
     local cmdline_param
     local idx
+    local distro=${1}
 
     ensure_file_writable "$grub_cfg"
 
@@ -129,13 +198,15 @@ grub_setup() {
     _merge_new_kernel_params
     cmdline_param=$(_generate_kernel_cmdline)
     sed -i "s|GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"$cmdline_param\"|g" $grub_cfg
-    mk_grub
+    mk_grub ${distro}
 }
 
-if [ "$(uname -m)" != "x86_64" ]; then
-    echo "is not x86 machine"
-    exit 0
-fi
+main() {
+    distro=$(env_check)
+    grub_setup ${distro}
+    systemctl enable oc-hugetlb-gigantic-pages
+    info "All done, ${UCYAN}REBOOT to make it work"
+}
 
-grub_setup
-systemctl enable oc-hugetlb-gigantic-pages
+main
+
