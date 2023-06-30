@@ -112,12 +112,27 @@ _generate_kernel_cmdline() {
     cat $OLD_KERNEL_PARAMS_FILE | tr '\n' ' '
 }
 
-mk_grub(){
+mk_grub2(){
     if [ -d /sys/firmware/efi ]; then
         mkdir -p /boot/efi/EFI/centos
         grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
     else
         grub2-mkconfig -o /boot/grub2/grub.cfg
+    fi
+}
+
+mk_grub_legacy(){
+    update-grub
+}
+
+mk_grub(){
+    local distro=${1}
+    if [[ "${distro}" == "centos" ]]; then
+        mk_grub2
+    elif [[ "${distro}" == "debian" ]]; then
+        mk_grub_legacy
+    else
+        error_exit "unsupport distro ${distro}!"
     fi
 }
 
@@ -127,6 +142,7 @@ grub_setup() {
     local grub_cfg="/etc/default/grub"
     local cmdline_param
     local idx
+    local distro=${1}
 
     ensure_file_writable "$grub_cfg"
 
@@ -139,12 +155,19 @@ grub_setup() {
     # 删掉 rd.lvm.lv(含)之后，空格之前的所有字符
     # 以便解决重启后因未加载 lvm 驱动而卡住的问题
     sed -i -e 's#rd.lvm.lv=[^ ]*##gi' $grub_cfg
+
+    # 替换成带有 yn 后缀的内核，只对 centos
+    if [[ "${distro}" != "centos" ]]; then
+        mk_grub ${distro}
+        return
+    fi
+
     for i in {1..3}; do
         idx=$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' $(find /etc/ -name 'grub2*cfg' -exec test -e {} \; -print |head -1 ) |grep -P '\.yn\d{8}\.'|awk '{print $1}' |head -1)
         if [ "$idx" -gt "0" ]; then
             break
         fi
-        mk_grub
+        mk_grub ${distro}
     done
     if grep -q '^GRUB_DEFAULT' $grub_cfg; then
         sudo sed -i -e "s#^GRUB_DEFAULT=.*#GRUB_DEFAULT=$idx#" $grub_cfg
@@ -154,7 +177,7 @@ grub_setup() {
         echo "GRUB_DEFAULT=$idx" >> $tmp_conf
         sudo mv $tmp_conf $grub_cfg
     fi
-    mk_grub
+    mk_grub ${distro}
 }
 
 vfio_override_script_setup() {
@@ -230,36 +253,67 @@ EOF
 }
 
 get_distro() {
-    awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2)  }' | tr -d \"
+    distro=($(awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }' | tr -d \"))
+    echo "${distro[@]}"
+}
+
+function findStringInArray() {
+    local search="$1"
+    shift
+
+    for element in "$@"; do
+        if [[ "$element" == "$search" ]]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
 env_check() {
-    distro=$(get_distro)
-    if [ "$distro" != "centos" ]; then
-        error_exit "Linux Distribution: \"$distro\" not support, only \"centos\" support!"
-    fi
     if [[ $EUID -ne 0 ]]; then
         error_exit "You need sudo or root to run this script."
+    fi
+
+    local supported_distros=("centos" "debian")
+    local distros=($(get_distro))
+
+    local found_supported_distro=false
+    local unsupported_distros=()
+
+    for distro in "${distros[@]}"; do
+        if findStringInArray "${distro}" "${supported_distros[@]}"; then
+            found_supported_distro=true
+            echo "${distro}"
+            break
+        else
+            unsupported_distros+=("${distro}")
+        fi
+    done
+
+    if [[ $found_supported_distro == false ]]; then
+        error_exit "The following Linux distributions are not supported: ${unsupported_distros[*]}, only support ${supported_distros[*]}"
     fi
 }
 
 dracut_ramfs() {
     info "Use dracut rebuild initramfs..."
-    local dracut_vfio_file="/etc/dracut.conf.d/vfio.conf"
-	cat <<EOF >"$dracut_vfio_file"
-add_drivers+=" vfio vfio_iommu_type1 vfio_pci"
-EOF
     local yn_kernel=$(ls /boot/vmlinuz-* | grep yn | sort -r | head -n 1)
     if [ -z "$yn_kernel" ]; then
-        error_exit "Not found cloud customize kernel"
+        warn "Dracut ramfs not found cloud customize kernel, skip it"
+        return
     fi
+
+    local dracut_vfio_file="/etc/dracut.conf.d/vfio.conf"
+    cat <<EOF >"$dracut_vfio_file"
+add_drivers+=" vfio vfio_iommu_type1 vfio_pci"
+EOF
     local kernel_release=$(basename $yn_kernel | sed 's/vmlinuz-//g')
     dracut -f --kver $kernel_release --install find --install $VFIO_PCI_OVERRIDE_TOOL
 }
 
 main() {
-    env_check
-    grub_setup
+    distro=$(env_check)
+    grub_setup ${distro}
     vfio_override_script_setup
     modules_setup
 #    refresh_pciids # has been replaced by "Update pciids" task in playbook.
