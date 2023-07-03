@@ -1,6 +1,6 @@
 ---
 
-is_centos_based: true
+is_redhat_based: true
 is_openeuler_x86: true
 is_openeuler_based: true
 
