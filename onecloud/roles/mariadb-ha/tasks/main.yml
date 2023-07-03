@@ -1,0 +1,115 @@
+---
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution|lower | replace(' ', '_')}}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower }}-{{ ansible_distribution_release|lower }}.yml"
+        - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower }}.yml"
+        - "{{ ansible_os_family|lower }}.yml"
+        - "{{ ansible_distribution|lower| replace(' ', '_')| replace('_\"_', '') }}.yml"
+      paths:
+        - ../vars
+  tags:
+    - facts
+
+- name: Install mariadb
+  package:
+    name: "{{ item }}"
+    state: present
+  failed_when: false
+  loop: "{{ mariadb_package_info.pkgs }}"
+
+- name: pips for mysql/mariadb
+  pip:
+    name: PyMySQL
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: copy my.cnf
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+    backup: yes
+
+- name: mariadb config hack
+  shell: |
+    if [ ! -d /etc/my.cnf.d ] && [ -d /etc/mysql ]; then
+      ln -sf /etc/mysql /etc/my.cnf.d
+    fi
+    if [ -f /etc/mysql/mariadb.conf.d/50-server.cnf ] && grep -qP 'bind-address *= *127.0.0.1' /etc/mysql/mariadb.conf.d/50-server.cnf; then
+      cp -vf /etc/mysql/mariadb.conf.d/50-server.cnf /etc/mysql/mariadb.conf.d/50-server.cnf.$(date +"%Y%m%d-%H%M%S").bak
+      sed -i 's#bind-address *= *127.0.0.1#bind-address = 0.0.0.0#' /etc/mysql/mariadb.conf.d/50-server.cnf
+    fi
+    systemctl restart mariadb
+  args:
+    executable: /bin/bash
+
+- name: start mariadb
+  systemd:
+    name: mariadb
+    enabled: yes
+    state: started
+
+- debug: var=db_password
+
+- name: Change root password
+  mysql_user:
+    login_user: "{{ db_user }}"
+    login_port: "{{ db_port | default(3306) }}"
+    login_password: "{{ db_password }}"
+    password: "{{ db_password }}"
+    name: "{{ db_user }}"
+    priv: '*.*:ALL,GRANT'
+    host: "{{ item }}"
+    check_implicit_admin: true
+  loop:
+    - "localhost"
+    - "%"
+    - "::1"
+    - "127.0.0.1"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  when:
+    - is_redhat_based |default(false)|bool == true
+
+- name: Change root password for debian
+  mysql_user:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: "{{ db_user }}"
+    login_port: "{{ db_port | default(3306) }}"
+    login_password: "{{ db_password }}"
+    password: "{{ db_password }}"
+    name: "{{ db_user }}"
+    priv: '*.*:ALL,GRANT'
+    host: "{{ item }}"
+    check_implicit_admin: true
+  loop:
+    - "localhost"
+    - "%"
+    - "::1"
+    - "127.0.0.1"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  when:
+    - is_debian_based |default(false)|bool == true
+
+- name: Remove all anonymous user accounts
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+
+- name: Remove test database
+  mysql_db:
+    name: test
+    state: absent
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+
+- when: groups['mariadb_ha_nodes'] | length > 1
+  include_tasks: 05ha.yml

@@ -1,8 +1,8 @@
 ---
 
 is_redhat_based: true
-is_kylin_x86: true
-is_kylin_based: true
+is_openeuler_x86: true
+is_openeuler_based: true
 
 common_packages:
   - bash-completion
@@ -51,7 +51,6 @@ common_packages:
   - openvswitch
   - parallel
   - pixman
-  - python2-libselinux
   - python3-libselinux
   - quota
   - quota-nls

@@ -41,3 +41,11 @@
     when:
     - ignore_check != True
 
+- name: assert centos is_centos_based?[{{ is_centos_based }}] distribution version {{ ansible_distribution_version }} is above 7.6
+  assert:
+    that:
+    - "'{{ ansible_distribution_version }}' is version('7.6', '>=')"
+    fail_msg: "Cent OS distribution version {{ ansible_distribution_version }} is not supported. It must be above 7.6."
+  when:
+  - is_centos_based is defined
+

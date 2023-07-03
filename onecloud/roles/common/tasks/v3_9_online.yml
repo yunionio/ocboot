@@ -7,7 +7,6 @@
   become: yes
   when:
   - is_centos_based is defined
-  - is_kylin_based|default(false)|bool == false
 
 - name: Add cloud rpm repository for Kylin
   get_url:
