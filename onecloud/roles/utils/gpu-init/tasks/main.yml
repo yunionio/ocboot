@@ -38,4 +38,3 @@
   failed_when: false
   when:
   - is_centos_based is defined
-  - is_kylin_based|default(false)|bool == false

@@ -1,6 +1,6 @@
 ---
 
-is_centos_based: true
+is_redhat_based: true
 is_kylin_arm64: true
 is_kylin_based: true
 
