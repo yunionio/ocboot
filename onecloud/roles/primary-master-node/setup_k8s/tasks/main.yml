@@ -157,6 +157,10 @@
     when:
     - join_as_host | default(false)|bool == true
 
+- name: show init args
+  debug:
+    msg: "/opt/yunion/bin/ocadm {{ init_args }}"
+
 - name: Use ocadm init first master node
   command: "/opt/yunion/bin/ocadm {{ init_args }}"
   when: kubelet_result.rc != 0
