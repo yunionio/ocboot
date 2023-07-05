@@ -3,7 +3,7 @@
   with_items:
   - yunion-registry
   when:
-  - is_centos_based is defined
+  - is_redhat_based is defined
 
 - name: Create cloud conf directory
   file:

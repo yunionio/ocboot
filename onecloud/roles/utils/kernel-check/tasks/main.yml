@@ -8,8 +8,6 @@
   ignore_errors: yes
   no_log: true
   failed_when: false
-  args:
-    warn: no
 
 - name: nbd facts
   set_fact:
@@ -22,8 +20,6 @@
   register: is_yunion_kernel_running
   changed_when: false
   failed_when: false
-  args:
-    warn: no
 
 - name: Is cloud kernel installed
   shell: |
@@ -32,8 +28,6 @@
   register: is_yunion_kernel_installed
   changed_when: false
   failed_when: false
-  args:
-    warn: no
 
 - name: check is_yunion_kernel_installed.rc {{ is_yunion_kernel_installed.rc }}
   shell: echo is_yunion_kernel_installed.rc {{ is_yunion_kernel_installed.rc }}
@@ -62,7 +56,7 @@
   - ansible_connection == "ssh"
   - k8s_node_as_oc_host|default(false)|bool == true
   - is_centos_based is defined
-  - is_kylin_based|default(false)|bool == false
+  - nbd_ok|default(false)|bool == false
 
 # to "ignore Running reboot with local connection would reboot the control node"
 # warning
@@ -73,4 +67,4 @@
   - is_yunion_kernel_running.rc != 0
   - k8s_node_as_oc_host|default(false)|bool == true
   - is_centos_based is defined
-  - is_kylin_based|default(false)|bool == false
+  - nbd_ok|default(false)|bool == false

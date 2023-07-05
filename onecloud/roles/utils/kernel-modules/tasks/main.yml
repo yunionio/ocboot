@@ -1,0 +1,12 @@
+- name: Config ipvs
+  copy:
+    owner: root
+    group: root
+    mode: "0755"
+    src: ipvs.modules
+    dest: /etc/sysconfig/modules/ipvs.modules
+
+- name: Load ipvs modules
+  shell:
+    /etc/sysconfig/modules/ipvs.modules
+
