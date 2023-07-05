@@ -80,7 +80,7 @@ cluster:
       - key: node-role.kubernetes.io/controlplane
         effect: NoSchedule
   # Overrides the image tag whose default is the chart appVersion.
-  version: "v3.9.8"
+  version: "v3.9.11"
   # productVersion choose from:
   # - CMP
   # - FullStack
