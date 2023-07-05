@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REGISTRY=${REGISTRY:-registry.cn-beijing.aliyuncs.com/yunionio}
-VERSION=${VERSION:-v3.10.2}
+VERSION=${VERSION:-v3.10.3}
 OCBOOT_IMAGE="$REGISTRY/ocboot:$VERSION"
 
 if ! docker ps > /dev/null 2>&1; then
