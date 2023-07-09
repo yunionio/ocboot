@@ -12,7 +12,7 @@
   yum:
     state: latest
     enablerepo: "yunion*"
-    disablerepo: "*"
+    disablerepo: "{{ disablerepo }}"
     name:
       - yunion-executor
   when:
