@@ -31,6 +31,7 @@
 
 - name: reload NetworkManager
   shell: |
+    chattr +i /etc/resolv.conf || :
     echo "nm_service is defined? {{ nm_service is defined }}\nnm_service.state {{ nm_service.state | default('stopped') == 'started' }}"
   when:
   - nm_service is defined
