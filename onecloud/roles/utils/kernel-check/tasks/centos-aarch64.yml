@@ -1,7 +1,6 @@
 - name: Install Cloud Kernel
   yum:
     enablerepo: "yunion*"
-    disablerepo: "*"
+    disablerepo: "{{ disablerepo }}"
     name:
       - kernel-5.4.199-200.yn20221212.el7
-

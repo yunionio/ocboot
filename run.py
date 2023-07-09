@@ -120,7 +120,7 @@ def check_env(ipaddr=None):
 
 
 def random_password(num):
-    assert(num >= 6)
+    assert (num >= 6)
     digits = r'23456789'
     letters = r'abcdefghjkmnpqrstuvwxyz'
     uppers = letters.upper()
