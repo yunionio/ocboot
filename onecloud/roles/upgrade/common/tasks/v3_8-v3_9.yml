@@ -56,8 +56,8 @@
       - yunion-climc-ee
       - yunion-executor
       - yunion-qemu-4.2.0
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    disablerepo: "{{ disablerepo }}"
+    enablerepo: "{{ enablerepo }}"
     state: latest
   when:
   - is_centos_based is defined
