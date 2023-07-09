@@ -18,5 +18,14 @@
       [keyfile]
       unmanaged-devices=interface-name:cali*;interface-name:tunl*
     dest: /etc/NetworkManager/conf.d/calico.conf
-  when: nm_check.rc == 0
+  when: 
+  - nm_check.rc == 0
+
+- name: reload NetworkManager
+  shell: |
+    chattr +i /etc/resolv.conf || :
+    echo "nm_service is defined? {{ nm_service is defined }}\nnm_service.state {{ nm_service.state | default('stopped') == 'started' }}"
+  when:
+  - nm_service is defined
+  - nm_service.state | default('stopped') == 'started'
   notify: Reload NetworkManager
