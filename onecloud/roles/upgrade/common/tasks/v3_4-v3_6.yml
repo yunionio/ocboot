@@ -28,7 +28,7 @@
       - yunion-executor
     state: latest
     disablerepo: '*'
-    enablerepo: "yunion-*"
+    enablerepo: "{{ enablerepo }}"
   when:
   - is_centos_x86 is defined
 
