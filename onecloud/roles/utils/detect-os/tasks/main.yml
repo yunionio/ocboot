@@ -25,11 +25,6 @@
     offline_data_path: "{{ lookup('env', 'OFFLINE_DATA_PATH') }}"
     online_status: "{{ (lookup('env', 'OFFLINE_DATA_PATH') | length > 0) | ternary('offline', 'online') }}"
 
-- name: set vars for yum repos
-  set_fact:
-    disablerepo: "{{ '' if online_status == 'online' else '*' }}"
-    enablerepo: "{{ '*' if online_status == 'online' else 'yunion-*' }}"
-
 - name: will start {{ online_status | upper }} deploy
   shell: exit 0
 

@@ -9,8 +9,8 @@
 - name: install common packages via loop
   package:
     name: "{{ item }}"
-    disablerepo: "{{ disablerepo }}"
-    enablerepo: "{{ enablerepo }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
   with_items:
   - "{{ common_packages }}"
   when:
@@ -20,15 +20,18 @@
   package:
     name: "{{ item }}"
     state: latest
-    disablerepo: "{{ disablerepo }}"
-    enablerepo: "{{ enablerepo }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
   with_items:
   - "{{ latest_packages }}"
   when:
   - latest_packages is defined
 
 - name: install misc obsolete packages
-  package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*"
+  package:
+    name: "{{ item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
   with_items:
   - yunion-qemu-2.12.1
   when:
