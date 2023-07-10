@@ -7,8 +7,8 @@
   yum:
     name:
       - yunion-ocadm
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    disablerepo: "{{ disablerepo }}"
+    enablerepo: "{{ enablerepo }}"
     state: latest
   when:
   - is_centos_based is defined

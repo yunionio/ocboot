@@ -40,8 +40,8 @@
       - kernel-3.10.0-1160.6.1.el7.yn20201125
       - kernel-devel-3.10.0-1160.6.1.el7.yn20201125
       - kernel-headers-3.10.0-1160.6.1.el7.yn20201125
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    disablerepo: "{{ disablerepo }}"
+    enablerepo: "{{ enablerepo }}"
     state: latest
   when:
   - is_centos_x86 is defined
