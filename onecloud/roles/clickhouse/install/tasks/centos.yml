@@ -2,8 +2,8 @@
   package:
     name: "{{ item }}"
     state: "present"
-    disablerepo: "{{ disablerepo }}"
-    enablerepo: "{{ enablerepo }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
   with_items:
     - clickhouse-server
     - clickhouse-client
