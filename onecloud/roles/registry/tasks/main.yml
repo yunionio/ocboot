@@ -1,5 +1,9 @@
 - name: Install registry
-  yum: name={{ item }} disablerepo="*" state=present enablerepo="yunion-*"
+  yum:
+    name: "{{ item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+    state: present
   with_items:
   - yunion-registry
   when:

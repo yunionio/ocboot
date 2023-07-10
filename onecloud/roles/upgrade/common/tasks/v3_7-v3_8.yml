@@ -45,8 +45,8 @@
       - yunion-ocadm
       - yunion-climc
       - yunion-executor
-    disablerepo: "{{ disablerepo }}"
-    enablerepo: "{{ enablerepo }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     state: latest
   when:
   - is_centos_based is defined
