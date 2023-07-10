@@ -70,7 +70,7 @@ def check_ansible():
 
 def install_packages(pkgs):
     if os.system('grep -Pq "Kylin Linux Advanced Server|CentOS Linux|openEuler" /etc/os-release') == 0:
-        return os.system("yum install -y %s" % (" ".join(pkgs)))
+        return os.system("yum install -y $(yum search pyyaml |grep -iP '^python3\d?-pyyaml\.'| awk '{print $1}') %s" % (" ".join(pkgs)))
     elif os.system('grep -wq "Debian GNU/Linux" /etc/os-release') == 0:
         return os.system("apt install -y %s" % (" ".join(pkgs)))
     else:
