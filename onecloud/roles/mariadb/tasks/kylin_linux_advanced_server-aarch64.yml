@@ -2,8 +2,8 @@
   package:
     name: "{{ item }}"
     state: installed
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    disablerepo: "{{ disablerepo }}"
+    enablerepo: "{{ enablerepo }}"
   with_items:
   - mariadb-server
 

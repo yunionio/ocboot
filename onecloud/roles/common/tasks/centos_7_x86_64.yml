@@ -9,8 +9,8 @@
 - name: install common packages via loop
   package:
     name: "{{ item }}"
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    disablerepo: "{{ disablerepo }}"
+    enablerepo: "{{ enablerepo }}"
   with_items:
   - "{{ common_packages }}"
   loop_control:
@@ -21,8 +21,8 @@
   package:
     name: "{{ item }}"
     state: latest
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    disablerepo: "{{ disablerepo }}"
+    enablerepo: "{{ enablerepo }}"
   with_items:
   - "{{ latest_packages }}"
   retries: 6
