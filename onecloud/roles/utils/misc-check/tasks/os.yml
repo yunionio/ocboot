@@ -1,0 +1,50 @@
+- name: set var
+  set_fact:
+    supported_os:        
+      centos:
+        ansible_distribution_name: "CentOS"
+        conditions:
+          - "'{{ ansible_distribution_version }}' is version('7.6', '>=')"
+          - "'{{ ansible_distribution_version }}' is version('7.9', '<=')"
+      debian:
+        ansible_distribution_name: "Debian"
+        conditions:
+          - "'{{ ansible_distribution_version }}' is version('10', '>=')"
+          - "'{{ ansible_distribution_version }}' is version('11', '<=')"
+      euler:
+        ansible_distribution_name: "openEuler"
+        conditions:
+          - "'{{ ansible_distribution_major_version }}' is version('22', '==')"
+          - "'{{ ansible_distribution_version }}' is version('22.03', '>=')"
+      kylin:
+        ansible_distribution_name: "Kylin Linux Advanced Server"
+        conditions:
+          - "'{{ ansible_distribution_version }}' is version('V10', '==')"
+          - "'{{ ansible_distribution_release }}' in ['Kivity', 'Sword']"
+      uos:
+        ansible_distribution_name: "UnionTech OS Server"
+        conditions:
+          - "'{{ ansible_distribution_version }}' is version('20', '==')"
+
+- name: Check if the current operating system is supported
+  set_fact:
+    supported_os_name: true
+    supported_os_key: "{{item}}"
+  loop: "{{ supported_os.keys() }}"
+  when:
+  - ansible_distribution.startswith(supported_os[item].ansible_distribution_name)
+
+- name: Check if OS is supported
+  assert:
+    that:
+      - supported_os_name is true
+    fail_msg: "OS {{ ansible_distribution }} is not supported "
+    success_msg: "Os distribution {{ ansible_distribution }} is supported"
+
+- name: Check if OS VERSION is supported
+  assert:
+    that: "{{ item }}"        
+    fail_msg: "OS VER {{ ansible_distribution }} {{ ansible_distribution_version }} is NOT supported"
+  with_items: "{{ supported_os[supported_os_key].conditions }}"
+  when:
+    - ansible_distribution.startswith(supported_os[supported_os_key].ansible_distribution_name)
