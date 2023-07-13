@@ -37,7 +37,7 @@
 - name: Check if OS is supported
   assert:
     that:
-      - supported_os_name is true
+      - supported_os_name | bool
     fail_msg: "OS {{ ansible_distribution }} is not supported "
     success_msg: "Os distribution {{ ansible_distribution }} is supported"
 
