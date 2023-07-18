@@ -32,7 +32,7 @@ common_packages:
   - openvswitch-switch
   - ovmf
   - parallel
-  - python-selinux
+  - python3-selinux
   - software-properties-common
   - usbutils
   - wget

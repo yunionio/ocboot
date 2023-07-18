@@ -25,8 +25,8 @@
     dest: /tmp/yunion.gpg-key.asc
     validate_certs: no
 
-# https://iso.yunion.cn/debian/10/3.9/x86_64/
-- name: apply debian sig key
+# https://iso.yunion.cn/ubuntu/10/3.10/aarch64/
+- name: apply ubuntu sig key
   shell: |
     echo "deb [trusted=yes] https://iso.yunion.cn/debian/{{ ansible_distribution_major_version }}/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/ ./" > /etc/apt/sources.list.d/yunion.list;
     apt-key add /tmp/yunion.gpg-key.asc;
