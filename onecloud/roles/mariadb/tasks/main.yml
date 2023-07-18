@@ -31,7 +31,7 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   when:
-    - is_centos_based |default(false)|bool == true
+    - is_redhat_based |default(false)|bool == true
 
 - name: Change root password for debian
   mysql_user:
