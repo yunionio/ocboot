@@ -48,4 +48,3 @@ latest_packages:
     - yunion-executor
     - yunion-fetcherfs
     - yunion-ocadm
-  # - yunion-ovmfrpm # 缺乏相关包

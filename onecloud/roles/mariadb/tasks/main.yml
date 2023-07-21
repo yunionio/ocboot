@@ -22,14 +22,28 @@
     login_password: "{{ db_password }}"
     password: "{{ db_password }}"
     name: "{{ db_user }}"
-    priv: '*.*:ALL,GRANT'
+    priv: "*.*:ALL,GRANT"
     host: "{{ item }}"
     check_implicit_admin: true
   loop:
     - "{{ db_host }}"
-    - "localhost"
     - "%"
     - "::1"
     - "127.0.0.1"
+    - "localhost"
   vars:
     ansible_python_interpreter: /usr/bin/python3
+
+# https://dba.stackexchange.com/questions/102066/ansible-how-to-change-mysql-server-root-password-by-reprovisioning-the-server
+- name: Create .my.cnf
+  template:
+   src: "/home/ch/ocboot/templates/mariadb/client.my.cnf.j2"
+   dest: "/root/.my.cnf"
+   owner: root
+   group: root
+   mode: 0600
+
+# https://stackoverflow.com/questions/38433295/unable-to-change-password-for-root-account-ansible
+#  - name: Create .my.cnf file with root password credentials
+#      become: yes
+#      template: src=".my.cnf.j2" dest="/root/.my.cnf" owner=root group=root mode=0600

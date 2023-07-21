@@ -1,6 +1,7 @@
 # encoding: utf-8
 from datetime import datetime, tzinfo, timedelta
 
+
 def ensure_ascii(s):
     if not isinstance(s, str):
         s = '%s' % s
@@ -36,7 +37,7 @@ def parse_k8s_time(time_str):
 def get_major_version(ver):
     segs = ver.split('.')
     # 对于 master 版本，不做校验；对于 v3.6.x、v3.7.x这样的格式，做版本校验
-    if ver.startswith('master-'):
+    if ver.startswith('master'):
         return 'master'
 
     if (not ver.startswith('master-')) and len(segs) < 3:
@@ -46,7 +47,7 @@ def get_major_version(ver):
 
 def is_below_v3_9(ver):
     # 对于 master 版本，不做校验；对于 v3.6.x、v3.7.x这样的格式，做版本校验
-    if ver.startswith('master-'):
+    if ver.startswith('master'):
         return False
     segs = ver.split('.')
     v_1st = int(segs[0].strip('v'))
@@ -64,6 +65,7 @@ def is_below_v3_9(ver):
 def to_yaml(data):
     import yaml
     return yaml.dump(data, default_flow_style=False)
+
 
 def print_title(title):
     print('\n')
