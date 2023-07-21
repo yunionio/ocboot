@@ -255,7 +255,7 @@ primary_master_node:
   use_local: false
   user: root
   onecloud_version: "v3.9.8"
-  db_host: $DB_IP
+  db_host: $DB_VIP
   db_user: "$DB_USER"
   db_password: "$DB_PSWD"
   db_port: "$DB_PORT"
