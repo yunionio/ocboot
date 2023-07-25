@@ -147,6 +147,10 @@
     - is_kylin_based is defined
     - is_kylin_based |default(false)|bool == true
 
+  - name: show ocadm join args
+    debug:
+      msg "/opt/yunion/bin/ocadm {{ join_args }}"
+
   - name: Use ocadm join master node
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
     environment:

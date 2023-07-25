@@ -12,3 +12,5 @@ mariadb_package_info:
     - "{{ mariadb_versioned_pkg[mariadb_version | string] }}"
     - python-mysqldb
     - python-pymysql
+
+login_unix_socket: /var/run/mysqld/mysqld.sock
