@@ -53,10 +53,9 @@
     enabled: yes
     state: started
 
-- debug: var=db_password
-
 - name: Change root password
   mysql_user:
+    login_unix_socket: "{{ login_unix_socket }}"
     login_user: "{{ db_user }}"
     login_port: "{{ db_port | default(3306) }}"
     login_password: "{{ db_password }}"
@@ -72,29 +71,6 @@
     - "127.0.0.1"
   vars:
     ansible_python_interpreter: /usr/bin/python3
-  when:
-    - is_redhat_based |default(false)|bool == true
-
-- name: Change root password for debian
-  mysql_user:
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-    login_user: "{{ db_user }}"
-    login_port: "{{ db_port | default(3306) }}"
-    login_password: "{{ db_password }}"
-    password: "{{ db_password }}"
-    name: "{{ db_user }}"
-    priv: '*.*:ALL,GRANT'
-    host: "{{ item }}"
-    check_implicit_admin: true
-  loop:
-    - "localhost"
-    - "%"
-    - "::1"
-    - "127.0.0.1"
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
-  when:
-    - is_debian_based |default(false)|bool == true
 
 - name: Remove all anonymous user accounts
   mysql_user:
