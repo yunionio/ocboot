@@ -139,7 +139,7 @@ env_check() {
         error_exit "You need sudo or root to run this script."
     fi
 
-    local supported_distros=("centos" "debian")
+    local supported_distros=("centos" "debian" "openeuler")
     local distros=($(get_distro))
 
     local found_supported_distro=false
@@ -169,6 +169,17 @@ mk_grub2(){
     fi
 }
 
+
+mk_grub2_openeuler(){
+    if [ -d /sys/firmware/efi ]; then
+        mkdir -p /boot/efi/EFI/openEuler
+        grub2-mkconfig -o /boot/efi/EFI/openEuler/grub.cfg
+    else
+        grub2-mkconfig -o /boot/grub2/grub.cfg
+    fi
+}
+
+
 mk_grub_legacy(){
     update-grub
 }
@@ -179,6 +190,8 @@ mk_grub(){
         mk_grub2
     elif [[ "${distro}" == "debian" ]]; then
         mk_grub_legacy
+    elif [[ "${distro}" == "openeuler" ]]; then
+        mk_grub2_openeuler
     else
         error_exit "unsupport distro ${distro}!"
     fi
