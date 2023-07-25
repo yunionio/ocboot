@@ -68,7 +68,7 @@ common_packages:
   - "{{ yunion_qemu_package }}"
 
 common_services:
-  - ntpd
+  #  - ntpd # openeuler seems using different ntp
   - yunion-executor
 
 latest_packages:
