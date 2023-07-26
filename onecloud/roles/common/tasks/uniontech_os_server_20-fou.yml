@@ -45,6 +45,14 @@
   args:
     executable: /bin/bash
 
+- name: install dependencies
+  apt:
+    name:
+    - gpg-agent
+    - gnupg
+    - gnupg2
+    - gnupg-agent
+
 - name: init apt cache for debian
   get_url:
     url: https://iso.yunion.cn/debian/10/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/yunion.gpg-key.asc
@@ -66,34 +74,35 @@
   when:
   - is_debian_based is defined
 
-- debug: var=common_packages
+- name: install k8s packages
+  apt:
+    pkg:
+    - kubectl=1.15.12-00
+    - kubelet=1.15.12-00
+    force: yes
 
 - name: install common packages via loop
   package:
-    name: "{{ item }}"
+    name: "{{ package_item }}"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
-  with_items:
-  - "{{ common_packages }}"
+  loop: "{{ common_packages }}"
   loop_control:
+    loop_var: package_item
     index_var: item_index
-    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ item }}"
-
-- debug: var=latest_packages
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
 
 - name: install latest packages via loop
   package:
-    name: "{{ item }}"
+    name: "{{ package_item }}"
     state: latest
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
-  with_items:
-  - "{{ latest_packages }}"
+  loop: "{{ latest_packages }}"
+  loop_control:
+    loop_var: package_item
   retries: 6
   delay: 10
-  # register: latest_pkg_result
-  # until: latest_pkg_result.rc == 0
-  #  ignore_errors: yes
   when:
   - latest_packages is defined
 
