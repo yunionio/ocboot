@@ -1,0 +1,137 @@
+---
+- name: Check if systemd.unified_cgroup_hierarchy=0 is in /proc/cmdline
+  shell: "grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline"
+  register: unified_cgroup_hierarchy
+  ignore_errors: true
+  failed_when: false
+
+- name: get version tag
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    /usr/bin/kubectl get OnecloudCluster -n onecloud -o jsonpath='{.items[0].spec.version}'
+  args:
+      executable: /bin/bash
+  delegate_to: "{{ k8s_controlplane_host }}"
+  register: k8s_version_tag
+  ignore_errors: true
+  failed_when: false
+  when: k8s_controlplane_host is defined
+
+- name: set onecloud_version if not provided
+  set_fact:
+    onecloud_version: "{{ k8s_version_tag.stdout }}"
+  when:
+  - onecloud_version is not defined
+  - k8s_version_tag is defined
+  - k8s_version_tag.rc == 0
+
+- name: set var
+  set_fact:
+    onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
+
+- name: config iptables for debian
+  shell: |
+    if iptables -V |grep -wq nf_tables && ls -l /usr/sbin/iptables |grep -wq alternatives; then
+      update-alternatives --set iptables /usr/sbin/iptables-legacy
+      update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+      update-alternatives --set arptables /usr/sbin/arptables-legacy
+      update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+      if [ -x /usr/bin/aptitude ] && [ ! -x /usr/sbin/nft ]; then
+          aptitude install nftables -y
+          nft flush ruleset
+      fi
+    fi
+  args:
+    executable: /bin/bash
+
+- name: init apt cache for debian
+  get_url:
+    url: https://iso.yunion.cn/debian/10/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/yunion.gpg-key.asc
+    dest: /tmp/yunion.gpg-key.asc
+    validate_certs: no
+  become: yes
+  when:
+  - is_debian_based is defined
+
+# https://iso.yunion.cn/debian/10/3.9/x86_64/
+- name: apply debian sig key
+  shell: |
+    echo "deb [trusted=yes] https://iso.yunion.cn/debian/10/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/ ./" > /etc/apt/sources.list.d/yunion.list;
+    apt-key add /tmp/yunion.gpg-key.asc;
+    apt-get update -y;
+    rm -f /tmp/yunion.gpg-key.asc
+  args:
+    executable: /bin/bash
+  when:
+  - is_debian_based is defined
+
+- debug: var=common_packages
+
+- name: install common packages via loop
+  package:
+    name: "{{ item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  with_items:
+  - "{{ common_packages }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ item }}"
+
+- debug: var=latest_packages
+
+- name: install latest packages via loop
+  package:
+    name: "{{ item }}"
+    state: latest
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  with_items:
+  - "{{ latest_packages }}"
+  retries: 6
+  delay: 10
+  # register: latest_pkg_result
+  # until: latest_pkg_result.rc == 0
+  #  ignore_errors: yes
+  when:
+  - latest_packages is defined
+
+- name: install misc obsolete packages
+  package:
+    name: "{{ item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  with_items:
+  - yunion-qemu-2.12.1
+  when:
+  - is_centos_x86 is defined
+
+- name: Selinux Status
+  shell: |
+    sestatus |grep '^SELinux status:' |awk '{print $3}'
+  register: selinux_status
+  ignore_errors: yes
+
+- name: Check that if selinux config exists
+  stat:
+    path: /etc/selinux/config
+  register: selinux_conf_exists
+
+- name: Turn off selinux
+  selinux:
+    state: disabled
+  when:
+    - selinux_conf_exists.stat.exists
+
+- name: fix ovmf path
+  shell: |
+    if [ ! -f /usr/share/ovmf/OVMF.fd ]; then
+      exit 1
+    fi
+    mkdir -p /opt/cloud/contrib/
+    if [ ! -f /opt/cloud/contrib/OVMF.fd ]; then
+      ln -s /usr/share/ovmf/OVMF.fd /opt/cloud/contrib/OVMF.fd
+    fi
+  args:
+    executable: /bin/bash
