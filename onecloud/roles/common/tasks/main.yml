@@ -15,6 +15,7 @@
   include_tasks: "{{ item }}"
   with_first_found:
   - files:
+    - "{{ ansible_distribution | lower | regex_replace('[^a-zA-Z0-9 ]+|[ ]+$', '') | replace(' ','_') }}-{{ansible_distribution_release}}.yml"
     - "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}_{{ ansible_architecture }}.yml"
     - "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}.yml"
     - "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
@@ -168,6 +169,23 @@
 
   - name: Config docker file
     template: src=daemon.json.j2 dest=/etc/docker/daemon.json
+    when: 
+    - is_uos_kongzi|default(false) | bool == false 
+
+  - name: Config docker file
+    shell: |
+      cat > /etc/docker/daemon.json <<EOF
+      {
+        "bridge": "none",
+        "experimental": true,
+        "iptables": false,
+        "data-root": "/opt/docker"
+      }
+      EOF
+    args:
+      executable: /bin/bash
+    when: 
+    - is_uos_kongzi|default(false) | bool == true
 
   - name: Restart docker service
     service: name=docker state=restarted daemon_reload=yes enabled=yes
