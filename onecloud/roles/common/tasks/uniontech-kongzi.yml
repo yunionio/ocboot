@@ -1,0 +1,130 @@
+---
+- name: Add cloud rpm repository
+  shell: |
+    cat > /etc/yum.repos.d/yunion.repo <<-'EOF'
+    [yunion-repo-uos-kongzi]
+    name=Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/centos/7/3.10/{{ansible_architecture}}
+    sslverify=0
+    enabled=1
+    gpgcheck=0
+    EOF
+  when:
+  - is_uos_kongzi is defined
+
+- name: Check containerd status
+  command: systemctl is-active containerd
+  register: containerd_status
+  failed_when: false
+
+- name: Take action if containerd stopped
+  block:
+  - name: get containerd
+    get_url:
+      url: "https://iso.yunion.cn/uos/kongzi/3.10/{{ ansible_architecture}}/containerd-1.7.2-linux.tar.gz"
+      dest: /tmp/containerd-1.7.2-linux.tar.gz
+      force: yes
+      validate_certs: no
+
+  - name: install containerd
+    shell: |
+      mkdir -p /usr/local/containerd
+      tar xzvf /tmp/containerd-1.7.2-linux.tar.gz -C /usr/local/containerd
+      for i in /usr/local/containerd/bin/*
+      do 
+        ln -sf $i /usr/bin/
+      done
+      cat > /usr/lib/systemd/system/containerd.service <<-EOF
+      [Unit]
+      Description=containerd container runtime
+      Documentation=https://containerd.io
+      After=network.target local-fs.target
+
+      [Service]
+      ExecStartPre=-/sbin/modprobe overlay
+      ExecStart=/usr/bin/containerd
+
+      Type=notify
+      Delegate=yes
+      KillMode=process
+      Restart=always
+      RestartSec=5
+      # Having non-zero Limit*s causes performance problems due to accounting overhead
+      # in the kernel. We recommend using cgroups to do container-local accounting.
+      LimitNPROC=infinity
+      LimitCORE=infinity
+      LimitNOFILE=infinity
+      # Comment TasksMax if your systemd version does not supports it.
+      # Only systemd 226 and above support this version.
+      TasksMax=infinity
+      OOMScoreAdjust=-999
+
+      [Install]
+      WantedBy=multi-user.target
+      EOF
+
+      systemctl daemon-reload
+      systemctl enable --now containerd
+      systemctl is-active containerd
+    args:
+      executable: /bin/bash
+
+  when:
+    - containerd_status.stdout != "active"
+
+- name: append packages to common_packages
+  set_fact:
+    common_packages: "{{ common_packages + extra_packages }}"
+  when:
+  - extra_packages is defined
+  - common_packages is defined
+
+- name: install common packages via loop
+  package:
+    name: "{{ package_item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  with_items:
+  - "{{ common_packages }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+
+- name: install latest packages via loop
+  package:
+    name: "{{ package_item }}"
+    state: latest
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  with_items:
+  - "{{ latest_packages }}"
+  retries: 6
+  delay: 10
+  register: latest_pkg_result
+  until: latest_pkg_result.rc == 0
+  ignore_errors: yes
+  when:
+  - latest_packages is defined
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ latest_packages | length }}] {{ package_item }}"
+    loop_var: package_item
+
+- name: Selinux Status
+  shell: |
+    sestatus |grep '^SELinux status:' |awk '{print $3}'
+  register: selinux_status
+  ignore_errors: yes
+
+- name: Check that if selinux config exists
+  stat:
+    path: /etc/selinux/config
+  register: selinux_conf_exists
+
+- name: Turn off selinux
+  selinux:
+    state: disabled
+  when:
+    - selinux_status.stdout | default("") != "disabled"
+    - selinux_conf_exists.stat.exists
