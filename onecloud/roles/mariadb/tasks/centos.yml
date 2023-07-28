@@ -1,11 +1,13 @@
 - name: Install mariadb
   package:
-    name: "{{ item }}"
+    name: "{{ package_item }}"
     state: "present"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
   with_items:
     - mariadb-server
+  loop_control:
+    loop_var: package_item
 
 - name: pips for mysql/mariadb online
   pip:
