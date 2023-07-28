@@ -4,6 +4,8 @@
   include_vars: "{{ item }}"
   with_first_found:
     - files:
+        - "{{ ansible_distribution | regex_replace('[^a-zA-Z0-9 ]+|[ ]+$', '') |replace(' ','_') | lower}}-{{ansible_distribution_release}}.yml"
+        - "{{ ansible_distribution | regex_replace('[^a-zA-Z0-9 ]+|[ ]+$', '') |replace(' ','_') | lower}}.yml"
         - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
         - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_version|lower|replace('/', '_') }}.yml"
         - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
@@ -25,10 +27,15 @@
     offline_data_path: "{{ lookup('env', 'OFFLINE_DATA_PATH') }}"
     online_status: "{{ (lookup('env', 'OFFLINE_DATA_PATH') | length > 0) | ternary('offline', 'online') }}"
 
+- name: Check if /usr/bin/python3 exists
+  stat:
+    path: /usr/bin/python3
+  register: python3_stat
+
 - name: Set python interpreter
   set_fact:
-    key=ansible_python_interpreter
-    value="{{ '/usr/bin/python3' if ansible_facts.files['/usr/bin/python3'] is defined else omit }}"
+    ansible_python_interpreter: "/usr/bin/python3"
+  when: python3_stat.stat.exists
 
 - debug: var=online_status
 
