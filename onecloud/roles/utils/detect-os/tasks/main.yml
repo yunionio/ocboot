@@ -25,8 +25,12 @@
     offline_data_path: "{{ lookup('env', 'OFFLINE_DATA_PATH') }}"
     online_status: "{{ (lookup('env', 'OFFLINE_DATA_PATH') | length > 0) | ternary('offline', 'online') }}"
 
-- name: will start {{ online_status | upper }} deploy
-  shell: exit 0
+- name: Set python interpreter
+  set_fact:
+    key=ansible_python_interpreter
+    value="{{ '/usr/bin/python3' if ansible_facts.files['/usr/bin/python3'] is defined else omit }}"
+
+- debug: var=online_status
 
 - name: set default fact is_running_on_vm
   set_fact:
