@@ -6,16 +6,11 @@
   failed_when: false
 
 - name: Check distribution and version
-  assert:
-    that:
-      - ansible_distribution == 'Debian'
-      - ansible_distribution_major_version | int >= 11
-  register: debian_version_check
-  ignore_errors: true
-
-- name: Set variable if Debian 11 or later
   set_fact:
-    is_debian_11_or_later: "{{ debian_version_check is success }}"
+    is_debian_11_or_later: true
+  when:
+    - ansible_distribution == 'Debian'
+    - ansible_distribution_major_version | int >= 11
 
 - block:
   - name: Append systemd.unified_cgroup_hierarchy=0 to GRUB_CMDLINE_LINUX
@@ -101,10 +96,10 @@
   args:
     executable: /bin/bash
 
-- name: update common packages for debian 11 
+- name: update common packages for debian 11
   set_fact:
     common_packages: "{{ ['libcapstone4'] + common_packages }}"
-  when: 
+  when:
   - is_debian_11_or_later| default(false)|bool == true
 
 - name: install common packages via loop
@@ -137,7 +132,7 @@
 
 - name: fix ovmf path
   shell: |
-    if [ ! -f /usr/share/ovmf/OVMF.fd ]; then 
+    if [ ! -f /usr/share/ovmf/OVMF.fd ]; then
       exit 1
     fi
     mkdir -p /opt/cloud/contrib/
