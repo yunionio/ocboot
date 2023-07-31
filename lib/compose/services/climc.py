@@ -1,5 +1,5 @@
-from lib.compose.object import ServiceDataVolume
 from lib.compose.services import ClusterCommonService
+from lib.compose.object import Quoted
 
 
 class ClimcService(ClusterCommonService):
@@ -9,7 +9,8 @@ class ClimcService(ClusterCommonService):
         self.depend_on_completed(keystone.get_post_init_service())
 
     def get_command(self):
-        return ["tail", "-f", "/dev/null"]
+        cmd = "grep -q rcadmin /root/.bashrc || echo 'source /etc/yunion/rcadmin' >> /root/.bashrc; tail -f /dev/null"
+        return ["/bin/bash", "-c", Quoted(cmd)]
 
     def get_config_path(self):
         return self.YUNION_ETC_PATH + "rcadmin"
