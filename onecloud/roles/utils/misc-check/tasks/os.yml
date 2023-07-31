@@ -10,7 +10,7 @@
         ansible_distribution_name: "Debian"
         conditions:
           - "'{{ ansible_distribution_version }}' is version('10', '>=')"
-          - "'{{ ansible_distribution_version }}' is version('11', '<=')"
+          - "'{{ ansible_distribution_version }}' is version('12', '<')"
       euler:
         ansible_distribution_name: "openEuler"
         conditions:
