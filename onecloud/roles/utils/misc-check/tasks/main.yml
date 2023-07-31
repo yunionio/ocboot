@@ -36,8 +36,8 @@
   - name: Check Minimum Hardware Requirements
     assert:
       that:
-        - ansible_processor_vcpus >= minimal_cpu
-        - (ansible_memtotal_mb / 1024 +0.5) | round(1) | int >= minimal_mem
+        - ansible_processor_vcpus >= minimal_cpu | int
+        - (ansible_memtotal_mb / 1024 +0.5) | round(1) | int >= minimal_mem | int
       msg: |
         cpu: got {{ ansible_processor_vcpus }} (req: {{minimal_cpu}} cores)
         mem: got {{(ansible_memtotal_mb / 1024 +0.5) | round(1) | int}}GB (req: {{minimal_mem}}GB)
