@@ -648,9 +648,10 @@ services:
       keystone-post-init:
         condition: service_completed_successfully
     command:
-    - tail
-    - -f
-    - /dev/null
+    - /bin/bash
+    - -c
+    - "grep -q rcadmin /root/.bashrc || echo 'source /etc/yunion/rcadmin' >> /root/.bashrc;\
+      \ tail -f /dev/null"
     restart: on-failure
   yunionconf-init:
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1

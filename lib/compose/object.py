@@ -3,11 +3,22 @@ import yaml
 from lib.compose import SERVICE_RESTART_ON_FAILURE
 
 
+class Quoted(str):
+    pass
+
+
+def quoted_presenter(dumper, data):
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='"')
+    yaml.add_representer(quoted, quoted_presenter)
+
+
 class Utils(object):
 
     @classmethod
     def dump_yaml(cls, data):
-        output = yaml.dump(data, sort_keys=False)
+        yaml.add_representer(Quoted, quoted_presenter)
+
+        output = yaml.dump(data, default_flow_style=False, sort_keys=False)
         return output
 
 
