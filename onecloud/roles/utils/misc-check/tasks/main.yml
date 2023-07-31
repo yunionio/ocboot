@@ -2,8 +2,12 @@
 - name: ansible version
   set_fact:
     supported_ansible_version: "2.9.27"
-    minimal_cpu: 4
-    minimal_mem: 7
+    minimal_mem: "{{ 1 if lookup('env','IGNORE_ALL_CHECKS') == 'true' else 6 }}"
+    minimal_cpu: "{{ 1 if lookup('env','IGNORE_ALL_CHECKS') == 'true' else 4 }}"
+
+- name: debug
+  debug:
+    msg: "minimal_mem: {{minimal_mem}} minimal_cpu: {{minimal_cpu}}"
 
 - block:
 
