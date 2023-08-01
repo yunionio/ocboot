@@ -13,23 +13,27 @@
     login_user: "{{ db_user }}"
     login_password: "{{ db_password }}"
 
+- name: show var
+  debug:
+    msg: "groups['mariadb_ha_nodes'][0]{{ groups['mariadb_ha_nodes'][0] }}"
+
 - name: Get master binlog file name and binlog position
   mysql_replication:
-    mode: getmaster
+    mode: getprimary
     login_user: "{{ db_user }}"
     login_password: "{{ db_password }}"
   delegate_to: "{{ groups['mariadb_ha_nodes'][0] }}"
   register: repl_info
 
-- name: Stop slave
+- name: Stop replica
   mysql_replication:
-    mode: stopslave
+    mode: stopreplica
     login_user: "{{ db_user }}"
     login_password: "{{ db_password }}"
 
 - name: Change master to db01 for db02
   mysql_replication:
-    mode: changemaster
+    mode: changeprimary
     master_host: "{{ hostvars[groups['mariadb_ha_nodes'][0]]['ansible_host'] }}"
     master_log_file: "{{ repl_info.File }}"
     master_log_pos: "{{ repl_info.Position }}"
@@ -39,8 +43,8 @@
     login_password: "{{ db_password }}"
   ignore_errors: true
 
-- name: Start slave
+- name: Start replica
   mysql_replication:
-    mode: startslave
+    mode: startreplica
     login_user: "{{ db_user }}"
     login_password: "{{ db_password }}"

@@ -1,6 +1,51 @@
-# ./onecloud/roles/mariadb/tasks/
-- name: Import Install mariadb task
-  include_tasks: "{{ ansible_distribution | lower | replace(' ', '_')}}-{{ ansible_architecture }}.yml"
+---
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution | lower | regex_replace('[^a-zA-Z0-9 ]+|[ ]+$', '') |replace(' ','_') | lower}}-{{ansible_distribution_release}}.yml"
+        - "{{ ansible_distribution | lower | regex_replace('[^a-zA-Z0-9 ]+|[ ]+$', '') |replace(' ','_') | lower}}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}.yml"
+        - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_os_family|lower }}.yml"
+        - defaults.yml
+
+- name: Install mariadb
+  package:
+    name: "{{ package_item }}"
+    state: "present"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  with_items:
+    - "{{ packages }}"
+  loop_control:
+    loop_var: package_item
+
+- name: pips for mysql/mariadb online
+  pip:
+    name: "{{ pip_item }}"
+  when:
+  - online_status == "online"
+  loop: "{{ pips }}"
+  loop_control:
+    loop_var: pip_item
+
+- name: pips for mysql/mariadb offline
+  pip:
+    name: PyMySQL
+    extra_args: "--no-index --find-links=file://{{ offline_data_path }}/pips"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  when:
+  - online_status == "offline"
+  - offline_data_path is defined
+  - offline_data_path | length > 0
 
 - name: Copy my.cnf
   copy:
@@ -37,7 +82,7 @@
 # https://dba.stackexchange.com/questions/102066/ansible-how-to-change-mysql-server-root-password-by-reprovisioning-the-server
 - name: Create .my.cnf
   template:
-   src: "/home/ch/ocboot/templates/mariadb/client.my.cnf.j2"
+   src: "client.my.cnf.j2"
    dest: "/root/.my.cnf"
    owner: root
    group: root

@@ -1,6 +1,13 @@
 - name: set var
   set_fact:
     supported_os:        
+      uniontech:
+        ansible_distribution_name: "UnionTech"
+        conditions:
+          - "'{{ ansible_distribution_version }}' is version('20', '==')"
+          - "'{{ ansible_distribution_release }}' == 'kongzi'"
+          - "'{{ ansible_distribution_file_variety | default('') | lower }}' == 'redhat'"
+
       centos:
         ansible_distribution_name: "CentOS"
         conditions:
