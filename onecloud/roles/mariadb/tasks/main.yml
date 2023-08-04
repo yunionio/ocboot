@@ -53,11 +53,24 @@
     dest: /etc/my.cnf
     backup: yes
 
+- name: Allow remote hosts to connect (Ubuntu)
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    backrefs: yes
+    regexp: '^bind-address'
+    line: 'bind-address            = 0.0.0.0'
+    state: present
+
+- name: make conf dir
+  file:
+    name: /etc/my.cnf.d
+    state: directory
+
 - name: enable and start mariadb
   systemd:
     name: mariadb
     enabled: yes
-    state: started
+    state: restarted
 
 - name: Change root password
   mysql_user:
@@ -78,17 +91,3 @@
     - "localhost"
   vars:
     ansible_python_interpreter: /usr/bin/python3
-
-# https://dba.stackexchange.com/questions/102066/ansible-how-to-change-mysql-server-root-password-by-reprovisioning-the-server
-- name: Create .my.cnf
-  template:
-   src: "client.my.cnf.j2"
-   dest: "/root/.my.cnf"
-   owner: root
-   group: root
-   mode: 0600
-
-# https://stackoverflow.com/questions/38433295/unable-to-change-password-for-root-account-ansible
-#  - name: Create .my.cnf file with root password credentials
-#      become: yes
-#      template: src=".my.cnf.j2" dest="/root/.my.cnf" owner=root group=root mode=0600

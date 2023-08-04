@@ -9,6 +9,6 @@
 
 - name: Remove immutable flag on /etc/resolv.conf
   shell: |
-    chattr -ai /etc/resolv.conf // TODO: -ai? ref:https://www.linuxquestions.org/questions/linux-software-2/i-can%27t-change-file-permission-via-chattr-4175553888/
+    chattr -ai /etc/resolv.conf # TODO: -ai? ref:https://www.linuxquestions.org/questions/linux-software-2/i-can%27t-change-file-permission-via-chattr-4175553888/
   ignore_errors: yes
 
