@@ -93,3 +93,7 @@
     state: disabled
   when:
     - selinux_conf_exists.stat.exists
+
+- name: auto restart services 
+  become: yes
+  command: "sed -i \"s/#\\$nrconf{restart} = 'i';/\\$nrconf{restart} = 'a';/\" /etc/needrestart/needrestart.conf"
