@@ -52,6 +52,12 @@
     src: my.cnf
     dest: /etc/my.cnf
 
+- name: create Mariadb Conf Path For Debian
+  file:
+    path: /etc/my.cnf.d
+    state: directory
+  when: ansible_distribution == "Debian"
+
 - name: enable and start mariadb
   systemd:
     name: mariadb
@@ -74,3 +80,20 @@
     - "%"
     - "::1"
     - "127.0.0.1"
+
+- name: gather os specific Tasks for post installation
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}.yml"
+        - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_os_family|lower }}.yml"
+        - defaults.yml
+      skip: true
+

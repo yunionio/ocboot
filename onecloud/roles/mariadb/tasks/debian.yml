@@ -1,0 +1,15 @@
+- name: Allow remote hosts to connect (Debian)
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    backrefs: yes
+    regexp: '^bind-address'
+    line: 'bind-address            = 0.0.0.0'
+    state: present
+
+# restart the mariadb service asap to allow remote access
+- name: Restart Mariadb
+  systemd:
+    name: mariadb
+    state: restarted
+    enabled: yes
+
