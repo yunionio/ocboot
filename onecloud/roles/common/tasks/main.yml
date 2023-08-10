@@ -166,8 +166,8 @@
 
   - name: Config docker file
     template: src=daemon.json.j2 dest=/etc/docker/daemon.json
-    when: 
-    - is_uos_kongzi|default(false) | bool == false 
+    when:
+    - is_uos_kongzi|default(false) | bool == false
 
   - name: Config docker file
     shell: |
@@ -181,7 +181,7 @@
       EOF
     args:
       executable: /bin/bash
-    when: 
+    when:
     - is_uos_kongzi|default(false) | bool == true
 
   - name: Restart docker service

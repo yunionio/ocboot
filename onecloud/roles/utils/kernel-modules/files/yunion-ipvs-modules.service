@@ -1,0 +1,10 @@
+[Unit]
+Description=Yunion Loads ipvs module
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/yunion-ipvs-modules.sh
+
+[Install]
+WantedBy=multi-user.target
