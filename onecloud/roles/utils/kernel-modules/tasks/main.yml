@@ -1,12 +1,23 @@
-- name: Config ipvs
+- name: install service to reload kernel modules
   copy:
-    owner: root
-    group: root
-    mode: "0755"
-    src: ipvs.modules
-    dest: /etc/sysconfig/modules/ipvs.modules
+    src:  yunion-ipvs-modules.service
+    dest: /etc/systemd/system/yunion-ipvs-modules.service
+    mode: 644
 
-- name: Load ipvs modules
-  shell:
-    /etc/sysconfig/modules/ipvs.modules
+- name: prepare load module scripts
+  copy:
+    src:  yunion-ipvs-modules.sh
+    dest: /usr/bin/yunion-ipvs-modules.sh
+    mode: 755
+
+- name: execute load module scripts
+  shell: /usr/bin/yunion-ipvs-modules.sh
+  ignore_errors: yes
+
+- name: enable load modules service
+  ansible.builtin.systemd:
+    name: yunion-ipvs-modules
+    enabled: true
+    daemon_reload: true
+  ignore_errors: yes
 
