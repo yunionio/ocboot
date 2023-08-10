@@ -12,4 +12,3 @@
     name: mariadb
     state: restarted
     enabled: yes
-
