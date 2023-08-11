@@ -10,7 +10,7 @@
 
 - name: offline_nodes type list
   set_fact:
-    offline_node_list: "{{ offline_node_list + [ansible_default_ipv4.address] }}"
+    offline_node_list: "{{ offline_node_list + [node_ip] }}"
   when:
   - offline_data_path is defined
 
