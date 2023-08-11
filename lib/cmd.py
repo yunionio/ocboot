@@ -61,6 +61,9 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
 
     if len(debug_flag) > 0:
         cmd.append(debug_flag)
+    skip_tags = os.environ.get('SKIP_TAGS', "")
+    if len(skip_tags) > 0:
+        cmd.extend(["--skip-tags", f"'{skip_tags}'"])
     return _run_cmd(cmd)
 
 
