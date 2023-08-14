@@ -60,8 +60,7 @@
   changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
   retries: 3
   delay: 10
-  register: pull_image_result
-  until: pull_image_result.rc == 0
+  until: command_result.rc == 0
   when:
   - K8S_TOKEN.stdout|length == 0
   - online_status == "online"
