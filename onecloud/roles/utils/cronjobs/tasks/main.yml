@@ -6,11 +6,13 @@
     user: root
     job: "/usr/bin/docker image prune -f"
     cron_file: yunion_docker_image_prune
+  become: true
 
 - name: ensure /opt/yunion/scripts path exists
   file:
     path: /opt/yunion/scripts
     state: directory
+  become: true
 
 - name: enable auto backup
   include_role:

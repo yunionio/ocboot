@@ -63,6 +63,7 @@
         systemctl disable --now $service
       fi
     done
+  become: true
   args:
     executable: /bin/bash
 
@@ -74,6 +75,7 @@
   modprobe:
     name: "{{ item }}"
     state: present
+  become: true
   loop:
   - br_netfilter
   - ip_conntrack
@@ -86,12 +88,14 @@
     dest: /etc/modules-load.d/kubernetes.conf
     content:
       br_netfilter
+  become: true
 
 - name: Change sysctl setting
   sysctl:
     name: "{{ item }}"
     value: "1"
     state: present
+  become: true
   loop:
   - net.bridge.bridge-nf-call-iptables
   - net.bridge.bridge-nf-call-ip6tables
@@ -102,12 +106,14 @@
     name: "fs.inotify.max_user_watches"
     value: "65536"
     state: present
+  become: true
 
 - name: Change sysctl fs.inotify.max_user_instances
   sysctl:
     name: "fs.inotify.max_user_instances"
     value: "8192"
     state: present
+  become: true
 
 - name: Disable systemd swap service
   shell: |
@@ -127,7 +133,7 @@
 
     cp -fv /etc/fstab /etc/fstab.$(date +"%Y%m%d-%H%M%S").bak
     sed -i '/swap/ s/^#*/#/' -i /etc/fstab
-
+  become: true
   args:
     executable: /bin/bash
   when:
@@ -139,12 +145,14 @@
     name: "{{ item }}"
     fstype: swap
     state: absent
+  become: true
   with_items:
   - swap
   - none
 
 - name: Turn off swap now
   command: swapoff -a
+  become: true
   when: ansible_swaptotal_mb > 0
 
 - name: Create sysconfig directory if does not exist
@@ -152,6 +160,7 @@
     path: /etc/sysconfig/modules/
     state: directory
     mode: '0755'
+  become: true
 
 - name: kernel module config
   include_role:
@@ -166,9 +175,11 @@
       state: directory
       owner: root
       group: root
+    become: true
 
   - name: Config docker file
     template: src=daemon.json.j2 dest=/etc/docker/daemon.json
+    become: true
     when:
     - is_uos_kongzi|default(false) | bool == false
 
@@ -182,6 +193,7 @@
         "data-root": "/opt/docker"
       }
       EOF
+    become: true
     args:
       executable: /bin/bash
     when:
@@ -189,12 +201,14 @@
 
   - name: Restart docker service
     service: name=docker state=restarted daemon_reload=yes enabled=yes
+    become: true
   when:
     skip_docker_config is not defined or skip_docker_config|default(false)|bool == false
 
 # k8s packages
 - name: Enable kubelet
   service: name=kubelet enabled=yes
+  become: true
   tags: k8s
 
 - name: Export cloud bin path in /etc/profile
@@ -204,6 +218,7 @@
     state: present
     create: yes
     regexp: '^export PATH=.*/opt/yunion/bin'
+  become: true
   when: shell is undefined or shell == 'bash'
 
 - name: Enable cloud systemd services
@@ -211,6 +226,7 @@
     name: "{{ item }}"
     enabled: yes
     state: started
+  become: true
   loop:
   - yunion-executor
 

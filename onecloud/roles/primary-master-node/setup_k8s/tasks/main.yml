@@ -46,6 +46,7 @@
     done
   args:
     executable: /bin/bash
+  become: yes
   when:
   - docker_insecure_registries is defined
   - docker_insecure_registries | length > 0
@@ -59,6 +60,7 @@
   register: command_result
   changed_when: '"Image is up to date" not in command_result.stdout or "Already exists" not in command_result.stdout'
   retries: 3
+  become: true
   delay: 10
   until: command_result.rc == 0
   when:
@@ -171,12 +173,14 @@
         path: /usr/lib/systemd/system/kubelet.service
         regexp: '^ExecStart=/usr/bin/kubelet$'
         line: 'ExecStart=/usr/bin/kubelet --cgroup-driver=systemd'
+      become: true
 
     - name: reload systemd
       ansible.builtin.systemd:
         name: kubelet
         state: restarted
         daemon_reload: true
+      become: true
     when:
        is_openeuler_based | default(false) | bool == true
 
@@ -187,6 +191,7 @@
 - name: Use ocadm init first master node
   shell: |
     /opt/yunion/bin/ocadm {{ init_args }}
+  become: true
   when: kubelet_result.rc != 0
   args:
     executable: /bin/bash

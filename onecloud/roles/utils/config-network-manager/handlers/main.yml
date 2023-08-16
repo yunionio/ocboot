@@ -3,6 +3,7 @@
   service:
     name: NetworkManager
     state: reloaded
+  become: true
   when: '"running" in nm_check.stdout'
   notify:
     - Remove immutable flag on /etc/resolv.conf
@@ -10,5 +11,6 @@
 - name: Remove immutable flag on /etc/resolv.conf
   shell: |
     chattr -i /etc/resolv.conf
+  become: true
   ignore_errors: yes
 

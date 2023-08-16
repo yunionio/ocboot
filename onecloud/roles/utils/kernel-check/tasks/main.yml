@@ -3,6 +3,8 @@
   set_fact: kernel_regex="\.yn[0-9]{8}\."
 
 - name: test if nbd is supported
+  environment:
+    PATH: $PATH:/usr/sbin:/sbin
   shell: modprobe nbd
   register: nbd_status
   ignore_errors: yes
@@ -23,14 +25,17 @@
 
 - name: Is cloud kernel installed
   shell: |
-    count=$(rpm -qa |grep kernel |grep -E "{{ kernel_regex }}" |wc -l)
-    [[ "$count" -ge 3 ]]
+    if rpm --version &>/dev/null; then
+      count=$(rpm -qa |grep kernel |grep -E "{{ kernel_regex }}" |wc -l || :)
+    elif dpkg --version &>/dev/null; then
+      count=$(dpkg -l |grep kernel |grep -E "{{ kernel_regex }}" |wc -l || :)
+    fi
+    [[ "$count" -ge 1 ]]
+  args:
+    executable: /bin/bash
   register: is_yunion_kernel_installed
   changed_when: false
   failed_when: false
-
-- name: check is_yunion_kernel_installed.rc {{ is_yunion_kernel_installed.rc }}
-  shell: echo is_yunion_kernel_installed.rc {{ is_yunion_kernel_installed.rc }}
 
 - name: install customized kernel
   include: "{{ ansible_distribution | lower }}-{{ ansible_architecture }}.yml"
@@ -43,6 +48,7 @@
   file:
     path: /usr/local/hugetlb-init
     state: directory
+  become: yes
 
 - name: cp hugetlb setup script
   become: yes
@@ -91,6 +97,7 @@
     connect_timeout: 900 # 15 mins
     msg: "rebooting host to enable cloud kernel ... please wait... "
     test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
+  become: yes
   when:
   - is_yunion_kernel_running.rc != 0
   - ansible_connection == "ssh"
@@ -102,6 +109,7 @@
 # warning
 - name: force reboot the primary node if applicable
   shell: reboot
+  become: yes
   when:
   - must_reboot |default(false)|bool == true
   - is_yunion_kernel_running.rc != 0

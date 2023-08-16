@@ -10,11 +10,13 @@
     copy:
       src: etc_sysconfig_kubelet
       dest: /etc/sysconfig/kubelet
+    become: true
 
   - name: "Restart kubelet"
     systemd:
       name: kubelet
       daemon_reload: yes
       state: restarted
+    become: true
   when:
     kubelet_result.rc == 0
