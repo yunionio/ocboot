@@ -4,6 +4,7 @@
     state: "present"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: yes
   with_items:
     - clickhouse-server
     - clickhouse-client
