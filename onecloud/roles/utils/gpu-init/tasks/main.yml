@@ -3,6 +3,7 @@
   file:
     path: "{{ item }}"
     state: directory
+  become: yes
   loop:
     - /usr/local/gpu-init
     - /usr/share/hwdata
@@ -33,6 +34,7 @@
   args:
     executable: /bin/bash
     chdir: /usr/local/gpu-init/
+  become: yes
   ignore_errors: yes
   no_log: True
   failed_when: false

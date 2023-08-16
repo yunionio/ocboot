@@ -16,11 +16,10 @@
 
 - name: cp load-images.sh
   copy:
-    owner: root
-    group: root
     mode: "0755"
     src: load-images.sh
     dest: /tmp/load-images.sh
+  become: yes
   when:
   - offline_node_list | length > 0
   delegate_to: '{{ item }}'
@@ -34,3 +33,4 @@
   - "{{ offline_node_list }}"
   when:
   - offline_node_list | length > 0
+  become: yes

@@ -9,6 +9,7 @@
     enabled=1
     gpgcheck=0
     EOF
+  become: yes
   when:
   - is_uos_kongzi is defined
 
@@ -69,6 +70,7 @@
     args:
       executable: /bin/bash
 
+  become: yes
   when:
     - containerd_status.stdout != "active"
 
@@ -84,6 +86,7 @@
     name: "{{ package_item }}"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: true
   with_items:
   - "{{ common_packages }}"
   loop_control:
@@ -99,6 +102,7 @@
     state: latest
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: true
   with_items:
   - "{{ latest_packages }}"
   retries: 6
@@ -129,6 +133,7 @@
 - name: Turn off selinux
   selinux:
     state: disabled
+  become: true
   when:
     - selinux_status.stdout | default("") != "disabled"
     - selinux_conf_exists.stat.exists

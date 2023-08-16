@@ -4,6 +4,7 @@
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     state: present
+  become: yes
   with_items:
   - yunion-registry
   when:
@@ -13,10 +14,13 @@
   file:
     name: /etc/yunion/
     state: directory
+  become: yes
 
 - name: Config registry
   template: src=registry.yml dest=/etc/yunion/registry.yml
   notify: restart registry
+  become: yes
 
 - name: Start registry service
   service: name=yunion-registry state=started enabled=yes
+  become: yes

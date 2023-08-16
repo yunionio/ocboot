@@ -22,6 +22,7 @@
     state: "present"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: true
   with_items:
     - "{{ packages }}"
   loop_control:
@@ -32,6 +33,7 @@
     name: "{{ pip_item }}"
   when:
   - online_status == "online"
+  become: true
   loop: "{{ pips }}"
   loop_control:
     loop_var: pip_item
@@ -40,6 +42,7 @@
   pip:
     name: PyMySQL
     extra_args: "--no-index --find-links=file://{{ offline_data_path }}/pips"
+  become: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
   when:
@@ -52,11 +55,13 @@
     src: my.cnf
     dest: /etc/my.cnf
     backup: yes
+  become: true
 
 - name: create Mariadb Conf Path For Debian
   file:
     path: /etc/my.cnf.d
     state: directory
+  become: true
   when: ansible_distribution == "Debian"
 
 - name: enable and start mariadb
@@ -64,6 +69,7 @@
     name: mariadb
     enabled: yes
     state: started
+  become: true
 
 - name: Change root password
   mysql_user:
@@ -76,6 +82,7 @@
     priv: '*.*:ALL,GRANT'
     host: "{{ item }}"
     check_implicit_admin: true
+  become: true
   loop:
     - "localhost"
     - "%"

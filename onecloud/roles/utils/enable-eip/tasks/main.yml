@@ -10,5 +10,6 @@
     kubectl rollout restart ds -n onecloud default-host
   args:
     executable: /bin/bash
+  become: yes
   when:
   - enable_eip_man|default(false)|bool == true
