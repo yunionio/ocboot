@@ -29,6 +29,7 @@
     register: clickhouse_result
     delay: 30
     ignore_errors: true
+    become: yes
     until: clickhouse_result.rc == 0
 
   - name: clean tmp files

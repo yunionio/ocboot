@@ -7,6 +7,7 @@
     job: "/usr/bin/kubeadm alpha certs renew all"
     cron_file: yunion_kubeadm_renew_certs
     state: absent
+  become: true
 
 - name: Ensure a cronjob that renews k8s certificates
   cron:
@@ -15,3 +16,4 @@
     user: root
     job: "/opt/yunion/bin/ocadm alpha certs renew all"
     cron_file: yunion_ocadm_renew_certs
+  become: true
