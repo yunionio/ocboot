@@ -5,6 +5,7 @@
     regexp: '^bind-address'
     line: 'bind-address            = 0.0.0.0'
     state: present
+  become: yes
 
 # restart the mariadb service asap to allow remote access
 - name: Restart Mariadb
@@ -12,3 +13,4 @@
     name: mariadb
     state: restarted
     enabled: yes
+  become: yes

@@ -3,15 +3,18 @@
     src:  yunion-ipvs-modules.service
     dest: /etc/systemd/system/yunion-ipvs-modules.service
     mode: 644
+  become: true
 
 - name: prepare load module scripts
   copy:
     src:  yunion-ipvs-modules.sh
     dest: /usr/bin/yunion-ipvs-modules.sh
     mode: 755
+  become: true
 
 - name: execute load module scripts
   shell: /usr/bin/yunion-ipvs-modules.sh
+  become: true
   ignore_errors: yes
 
 - name: enable load modules service
@@ -19,5 +22,6 @@
     name: yunion-ipvs-modules
     enabled: true
     daemon_reload: true
+  become: true
   ignore_errors: yes
 
