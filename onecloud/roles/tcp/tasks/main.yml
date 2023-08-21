@@ -9,24 +9,31 @@
     value: "7"
     reload: yes
     state: present
+  become: true
+
 - name: keepalive time
   sysctl:
     name: net.ipv4.tcp_keepalive_time
     value: "13"
     reload: yes
     state: present
+  become: true
+
 - name: keepalive intvl
   sysctl:
     name: net.ipv4.tcp_keepalive_intvl
     value: "7"
     reload: yes
     state: present
+  become: true
+
 - name: keepalive probes
   sysctl:
     name: net.ipv4.tcp_keepalive_probes
     value: "3"
     reload: yes
     state: present
+  become: true
 
 - name: net ipv4 neigh default gc_thresh 1
   sysctl:
@@ -34,6 +41,7 @@
     value: "1024"
     reload: yes
     state: present
+  become: true
 
 - name: net ipv4 neigh default gc_thresh 2
   sysctl:
@@ -41,6 +49,7 @@
     value: "4096"
     reload: yes
     state: present
+  become: true
 
 - name: net ipv4 neigh default gc_thresh 3
   sysctl:
@@ -48,3 +57,4 @@
     value: "8192"
     reload: yes
     state: present
+  become: true

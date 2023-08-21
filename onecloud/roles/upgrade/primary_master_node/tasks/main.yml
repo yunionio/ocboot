@@ -49,6 +49,7 @@
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
     kubectl patch deployment -n onecloud onecloud-operator --patch "$(cat /tmp/turn-on-operator-clear-component.patch.yml)" && rm -f /tmp/turn-on-operator-clear-component.patch.yml
+  become: yes
   args:
     executable: /bin/bash
 
@@ -77,6 +78,7 @@
     register: hyper_image_patch_result
     delay: 30
     ignore_errors: true
+    become: yes
     until: hyper_image_patch_result.rc == 0
 
   when:
@@ -91,6 +93,7 @@
         --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} \
         --wait
   # 30 minutes timeout
+  become: yes
   async: 1800
   poll: 0
   register: ocadm_update_register
@@ -117,5 +120,6 @@
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
     kubectl patch deployment -n onecloud onecloud-operator --patch "$(cat /tmp/turn-off-operator-clear-component.patch.yml)" && rm -f /tmp/turn-off-operator-clear-component.patch.yml
+  become: yes
   args:
     executable: /bin/bash

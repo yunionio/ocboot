@@ -47,6 +47,7 @@
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: 'kubectl get crd | grep onecloudcluster'
+  become: yes
   retries: 30
   delay: 10
   register: result
@@ -112,6 +113,7 @@
   register: result
   until: result.rc == 0
   ignore_errors: yes
+  become: yes
   when:
   - OC_CLUSTER_COUNT.stdout|int == 0
 
@@ -121,6 +123,7 @@
   shell: |
     kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/minio/enable", "value": true}]'
     kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/glance/switchToS3", "value": true}]'
+  become: yes
   when:
   - enable_minio is defined
   - enable_minio|default(false)|bool == true
@@ -130,15 +133,18 @@
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
     kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/productVersion", "value": "{{ product_version }}"}]'
+  become: yes
   when:
   - product_version is defined
 
 - name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin"
   shell: |
     /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin
+  become: yes
   retries: 6
   delay: 10
   ignore_errors: yes
+  register: onecloud_rcadmin
 
 - name: "Source ~/.onecloud_rcadmin in ~/.bashrc"
   lineinfile:
@@ -147,6 +153,7 @@
     state: present
     create: yes
     regexp: '^source ~/.onecloud_rcadmin'
+  become: yes
   ignore_errors: yes
   when:
   - shell is undefined or shell == 'bash'
@@ -156,17 +163,20 @@
     eval $(/opt/yunion/bin/ocadm cluster rcadmin)
     /opt/yunion/bin/climc user-list | grep -w {{ onecloud_user }} | wc -l
   register: OC_USER_COUNT
+  become: yes
   ignore_errors: yes
   retries: 3
   delay: 10
 
 - name: "Create onecloud web login user {{ onecloud_user }}"
   shell: |
-   eval $(/opt/yunion/bin/ocadm cluster rcadmin)
-   /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
+    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
   ignore_errors: yes
+  become: yes
   retries: 3
   delay: 10
+  register: create_user_ret
   args:
     executable: /bin/bash
   when:
@@ -175,9 +185,11 @@
 
 - name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
   shell: |
-    source ~/.onecloud_rcadmin
+    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
   retries: 3
+  register: update_user_ret
+  become: yes
   delay: 10
   args:
     executable: /bin/bash
@@ -188,6 +200,7 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc project-add-user system {{ onecloud_user }} admin
+  become: yes
   args:
     executable: /bin/bash
   when:
@@ -197,6 +210,7 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc network-show adm0 > /dev/null 2>&1
+  become: yes
   register: network_admin_exist
   ignore_errors: yes
   changed_when: false
@@ -206,13 +220,15 @@
 
 - name: "Check if network contains {{ default_ip }}"
   shell: |
+    set -ex ;export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
     source ~/.onecloud_rcadmin
+    env |grep OS_AUTH
     /opt/yunion/bin/climc network-list --ip {{ default_ip }} | grep -v Total | wc -l
+  become: yes
   register: network_count_ret
   ignore_errors: yes
   args:
     executable: /bin/bash
-
 
 - name: set admin network count
   set_fact:
@@ -224,6 +240,7 @@
     /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} || :
     /opt/yunion/bin/climc network-private adm0 || :
   when: network_admin_exist.rc != 0 and admin_network_count|int == 0
+  become: yes
   ignore_errors: yes
   args:
     executable: /bin/bash
@@ -243,5 +260,6 @@
       sh -c "$line" 2>&1 | tee -a /tmp/post-install.log
       echo "[DONE ]processing $line OK"
     done
+  become: yes
   args:
     executable: /bin/bash

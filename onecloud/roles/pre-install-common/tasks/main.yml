@@ -60,4 +60,7 @@
         systemctl disable --now $service
       fi
     done
+  become: true
+  args:
+    executable: /bin/bash
 

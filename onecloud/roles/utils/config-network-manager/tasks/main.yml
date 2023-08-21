@@ -3,6 +3,7 @@
   command: systemctl show NetworkManager
   register: nm_check
   failed_when: false
+  become: true
   changed_when: false
 
 - name: Ensure NetworkManager conf.id dir for Calico
@@ -10,6 +11,7 @@
     path: "/etc/NetworkManager/conf.d"
     state: directory
     recurse: yes
+  become: true
   when: nm_check.rc == 0
 
 - name: Prevent NetworkManager from managing Calico interfaces
@@ -18,13 +20,15 @@
       [keyfile]
       unmanaged-devices=interface-name:cali*;interface-name:tunl*
     dest: /etc/NetworkManager/conf.d/calico.conf
-  when: 
+  become: true
+  when:
   - nm_check.rc == 0
 
 - name: reload NetworkManager
   shell: |
     chattr +i /etc/resolv.conf || :
     echo "nm_service is defined? {{ nm_service is defined }}\nnm_service.state {{ nm_service.state | default('stopped') == 'started' }}"
+  become: true
   when:
   - nm_service is defined
   - nm_service.state | default('stopped') == 'started'
