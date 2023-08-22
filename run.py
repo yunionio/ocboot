@@ -229,7 +229,7 @@ primary_master_node:
   # enable_eip_man for all-in-one mode only
   enable_eip_man: true
   # chose product_version in ['FullStack', 'CMP', 'Edge']
-  product_version: 'FullStack'
+  product_version: 'product_stack'
   image_repository: registry.cn-beijing.aliyuncs.com/yunion
 """
 
@@ -251,7 +251,7 @@ def dynamic_load():
             print("\t%s" % p)
 
 
-def gen_config(ipaddr):
+def gen_config(ipaddr, product_stack):
     global conf
     import os.path
     import os
@@ -293,7 +293,8 @@ def gen_config(ipaddr):
                 .replace('your-sql-password', mypass_mariadb)
                 .replace('your-clickhouse-password', mypass_clickhouse)
                 .replace('ocboot_user', get_username())
-                .replace('v3.4.12', ver))
+                .replace('v3.4.12', ver)
+                .replace('product_stack', product_stack))
     return temp
 
 
@@ -303,9 +304,16 @@ def get_args():
     """show argpase snippets"""
     global parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('IP_CONF', nargs=1, type=str, help="Input the target IPv4 or Config file")
-    parser.add_argument('--offline-data-path', nargs='?', help="offline packages location")
+    parser.add_argument('IP_CONF', nargs=1, type=str,
+                        help="Input the target IPv4 or Config file")
+    parser.add_argument('--offline-data-path', nargs='?',
+                        help="offline packages location")
+    parser.add_argument('--stack', type=str, default='fullstack',
+                        help="choose product version",
+                        choices=['fullstack', 'cmp', 'edge'])
     return parser.parse_args()
+  # chose product_version in ['FullStack', 'CMP', 'Edge']
+#  product_version: 'FullStack'
 
 
 def main():
@@ -313,6 +321,15 @@ def main():
     args = get_args()
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     ip_conf = str(args.IP_CONF[0])
+
+    product_stack = ''
+    got_stack = args.stack.lower()
+    if got_stack in ['fullstack', '', None]:
+        product_stack = 'FullStack'
+    elif got_stack == 'cmp':
+        product_stack = 'CMP'
+    elif got_stack == 'edge':
+        product_stack = 'Edge'
 
     # 1. try to get offline data path from optional args
     # 2. if not exist, try to get from os env
@@ -331,7 +348,7 @@ def main():
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf)
-        conf = gen_config(ip_conf)
+        conf = gen_config(ip_conf, product_stack)
     elif path.isfile(ip_conf):
         check_env()
         conf = ip_conf
