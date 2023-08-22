@@ -37,6 +37,18 @@ def version_ge(v1, v2):
     return versiontuple(v1) >= versiontuple(v2)
 
 
+def init_local_user_path():
+    path = os.environ['PATH']
+    user_bin = os.path.expanduser('~/.local/bin')
+    if user_bin not in path.split(os.pathsep):
+        path = f'{path}:{user_bin}'
+        os.environ['PATH'] = path
+
+def get_username():
+    import getpass
+    # python2 / python3 are all tested to get username
+    return getpass.getuser()
+
 def check_pip3():
     ret = os.system("pip3 --version >/dev/null 2>&1")
     if ret == 0:
@@ -69,14 +81,24 @@ def check_ansible():
 
 
 def install_packages(pkgs):
-    if os.system('grep -Pq "Kylin Linux Advanced Server|CentOS Linux|openEuler" /etc/os-release') == 0:
-        return os.system("yum install -y $(yum search pyyaml |grep -iP '^python3\d?-pyyaml\.'| awk '{print $1}') %s" % (" ".join(pkgs)))
-    elif os.system('grep -Pq "Debian GNU/Linux|Ubuntu" /etc/os-release') == 0:
-        return os.system("apt install -y %s" % (" ".join(pkgs)))
-    else:
-        print("Unsupported OS")
-        return 255
+    ignore_check = os.getenv("IGNORE_ALL_CHECKS")
+    if ignore_check == "true":
+        return
 
+    packager = None
+
+    for p in ['/usr/bin/dnf', '/usr/bin/yum', '/usr/bin/apt']:
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            packager = p
+            break
+
+    if packager is None:
+        print('Current os-release:')
+        with open('/etc/os-release', 'r') as f:
+            print(f.read())
+        raise Exception("Install ansible failed for os-release is not supported.")
+    cmdline = 'sudo %s install -y %s' % (packager, ' '.join(pkgs))
+    return os.system(cmdline)
 
 def install_ansible():
     if os.system('grep -wq "Ubuntu" /etc/os-release') == 0:
@@ -87,24 +109,25 @@ def install_ansible():
 
     if os.system('rpm -qa |grep -q python3-pip') != 0:
         ret = os.system(
-            'python3 -m pip install --upgrade pip setuptools wheel')
+            'python3 -m pip install --user --upgrade pip setuptools wheel')
         if ret != 0:
             raise Exception("Install/updrade pip3 failed. ")
-    os.system('python3 -m pip install --upgrade pip')
-    ret = os.system('python3 -m pip install --upgrade ansible')
+    os.system('python3 -m pip install --user --upgrade pip')
+    ret = os.system('python3 -m pip install --user --upgrade ansible')
     if ret != 0:
         raise Exception("Install ansible failed. ")
 
 
 def check_passless_ssh(ipaddr):
-    cmd = "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (
-        ipaddr)
+    username = get_username()
+    cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} hostname"
+    print('cmd:', cmd)
     ret = os.system(cmd)
     if ret == 0:
         return
     else:
         raise Exception(
-            "Passwordless ssh failed, please configure passwordless ssh to root@%s" % (ipaddr))
+            "Passwordless ssh failed, please configure passwordless ssh to %s@%s" % (username, ipaddr))
     try:
         install_passless_ssh(ipaddr)
     except Exception as e:
@@ -113,6 +136,7 @@ def check_passless_ssh(ipaddr):
 
 
 def install_passless_ssh(ipaddr):
+    username = get_username()
     rsa_path = os.path.join(os.environ.get("HOME"), ".ssh/id_rsa")
     if not os.path.exists(rsa_path):
         ret = os.system("ssh-keygen -f %s -P '' -N ''" % (rsa_path))
@@ -120,20 +144,24 @@ def install_passless_ssh(ipaddr):
             raise Exception("ssh-keygen")
     print("We are going to run the following command to enable passwordless SSH login:")
     print("")
-    print("    ssh-copy-id -i ~/.ssh/id_rsa.pub root@%s" % (ipaddr))
+    print("    ssh-copy-id -i ~/.ssh/id_rsa.pub %s@%s" % (username, ipaddr))
     print("")
-    print("Press any key to continue and then input root password to %s" % (ipaddr))
+    print("Press any key to continue and then input %s's password to %s" % (username, ipaddr))
     os.system("read")
-    ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub root@%s" % (ipaddr))
+    ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub %s@%s" % (username, ipaddr))
     if ret != 0:
         raise Exception("ssh-copy-id")
     ret = os.system(
-        "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr))
+        "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' %s@%s hostname" % (username, ipaddr))
     if ret != 0:
         raise Exception("check passwordless ssh login failed")
 
 
 def check_env(ipaddr=None):
+
+    ignore_check = os.getenv("IGNORE_ALL_CHECKS")
+    if ignore_check == "true":
+        return
     check_pip3()
     check_ansible()
     if ipaddr:
@@ -190,7 +218,7 @@ mariadb_node:
 # primary_master_node indicates the machine running Kubernetes and OneCloud Platform
 primary_master_node:
   hostname: 10.127.10.158
-  user: root
+  user: ocboot_user
   # Database connection address
   db_host: 10.127.10.158
   # Database connection username
@@ -209,6 +237,7 @@ primary_master_node:
   onecloud_user_password: admin@123
   # This machine serves as a OneCloud private cloud computing node
   as_host: true
+  # as_host_on_vm: true
   # enable_eip_man for all-in-one mode only
   enable_eip_man: true
   # chose product_version in ['FullStack', 'CMP', 'Edge']
@@ -218,10 +247,16 @@ primary_master_node:
 
 
 def dynamic_load():
+    username = get_username()
+
     import glob
     paths = glob.glob('/usr/local/lib64/python3.?/site-packages/') + \
-        glob.glob('/usr/local/lib64/python3.??/site-packages/')
+        glob.glob('/usr/local/lib64/python3.??/site-packages/') + \
+        glob.glob(f'/home/{username}/.local/lib/python3.?/site-packages') + \
+        glob.glob(f'/home/{username}/.local/lib/python3.??/site-packages')
+
     print("loading path:")
+
     for p in paths:
         if os.path.isdir(p) and p not in sys.path:
             sys.path.append(p)
@@ -271,6 +306,7 @@ def gen_config(ipaddr):
         f.write(conf.replace('10.127.10.158', ipaddr)
                 .replace('your-sql-password', mypass_mariadb)
                 .replace('your-clickhouse-password', mypass_clickhouse)
+                .replace('ocboot_user', get_username())
                 .replace('v3.4.12', ver))
     return temp
 
@@ -290,6 +326,7 @@ def get_args():
 
 
 def main():
+    init_local_user_path()
     args = get_args()
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     ip_conf = str(args.IP_CONF[0])
@@ -324,7 +361,6 @@ def main():
         parser.print_help()
         exit()
     return install.start(conf)
-
 
 if __name__ == "__main__":
     sys.exit(main())

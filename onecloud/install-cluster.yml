@@ -7,6 +7,8 @@
 - hosts: mariadb_node
   roles:
     - mariadb
+  tags:
+    - db
 
 - hosts: mariadb_ha_nodes
   roles:
@@ -15,6 +17,9 @@
 - hosts: clickhouse_node
   roles:
     - clickhouse/install
+  tags:
+    - db
+    - clickhouse
 
 - hosts: registry_node
   roles:
@@ -24,36 +29,58 @@
   roles:
     - primary-master-node/setup_k8s
     - restore/add-sync-user
+  tags:
+    - k8s
 
 - hosts: master_nodes
   roles:
     - master-node
+  tags:
+    - k8s
+
 
 - hosts: worker_nodes
   roles:
     - worker-node
+  tags:
+    - k8s
+
 
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:
     - utils/gpu-init
+  tags:
+    - gpu
+
 
 - hosts: master_nodes:worker_nodes
   roles:
     - utils/kernel-check
+  tags:
+    - kernel
 
 - hosts: primary_master_node
   roles:
     - primary-master-node/setup_cloud
     - utils/enable-eip
+  tags:
+    - cloud
 
 - hosts: clickhouse_node
   roles:
     - clickhouse/deploy
+  tags:
+    - db
+    - clickhouse
 
 - hosts: worker_nodes
   roles:
     - utils/eip-ha
+  tags:
+    - eip
 
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:
     - primary-master-node/reboot
+  tags:
+    - reboot

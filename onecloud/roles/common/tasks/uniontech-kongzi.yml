@@ -9,6 +9,7 @@
     enabled=1
     gpgcheck=0
     EOF
+  become: yes
   when:
   - is_uos_kongzi is defined
 
@@ -31,7 +32,7 @@
       mkdir -p /usr/local/containerd
       tar xzvf /tmp/containerd-1.7.2-linux.tar.gz -C /usr/local/containerd
       for i in /usr/local/containerd/bin/*
-      do 
+      do
         ln -sf $i /usr/bin/
       done
       cat > /usr/lib/systemd/system/containerd.service <<-EOF
@@ -69,6 +70,7 @@
     args:
       executable: /bin/bash
 
+  become: yes
   when:
     - containerd_status.stdout != "active"
 
@@ -84,12 +86,15 @@
     name: "{{ package_item }}"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: true
   with_items:
   - "{{ common_packages }}"
   loop_control:
     index_var: item_index
     label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
     loop_var: package_item
+  tags:
+  - package
 
 - name: install latest packages via loop
   package:
@@ -97,6 +102,7 @@
     state: latest
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: true
   with_items:
   - "{{ latest_packages }}"
   retries: 6
@@ -110,6 +116,8 @@
     index_var: item_index
     label: "[{{ item_index + 1 }}/{{ latest_packages | length }}] {{ package_item }}"
     loop_var: package_item
+  tags:
+  - package
 
 - name: Selinux Status
   shell: |
@@ -125,6 +133,7 @@
 - name: Turn off selinux
   selinux:
     state: disabled
+  become: true
   when:
     - selinux_status.stdout | default("") != "disabled"
     - selinux_conf_exists.stat.exists

@@ -22,6 +22,7 @@
     state: "present"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: true
   with_items:
     - "{{ packages }}"
   loop_control:
@@ -32,6 +33,7 @@
     name: "{{ pip_item }}"
   when:
   - online_status == "online"
+  become: true
   loop: "{{ pips }}"
   loop_control:
     loop_var: pip_item
@@ -40,6 +42,7 @@
   pip:
     name: PyMySQL
     extra_args: "--no-index --find-links=file://{{ offline_data_path }}/pips"
+  become: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
   when:
@@ -52,6 +55,14 @@
     src: my.cnf
     dest: /etc/my.cnf
     backup: yes
+  become: true
+
+- name: create Mariadb Conf Path For Debian
+  file:
+    path: /etc/my.cnf.d
+    state: directory
+  become: true
+  when: ansible_distribution == "Debian"
 
 - name: Allow remote hosts to connect (Ubuntu)
   lineinfile:
@@ -70,7 +81,8 @@
   systemd:
     name: mariadb
     enabled: yes
-    state: restarted
+    state: started
+  become: true
 
 - name: Change root password
   mysql_user:
@@ -83,11 +95,25 @@
     priv: "*.*:ALL,GRANT"
     host: "{{ item }}"
     check_implicit_admin: true
+  become: true
   loop:
     - "{{ db_host }}"
     - "%"
     - "::1"
     - "127.0.0.1"
-    - "localhost"
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
+
+- name: gather os specific Tasks for post installation
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}.yml"
+        - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_os_family|lower }}.yml"
+        - defaults.yml
+      skip: true
