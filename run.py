@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 from __future__ import unicode_literals
 from __future__ import absolute_import
@@ -11,6 +11,7 @@ import re
 import argparse
 from lib import install
 from lib import cmd
+from lib.utils import init_local_user_path
 
 
 def show_usage():
@@ -32,13 +33,6 @@ def versiontuple(v):
 def version_ge(v1, v2):
     return versiontuple(v1) >= versiontuple(v2)
 
-
-def init_local_user_path():
-    path = os.environ['PATH']
-    user_bin = os.path.expanduser('~/.local/bin')
-    if user_bin not in path.split(os.pathsep):
-        path = f'{path}:{user_bin}'
-        os.environ['PATH'] = path
 
 def get_username():
     import getpass
