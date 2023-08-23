@@ -72,3 +72,14 @@ def print_title(title):
     print('=' * 80)
     print(title)
     print('=' * 80)
+
+
+def init_local_user_path():
+    import os
+    path = os.environ['PATH']
+    user_bin = os.path.expanduser('~/.local/bin')
+    if user_bin not in path.split(os.pathsep):
+        path = f'{path}:{user_bin}'
+        os.environ['PATH'] = path
+
+

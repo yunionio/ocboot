@@ -9,8 +9,8 @@ from .cmd import run_ansible_playbook
 from .utils import get_major_version
 from .cluster import construct_cluster
 from . import consts
+from getpass import getuser
 from lib import utils
-
 
 UPGRADE_MSG = """
 ┌───────────────────────────────────────────────────────────────────────────────┐
@@ -39,10 +39,9 @@ def add_command(subparsers):
 
     # optional options
     help_d = lambda help: help + " (default: %(default)s)"
-
     parser.add_argument("--user", "-u",
                         dest="ssh_user",
-                        default="root",
+                        default=getuser(),
                         help=help_d("primary master host ssh user"))
 
     parser.add_argument("--key-file", "-k",
