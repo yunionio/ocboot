@@ -113,7 +113,9 @@
     set_fact:
       join_args: "{{ join_args }} --enable-hugepage "
     when:
-      enable_hugepage is defined
+    - enable_hugepage is defined
+    - onecloud_version is defined
+    - onecloud_version is version('v3.10', '>=')
 
   - name: join node as onecloud controller
     set_fact:

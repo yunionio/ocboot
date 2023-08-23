@@ -1,18 +1,29 @@
+- set_fact: default_interface=false
+
 - name: Get default gateway
   shell: "ip route get 1 | head -n 1 | awk '{print $3}'"
   register: default_gateway_ret
 
-- name: Set default gateway var
-  set_fact:
-    default_gateway: "{{ default_gateway_ret.stdout }}"
-
-- name: "Get default gateway {{ default_gateway }} local ip address"
+- name: Get default ip by node ip by command
   shell: "ip route get 1 | head -n 1 | awk '{print $7}'"
   register: default_ip_ret
 
-- name: Set default ip var
+- name: Parse default ip by node
   set_fact:
-    default_ip: "{{ default_ip_ret.stdout }}"
+    default_ip:  "{{ default_ip_ret.stdout }}"
+
+- name: Default interface
+  set_fact:
+    default_interface: true
+  when:
+  - node_ip is defined
+  - node_ip == default_ip
+  - node_ip is ansible.utils.ipv4
+
+- name: Set default Gateway
+  set_fact:
+    default_gateway: "{{ default_gateway_ret.stdout if default_interface else ''}}"
+    default_ip: "{{ default_ip if default_interface else node_ip }}"
 
 - name: "Get default ip address {{ default_ip }} masklen"
   shell: |
@@ -220,7 +231,6 @@
 
 - name: "Check if network contains {{ default_ip }}"
   shell: |
-    set -ex ;export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
     source ~/.onecloud_rcadmin
     env |grep OS_AUTH
     /opt/yunion/bin/climc network-list --ip {{ default_ip }} | grep -v Total | wc -l
@@ -234,10 +244,22 @@
   set_fact:
     admin_network_count: "{{ network_count_ret.stdout }}"
 
+- name: Set adm0 command
+  set_fact:
+    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} "
+
+- name: Update adm0 command
+  set_fact:
+    adm0_cmd: "{{ adm0_cmd }} --gateway {{ default_gateway }} "
+  when:
+  - default_gateway | length > 0
+
+- debug: var=adm0_cmd
+
 - name: "Register adm0 network for {{ default_ip }}/{{ default_masklen }}, gateway {{ default_gateway }}"
   shell: |
     source ~/.onecloud_rcadmin
-    /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} || :
+    {{ adm0_cmd }}
     /opt/yunion/bin/climc network-private adm0 || :
   when: network_admin_exist.rc != 0 and admin_network_count|int == 0
   become: yes
