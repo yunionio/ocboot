@@ -26,6 +26,7 @@
     mkdir -p $bk_dir
     kubectl get deployment -n onecloud onecloud-operator -o yaml | sed -f /tmp/clean_k8s_obj.sed > $bk_dir/operator.yml
     kubectl get oc -n onecloud default -o yaml | sed -f /tmp/clean_k8s_obj.sed > $bk_dir/oc.yml
+  become: yes
 
 - name: update operator only
   shell: |
@@ -36,6 +37,7 @@
         --operator-only \
         --wait
   # 30 minutes timeout
+  become: yes
   async: 1800
   poll: 0
 
@@ -114,6 +116,7 @@
     To watch upgrade process,
     SSH login host "{{ ansible_hostname }}" execute:
       kubectl get pods -n onecloud -w
+  become: yes
   async_status:
     jid: "{{ ocadm_update_register.ansible_job_id }}"
   register: ocadm_update_result
