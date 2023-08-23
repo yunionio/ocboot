@@ -3,6 +3,7 @@ import subprocess
 import os
 
 from lib import utils
+from lib.utils import init_local_user_path
 
 def init_ansible_playbook_path():
     if '/usr/local/bin' not in os.environ.get('PATH', '').split(':'):
@@ -42,6 +43,9 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
     debug level support example:
     ANSIBLE_VERBOSITY=4 /opt/yunionboot/run.py /opt/yunion/upgrade/config.yml
     """
+
+    init_local_user_path()
+
     debug_flag = ''
     if debug_level == 0:
         debug_level = int(os.environ.get('ANSIBLE_VERBOSITY', 0))
