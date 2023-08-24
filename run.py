@@ -367,7 +367,7 @@ def main():
         check_env()
         conf = ip_conf
     else:
-        prRed(f'Config file <{ip_conf}> dose NOT exist!')
+        prRed(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()
     return install.start(conf)
 
