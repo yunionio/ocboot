@@ -83,3 +83,5 @@ def init_local_user_path():
         os.environ['PATH'] = path
 
 
+def prRed(skk):
+    print("\033[31m{}\033[00m" .format(skk))

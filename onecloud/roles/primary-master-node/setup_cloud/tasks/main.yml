@@ -148,16 +148,29 @@
   when:
   - product_version is defined
 
-- name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin"
+- name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin for root"
   shell: |
     /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin
+    /opt/yunion/bin/ocadm cluster rcadmin > /tmp/.onecloud_rcadmin
   become: yes
   retries: 6
   delay: 10
   ignore_errors: yes
   register: onecloud_rcadmin
 
-- name: "Source ~/.onecloud_rcadmin in ~/.bashrc"
+- name: Print message if ansible version is greater than 2.7.0
+  shell: |
+    if [ "$EUID" -eq 0 ]; then
+      rm -f /tmp/.onecloud_rcadmin
+    else
+      conf=~/.onecloud_rcadmin
+      sudo mv /tmp/.onecloud_rcadmin $conf
+      sudo chown {{ansible_user_id}}:{{ansible_user_id}} $conf
+    fi
+  args:
+    executable: /bin/bash
+
+- name: "Source ~/.onecloud_rcadmin in ~/.bashrc for root"
   lineinfile:
     dest: ~/.bashrc
     line: "source ~/.onecloud_rcadmin"
@@ -168,6 +181,18 @@
   ignore_errors: yes
   when:
   - shell is undefined or shell == 'bash'
+
+- name: "Source ~/.onecloud_rcadmin in ~/.bashrc for current user"
+  lineinfile:
+    dest: ~/.bashrc
+    line: "source ~/.onecloud_rcadmin"
+    state: present
+    create: yes
+    regexp: '^source ~/.onecloud_rcadmin'
+  ignore_errors: yes
+  when:
+  - shell is undefined or shell == 'bash'
+  - ansible_user_id != 'root'
 
 - name: "Check onecloud user {{ onecloud_user }} exists"
   shell: |
