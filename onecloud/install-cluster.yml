@@ -34,20 +34,17 @@
   tags:
     - k8s
 
-
 - hosts: worker_nodes
   roles:
     - worker-node
   tags:
     - k8s
 
-
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:
     - utils/gpu-init
   tags:
     - gpu
-
 
 - hosts: master_nodes:worker_nodes
   roles:

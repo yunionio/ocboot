@@ -12,6 +12,7 @@ import argparse
 from lib import install
 from lib import cmd
 from lib.utils import init_local_user_path
+from lib.utils import prRed
 
 
 def show_usage():
@@ -38,6 +39,7 @@ def get_username():
     import getpass
     # python2 / python3 are all tested to get username
     return getpass.getuser()
+
 
 def check_pip3():
     ret = os.system("pip3 --version >/dev/null 2>&1")
@@ -184,7 +186,7 @@ conf = """
 #   # IP of the machine to be deployed
 #   hostname: 10.127.10.158
 #   # SSH Login username of the machine to be deployed
-#   user: root
+#   user: ocboot_user
 #   # Password of clickhouse
 #   ch_password: your-clickhouse-password
 # mariadb_node indicates the node where the mariadb service needs to be deployed
@@ -192,7 +194,7 @@ mariadb_node:
   # IP of the machine to be deployed
   hostname: 10.127.10.158
   # SSH Login username of the machine to be deployed
-  user: root
+  user: ocboot_user
   # Username of mariadb
   db_user: root
   # Password of mariadb
@@ -342,13 +344,17 @@ def main():
         check_env(ip_conf)
         conf = gen_config(ip_conf, product_stack)
     elif path.isfile(ip_conf):
+        sz = path.getsize(ip_conf)
+        if sz == 0:
+            prRed(f'Config file <{ip_conf}> is Empty!')
+            exit()
         check_env()
         conf = ip_conf
     else:
-        print("Wrong args!")
-        parser.print_help()
+        prRed(f'Config file <{ip_conf}> dose NOT exist!')
         exit()
     return install.start(conf)
+
 
 if __name__ == "__main__":
     sys.exit(main())
