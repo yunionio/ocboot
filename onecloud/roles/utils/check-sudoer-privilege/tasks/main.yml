@@ -5,6 +5,7 @@
       sudo_nopasswd_bin_lists:
         - /home/{{ansible_user_id}}/.local/bin/ansible
         - /home/{{ansible_user_id}}/.local/bin/ansible-playbook
+        - /opt/yunion/bin/ocadm
         - /usr/bin/chown
         - /usr/bin/cp
         - /usr/bin/docker
