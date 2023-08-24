@@ -1,4 +1,8 @@
 ---
+- name: check user privilege
+  include_role:
+    name: utils/check-sudoer-privilege
+
 - name: ansible version
   set_fact:
     supported_ansible_version: "2.9.27"
