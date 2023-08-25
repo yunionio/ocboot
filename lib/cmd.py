@@ -4,6 +4,8 @@ import os
 
 from lib import utils
 from lib.utils import init_local_user_path
+from lib.utils import tryBackupFile
+
 
 def init_ansible_playbook_path():
     if '/usr/local/bin' not in os.environ.get('PATH', '').split(':'):
@@ -57,6 +59,7 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
 
     if vars:
         vars_f = "/tmp/oc_vars.yml"
+        tryBackupFile(vars_f)
         with open(vars_f, 'w') as f:
             f.write(utils.to_yaml(vars))
         cmd.extend(["-e", "@%s" % vars_f])
