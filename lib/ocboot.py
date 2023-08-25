@@ -6,12 +6,13 @@ import os
 from . import ansible
 from . import utils
 from . import consts
+from lib.utils import tryBackupFile
 
 
 GROUP_MARIADB_NODE = "mariadb_node"
 GROUP_MARIADB_HA_NODES = "mariadb_ha_nodes"
 GROUP_CLICKHOUSE_NODE = "clickhouse_node"
-GROUP_REGISTRY_NODE="registry_node"
+GROUP_REGISTRY_NODE = "registry_node"
 GROUP_PRIMARY_MASTER_NODE = "primary_master_node"
 GROUP_MASTER_NODES = "master_nodes"
 GROUP_WORKER_NODES = "worker_nodes"
@@ -122,6 +123,7 @@ class OcbootConfig(object):
         content = self.get_ansible_inventory()
         yaml_content = utils.to_yaml(content)
         filepath = '/tmp/host_inventory.yml'
+        tryBackupFile(filepath)
         with open(filepath, 'w') as f:
             f.write(yaml_content)
         return filepath
@@ -560,4 +562,3 @@ class NodeConfig(object):
 
     def ansible_vars(self):
         return {}
-
