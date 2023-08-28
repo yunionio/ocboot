@@ -96,6 +96,16 @@
     when:
       host_networks is defined
 
+  - name: Wait for port {{ k8s_controlplane_host }}:{{ k8s_controlplane_port | default(6443)}} to be ready
+    wait_for:
+      host: "{{ k8s_controlplane_host }}"
+      port: "{{ k8s_controlplane_port | default(6443)}}"
+      delay: 5
+      timeout: 60
+    become: yes
+    retries: 3
+    run_once: yes
+
   - name: "Use 'ocadm {{ join_args }}'"
     command: "/opt/yunion/bin/ocadm {{ join_args }}"
     environment:
