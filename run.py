@@ -13,6 +13,7 @@ from lib import install
 from lib import cmd
 from lib.utils import init_local_user_path
 from lib.utils import prRed
+from lib.utils import tryBackupFile
 
 
 def show_usage():
@@ -104,7 +105,7 @@ def install_ansible():
 
 def check_passless_ssh(ipaddr):
     username = get_username()
-    cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} hostname"
+    cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} uptime"
     print('cmd:', cmd)
     ret = os.system(cmd)
     if ret == 0:
@@ -261,6 +262,7 @@ def gen_config(ipaddr, product_stack):
     if not config_dir:
         config_dir = cur_path
     temp = os.path.join(config_dir, "config-allinone-current.yml")
+    tryBackupFile(temp)
     verf = os.path.join(cur_path, "VERSION")
     with open(verf, 'r') as f:
         ver = f.read().strip()
@@ -292,6 +294,27 @@ def gen_config(ipaddr, product_stack):
                 .replace('v3.4.12', ver)
                 .replace('product_stack', product_stack))
     return temp
+
+
+def update_config(conf_file, product_version):
+    if not os.path.exists(conf_file):
+        raise f"Conf file {conf_file} dose not exist!"
+        return
+
+    if product_version not in ['FullStack', 'CMP', 'Edge']:
+        raise f"Product version {product_version} is not valid! Only 'FullStack', 'CMP', 'Edge' ar supported. "
+        return
+
+    with open(conf_file, 'r') as f:
+        conf = f.read().strip()
+
+    with open(conf_file, 'w') as f:
+        regex = r"^  product_version: (.*)"
+        subst = f"  product_version: '{product_version}'"
+        conf = re.sub(regex, subst, conf, 0, re.MULTILINE)
+        f.write(conf)
+        print('conf updated.')
+        return conf
 
 
 parser = None
@@ -351,6 +374,7 @@ def main():
             prRed(f'Config file <{ip_conf}> is Empty!')
             exit()
         check_env()
+        update_config(ip_conf, product_stack)
         conf = ip_conf
     else:
         prRed(f'The configuration file <{ip_conf}> does not exist or is not valid!')
