@@ -1,5 +1,5 @@
+# block 1
 - block:
-
   - name: set bin facts
     set_fact:
       sudo_nopasswd_bin_lists:
@@ -24,6 +24,7 @@
         - /usr/sbin/dmidecode
         - /usr/sbin/iptables
         - /usr/sbin/iptables-save
+        - /usr/sbin/modprobe
         - /usr/sbin/service
         - /usr/sbin/update-alternatives
 
@@ -37,20 +38,35 @@
     when:
     - lookup('file', item,errors='ignore') | default(None) is not none
 
-  - name: Test each file in sudo_nopasswd_bin_lists has been granted with NOPASSWD privilege.
+  - name: Test NOPASSWD ALL privilege
     shell: |
-      sudo -lU "{{ansible_user_id}}" |grep -w NOPASSWD |grep -wo "{{item}}"
-    loop: "{{sudo_nopasswd_bin_lists | list}}"
-    register: show
+      sudo -lU "{{ansible_user_id}}" | grep -w NOPASSWD| sed -e 's#.*NOPASSWD##' | grep -iwq ALL
+    register: with_all_privilege
     ignore_errors: true
+    failed_when: false
 
+  # block 2
   - block:
-    - name: Privilege test result
-      debug:
-        msg: "following commands should be in user {{ansible_user_id}}'s sudoer file: {{ show.results | selectattr('rc', 'ne', 0) |map(attribute='item') |list | join(',') }}"
+    - name: Test each file in sudo_nopasswd_bin_lists has been granted with NOPASSWD privilege.
+      shell: |
+        sudo -lU "{{ansible_user_id}}" | grep -w NOPASSWD| sed -e 's#.*NOPASSWD##' | grep -wo "{{item}}"
+      loop: "{{sudo_nopasswd_bin_lists | list}}"
+      register: show
+      ignore_errors: true
 
-    - shell: exit 1
+    # block 3
+    - block:
+      - name: Privilege test result
+        debug:
+          msg: "following commands should be in user {{ansible_user_id}}'s sudoer file: {{ show.results | selectattr('rc', 'ne', 0) | map(attribute='item') | list | join(',') }}"
 
-    when: show.results | selectattr('rc', 'ne', 0) |map(attribute='item') |list | length > 0
+      - shell: exit 1
 
+      # when3
+      when: show.results | selectattr('rc', 'ne', 0) | map(attribute='item') | list | length > 0
+    # when2
+    when: with_all_privilege.rc != 0
+  # when 1
   when: ansible_user_id != 'root'
+  tags:
+  - sudoer

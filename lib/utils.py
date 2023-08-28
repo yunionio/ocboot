@@ -1,5 +1,6 @@
 # encoding: utf-8
 from datetime import datetime, tzinfo, timedelta
+import os
 
 
 def ensure_ascii(s):
@@ -85,3 +86,15 @@ def init_local_user_path():
 
 def prRed(skk):
     print("\033[31m{}\033[00m" .format(skk))
+
+
+def tryBackupFile(filename):
+    # only for no write access
+    if not os.path.exists(filename):
+        return
+    if os.access(filename, os.W_OK):
+        return
+
+    date = datetime.now().strftime('%Y%m%d')
+    new_path = f'{filename}.{date}'
+    os.system(f'sudo mv {filename} {new_path}')
