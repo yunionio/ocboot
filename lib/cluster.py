@@ -23,16 +23,24 @@ def construct_cluster(primary_master_host, ssh_user, ssh_private_file, ssh_port)
     cluster = OnecloudCluster(cli)
     return cluster
 
+
 def json_trim(str_2_replace):
     regex = re.compile(r"^[^{]+|[^}]+$", re.DOTALL)
     return regex.sub("", str_2_replace)
 
+
 class OnecloudCluster(object):
 
     def __init__(self, ssh_client):
+
+        user = getuser()
+        sudo_exec = ''
+        if user != 'root':
+            sudo_exec = 'sudo'
+
         self.ssh_client = ssh_client
         ret = ssh_client.exec_command(
-            'sudo kubectl -n onecloud get onecloudclusters default -o json')
+            f'{sudo_exec} kubectl -n onecloud get onecloudclusters default -o json')
         try:
             cluster = json.loads(ret)
         except ValueError:
@@ -85,7 +93,12 @@ class OnecloudCluster(object):
         return self.get_spec().get('version')
 
     def _construct_nodes(self):
-        k8s_nodes = json.loads(self.ssh_client.exec_command('sudo kubectl get nodes -o json')).get('items')
+        user = getuser()
+        sudo_exec = ''
+        if user != 'root':
+            sudo_exec = 'sudo'
+
+        k8s_nodes = json.loads(self.ssh_client.exec_command(f'{sudo_exec} kubectl get nodes -o json')).get('items')
         self.k8s_nodes = [k8s.Node(obj) for obj in k8s_nodes]
         self.master_nodes = [node for node in self.k8s_nodes if node.is_master()]
         self.worker_nodes = [node for node in self.k8s_nodes if not node.is_master()]
@@ -123,9 +136,12 @@ class OnecloudCluster(object):
         return inventory.generate_content()
 
     def set_current_version(self, version):
-        cmd = 'sudo kubectl -n onecloud annotate --overwrite=true onecloudclusters default %s=%s' % (
-            A_OCBOOT_UPGRADE_CURRENT_VERSION,
-            version)
+        user = getuser()
+        sudo_exec = ''
+        if user != 'root':
+            sudo_exec = 'sudo'
+
+        cmd = f'{sudo_exec} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
         self.ssh_client.exec_command(cmd)
 
 
@@ -154,7 +170,6 @@ class AnsibleInventory(object):
             self._append(self.worker_hosts, host)
         else:
             raise Exception("Unsupported role %s" % role)
-
 
     def add(self, *hosts):
         for host in hosts:
