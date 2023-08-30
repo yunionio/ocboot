@@ -14,6 +14,7 @@ from lib import cmd
 from lib.utils import init_local_user_path
 from lib.utils import prRed
 from lib.utils import tryBackupFile
+from lib.get_interface_by_ip import get_interface_by_ip
 
 
 def show_usage():
@@ -238,6 +239,7 @@ primary_master_node:
   # chose product_version in ['FullStack', 'CMP', 'Edge']
   product_version: 'product_stack'
   image_repository: registry.cn-beijing.aliyuncs.com/yunion
+  # host_networks: '<interface>/br0/<ip>'
 """
 
 
@@ -298,12 +300,15 @@ def gen_config(ipaddr, product_stack):
 
     mypass_clickhouse = random_password(12)
     mypass_mariadb = random_password(12)
+    interface = get_interface_by_ip(ipaddr)
+    host_networks = f'''host_networks: "{interface}/br0/{ipaddr}"'''
     with open(temp, 'w') as f:
         f.write(conf.replace('10.127.10.158', ipaddr)
                 .replace('your-sql-password', mypass_mariadb)
                 .replace('your-clickhouse-password', mypass_clickhouse)
                 .replace('ocboot_user', get_username())
                 .replace('v3.4.12', ver)
+                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks)
                 .replace('product_stack', product_stack))
     return temp
 
