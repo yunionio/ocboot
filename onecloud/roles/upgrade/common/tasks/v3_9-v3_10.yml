@@ -43,6 +43,7 @@
     if [ -n "$rpms" ]; then
       yum remove -y $rpms
     fi
+  become: yes
   when:
   - is_centos_based is defined
   args:
@@ -60,5 +61,6 @@
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     state: latest
+  become: yes
   when:
   - is_centos_based is defined
