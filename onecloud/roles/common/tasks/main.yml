@@ -21,6 +21,10 @@
     paths:
     - ../tasks
 
+- name: Binary version check
+  include_role:
+    name: utils/bin-version-check
+
 - name: reset iptables rules
   shell: |
     # backup iptable ruleset
