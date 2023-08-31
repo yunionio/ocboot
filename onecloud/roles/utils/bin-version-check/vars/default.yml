@@ -1,0 +1,3 @@
+k8s_version_ge: v1.15.12
+k8s_version_lt: v1.16
+yunion_bin_ge: v3.10
