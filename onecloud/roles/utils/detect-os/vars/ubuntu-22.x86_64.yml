@@ -27,6 +27,7 @@ common_packages:
   - libusbredirparser1
   - librbd1
   - libspice-server1
+  - libiscsi7
   - libcapstone4
   - nfs-common
   - ntp

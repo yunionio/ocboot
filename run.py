@@ -98,12 +98,10 @@ def install_packages(pkgs):
     cmdline = 'sudo %s install -y %s' % (packager, ' '.join(pkgs))
     return os.system(cmdline)
 
+
 def install_ansible():
-    if os.system('grep -wq "Ubuntu" /etc/os-release') == 0:
-        install_packages(["python3-yaml"])
-    else:
-        for pkg in ['python2-pyyaml', 'PyYAML']:
-            install_packages([pkg])
+    for pkg in ['python2-pyyaml', 'PyYAML']:
+        install_packages([pkg])
 
     if os.system('rpm -qa |grep -q python3-pip') != 0:
         ret = os.system(

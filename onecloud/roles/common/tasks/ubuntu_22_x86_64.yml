@@ -48,6 +48,7 @@
           nft flush ruleset
       fi
     fi
+  become: true
   args:
     executable: /bin/bash
 
@@ -56,6 +57,7 @@
     url: https://iso.yunion.cn/ubuntu/{{ ansible_distribution_major_version }}/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/yunion.gpg-key.asc
     dest: /tmp/yunion.gpg-key.asc
     validate_certs: no
+  become: true
 
 - name: apply ubuntu sig key
   shell: |
@@ -63,12 +65,14 @@
     apt-key add /tmp/yunion.gpg-key.asc;
     apt-get update -y;
     rm -f /tmp/yunion.gpg-key.asc
+  become: true
   args:
     executable: /bin/bash
 
 - name: install common packages via loop
   package:
     name: "{{ item }}"
+  become: true
   with_items:
   - "{{ common_packages }}"
   when:
@@ -78,6 +82,7 @@
   package:
     name: "{{ item }}"
     state: latest
+  become: true
   with_items:
   - "{{ latest_packages }}"
   when:
@@ -91,6 +96,7 @@
 - name: Turn off selinux
   selinux:
     state: disabled
+  become: true
   when:
     - selinux_conf_exists.stat.exists
 

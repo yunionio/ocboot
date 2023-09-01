@@ -64,14 +64,6 @@
   become: true
   when: ansible_distribution == "Debian"
 
-- name: Allow remote hosts to connect (Ubuntu)
-  lineinfile:
-    path: /etc/mysql/mariadb.conf.d/50-server.cnf
-    backrefs: yes
-    regexp: '^bind-address'
-    line: 'bind-address            = 0.0.0.0'
-    state: present
-
 - name: make conf dir
   file:
     name: /etc/my.cnf.d
@@ -97,6 +89,7 @@
     check_implicit_admin: true
   become: true
   loop:
+    - "localhost"
     - "{{ db_host }}"
     - "%"
     - "::1"
