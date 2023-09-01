@@ -113,11 +113,13 @@
     when:
       host_networks is defined
 
-  - name: construct hugepage args
+  - name: construct hugepage args {{onecloud_version}}
     set_fact:
       init_args: "{{ init_args }} --enable-hugepage"
     when:
-      enable_hugepage is defined
+    - enable_hugepage is defined
+    - onecloud_version is defined
+    - onecloud_version is version('v3.10', ">=")
 
   - name: Construct onecloud version
     set_fact:

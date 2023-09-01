@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 from __future__ import unicode_literals
 from __future__ import absolute_import
@@ -11,6 +11,10 @@ import re
 import argparse
 from lib import install
 from lib import cmd
+from lib.utils import init_local_user_path
+from lib.utils import prRed
+from lib.utils import tryBackupFile
+from lib.get_interface_by_ip import get_interface_by_ip
 
 
 def show_usage():
@@ -37,17 +41,11 @@ def version_ge(v1, v2):
     return versiontuple(v1) >= versiontuple(v2)
 
 
-def init_local_user_path():
-    path = os.environ['PATH']
-    user_bin = os.path.expanduser('~/.local/bin')
-    if user_bin not in path.split(os.pathsep):
-        path = f'{path}:{user_bin}'
-        os.environ['PATH'] = path
-
 def get_username():
     import getpass
     # python2 / python3 are all tested to get username
     return getpass.getuser()
+
 
 def check_pip3():
     ret = os.system("pip3 --version >/dev/null 2>&1")
@@ -120,7 +118,7 @@ def install_ansible():
 
 def check_passless_ssh(ipaddr):
     username = get_username()
-    cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} hostname"
+    cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} uptime"
     print('cmd:', cmd)
     ret = os.system(cmd)
     if ret == 0:
@@ -202,7 +200,7 @@ conf = """
 #   # IP of the machine to be deployed
 #   hostname: 10.127.10.158
 #   # SSH Login username of the machine to be deployed
-#   user: root
+#   user: ocboot_user
 #   # Password of clickhouse
 #   ch_password: your-clickhouse-password
 # mariadb_node indicates the node where the mariadb service needs to be deployed
@@ -210,7 +208,7 @@ mariadb_node:
   # IP of the machine to be deployed
   hostname: 10.127.10.158
   # SSH Login username of the machine to be deployed
-  user: root
+  user: ocboot_user
   # Username of mariadb
   db_user: root
   # Password of mariadb
@@ -241,8 +239,9 @@ primary_master_node:
   # enable_eip_man for all-in-one mode only
   enable_eip_man: true
   # chose product_version in ['FullStack', 'CMP', 'Edge']
-  product_version: 'FullStack'
+  product_version: 'product_stack'
   image_repository: registry.cn-beijing.aliyuncs.com/yunion
+  # host_networks: '<interface>/br0/<ip>'
 """
 
 
@@ -263,7 +262,7 @@ def dynamic_load():
             print("\t%s" % p)
 
 
-def gen_config(ipaddr):
+def gen_config(ipaddr, product_stack):
     global conf
     import os.path
     import os
@@ -277,6 +276,7 @@ def gen_config(ipaddr):
     if not config_dir:
         config_dir = cur_path
     temp = os.path.join(config_dir, "config-allinone-current.yml")
+    tryBackupFile(temp)
     verf = os.path.join(cur_path, "VERSION")
     with open(verf, 'r') as f:
         ver = f.read().strip()
@@ -302,13 +302,38 @@ def gen_config(ipaddr):
 
     mypass_clickhouse = random_password(12)
     mypass_mariadb = random_password(12)
+    interface = get_interface_by_ip(ipaddr)
+    host_networks = f'''host_networks: "{interface}/br0/{ipaddr}"'''
     with open(temp, 'w') as f:
         f.write(conf.replace('10.127.10.158', ipaddr)
                 .replace('your-sql-password', mypass_mariadb)
                 .replace('your-clickhouse-password', mypass_clickhouse)
                 .replace('ocboot_user', get_username())
-                .replace('v3.4.12', ver))
+                .replace('v3.4.12', ver)
+                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks)
+                .replace('product_stack', product_stack))
     return temp
+
+
+def update_config(conf_file, product_version):
+    if not os.path.exists(conf_file):
+        raise f"Conf file {conf_file} dose not exist!"
+        return
+
+    if product_version not in ['FullStack', 'CMP', 'Edge']:
+        raise f"Product version {product_version} is not valid! Only 'FullStack', 'CMP', 'Edge' ar supported. "
+        return
+
+    with open(conf_file, 'r') as f:
+        conf = f.read().strip()
+
+    with open(conf_file, 'w') as f:
+        regex = r"^  product_version: (.*)"
+        subst = f"  product_version: '{product_version}'"
+        conf = re.sub(regex, subst, conf, 0, re.MULTILINE)
+        f.write(conf)
+        print('conf updated.')
+        return conf
 
 
 parser = None
@@ -322,7 +347,12 @@ def get_args():
                         help="Input the target IPv4 or Config file")
     parser.add_argument('--offline-data-path', nargs='?',
                         help="offline packages location")
+    parser.add_argument('--stack', type=str, default='fullstack',
+                        help="choose product version",
+                        choices=['fullstack', 'cmp', 'edge'])
     return parser.parse_args()
+  # chose product_version in ['FullStack', 'CMP', 'Edge']
+#  product_version: 'FullStack'
 
 
 def main():
@@ -330,6 +360,15 @@ def main():
     args = get_args()
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     ip_conf = str(args.IP_CONF[0])
+
+    product_stack = ''
+    got_stack = args.stack.lower()
+    if got_stack in ['fullstack', '', None]:
+        product_stack = 'FullStack'
+    elif got_stack == 'cmp':
+        product_stack = 'CMP'
+    elif got_stack == 'edge':
+        product_stack = 'Edge'
 
     # 1. try to get offline data path from optional args
     # 2. if not exist, try to get from os env
@@ -352,15 +391,20 @@ def main():
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf)
-        conf = gen_config(ip_conf)
+        conf = gen_config(ip_conf, product_stack)
     elif path.isfile(ip_conf):
+        sz = path.getsize(ip_conf)
+        if sz == 0:
+            prRed(f'Config file <{ip_conf}> is Empty!')
+            exit()
         check_env()
+        update_config(ip_conf, product_stack)
         conf = ip_conf
     else:
-        print("Wrong args!")
-        parser.print_help()
+        prRed(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()
     return install.start(conf)
+
 
 if __name__ == "__main__":
     sys.exit(main())
