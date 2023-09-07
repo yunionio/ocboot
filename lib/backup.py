@@ -1,4 +1,6 @@
+#!/usr/bin/env python3
 # encoding: utf-8
+
 
 from . import ocboot
 from .db import backup_config, backup_db

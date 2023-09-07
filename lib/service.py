@@ -1,4 +1,6 @@
+#!/usr/bin/env python3
 # encoding: utf-8
+
 from __future__ import unicode_literals
 
 from .ocboot import NodeConfig, Config
