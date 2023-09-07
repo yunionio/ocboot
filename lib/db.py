@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+
 import os
 
 from shutil import copyfile
@@ -7,6 +10,8 @@ from .utils import print_title
 
 PV_ARGS = 'pv --timer --rate --eta'
 MYSQL_BACKUP_ARGS = '--add-drop-database --add-drop-table --add-locks --single-transaction --quick '
+
+
 class DB():
     def __init__(self, config=None, database="", host='127.0.0.1', user='root', passwd=None, port=3306):
 
@@ -18,7 +23,7 @@ class DB():
         }
         if config:
             primary_master_config = getattr(config, 'primary_master_config', None)
-            assert(primary_master_config)
+            assert (primary_master_config)
             values.update(vars(primary_master_config))
             db = MySQLdb.connect(
                 host=values['db_host'],
@@ -95,7 +100,7 @@ def gen_db_config_args(config):
     }
 
     primary_master_config = getattr(config, 'primary_master_config', None)
-    assert(primary_master_config)
+    assert (primary_master_config)
     values.update(vars(primary_master_config))
     return ' -h "%(db_host)s" -u "%(db_user)s" -p"%(db_password)s" -P "%(db_port)s" ' % values
 
