@@ -1,4 +1,6 @@
+#!/usr/bin/env python3
 # encoding: utf-8
+
 
 import platform
 import os
@@ -38,6 +40,7 @@ REBOOT_MSG = """
 
 REBOOT_TIMEOUT = 30
 
+
 def add_command(subparsers):
     parser = subparsers.add_parser("install", help="install onecloud cluster")
     parser.add_argument('config', help="config yaml file")
@@ -51,6 +54,7 @@ def do_install(args):
         logger.error("%s" % e)
     except Exception as e:
         raise e
+
 
 def need_reboot(ip, inside):
     if os.environ.get('NO_REBOOT', ''):
