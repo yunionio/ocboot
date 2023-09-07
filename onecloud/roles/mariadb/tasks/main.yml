@@ -1,5 +1,5 @@
 ---
-- name: gather os specific variables
+- name: gather os specific variables vars for mariadb
   include_vars: "{{ item }}"
   with_first_found:
     - files:

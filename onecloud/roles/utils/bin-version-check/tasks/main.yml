@@ -29,12 +29,15 @@
 
 - debug: var=yunion_bin_version_ret.stdout
 
-- name: Assert yunion bin version
+- name: Assert yunion bin version onecloud_version "{{ onecloud_version }}"
   assert:
     that:
       - '"{{item}}" is version(yunion_bin_ge, ">=")'
     fail_msg: "yunion's version must be greater than {{ yunion_bin_ge }}, got {{item}}."
   loop: "{{yunion_bin_version_ret.stdout.split('\n') | list }}"
+  when:
+  - onecloud_version | default("") | length > 0
+  - onecloud_version is version('v3.10', '>=')
 
 - name: Get Kubectl Bin version
   shell: |

@@ -16,5 +16,8 @@
 {% if docker_insecure_registries|length > 0 %}
   "insecure-registries": {{ docker_insecure_registries|to_json }},
 {% endif %}
+{% if ansible_distribution_release == "Kivity" %}
+"storage-driver": "vfs",
+{% endif %}
   "live-restore": true
 }
