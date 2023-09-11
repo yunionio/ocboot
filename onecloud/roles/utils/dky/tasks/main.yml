@@ -1,0 +1,51 @@
+- name: Replace default_qemu_version value
+  replace:
+    path: /etc/yunion/host.conf
+    regexp: '^default_qemu_version: 4\.\d+\.\d+$'
+    replace: 'default_qemu_version: 4.0.1'
+
+- name: Ensure generic_sm_host is enabled in host.conf
+  lineinfile:
+    path: /etc/yunion/host.conf
+    line: "generic_sm_host: true"
+
+- name: Notify host restart
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    host=$(kubectl get nodes -n onecloud -o wide |grep -v '^NAME' |awk '{print $1}' |head -1)
+    [ -n "$host" ] && /opt/yunion/bin/ocadm node enable-host-agent --node "$host" || :
+
+    ip=$(ip route get 1  |head -1 |awk '{print $7}' | sort -u |head -1)
+    if [ ! -s /opt/VMSecurity/vsoc/info/host_id_info ]; then
+      mkdir -p /opt/VMSecurity/vsoc/info
+      echo "1234567890123456" > /opt/VMSecurity/vsoc/info/host_id_info
+      echo "$ip" > /opt/VMSecurity/vsoc/info/server_ip_info
+    fi
+
+    for i in {1..10}; do
+    kubectl -n onecloud get  configmap default-host -o yaml > /tmp/host.yaml
+      if kubectl -n onecloud get  configmap default-host -o yaml |grep -wq 'default_qemu_version: 4.0.1'; then
+        break
+      fi
+      sed -i -e 's#default_qemu_version: 4.2.0#default_qemu_version: 4.0.1#' /tmp/host.yaml
+      kubectl apply -f /tmp/host.yaml
+      sleep 5
+    done
+    rm -f /tmp/host.yaml
+    kubectl rollout restart ds -n onecloud default-host || :
+    ocadm cluster update --use-ee --wait
+    kubectl delete configmap -n onecloud default-web
+    kubectl rollout restart deployment -n onecloud default-web
+    while true
+    do
+      sleep 10
+      pw=$(kubectl get pods -n onecloud -o wide --field-selector=status.phase!=Running|grep -iv '^Name' | grep 'web\|yunionagent' |wc -l)
+      if [[ "$pw" -eq 0 ]]; then
+        break
+      fi
+    done
+    /opt/yunion/upgrade/post-install/init_copyright.sh
+  args:
+    executable: /bin/bash
+

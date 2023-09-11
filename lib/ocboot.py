@@ -32,16 +32,16 @@ def get_ansible_global_vars(version):
         "onecloud_major_version": major_version,
         'extra_packages': [],
     }
-
+    # comment for dky
     # set yunion_qemu_package for pre released version
-    yunion_qemu_package = 'yunion-qemu-4.2.0'
+    # yunion_qemu_package = 'yunion-qemu-4.2.0'
     extra_packages = []
-    if utils.is_below_v3_9(version):
-        yunion_qemu_package = 'yunion-qemu-2.12.1'
-    else:
-        extra_packages.append('yunion-climc-ee')
-    if yunion_qemu_package:
-        vars['yunion_qemu_package'] = yunion_qemu_package
+    # if utils.is_below_v3_9(version):
+    #     yunion_qemu_package = 'yunion-qemu-2.12.1'
+    # else:
+    extra_packages.append('yunion-climc-ee')
+    # if yunion_qemu_package:
+    #     vars['yunion_qemu_package'] = yunion_qemu_package
     vars['extra_packages'] = extra_packages
     return vars
 

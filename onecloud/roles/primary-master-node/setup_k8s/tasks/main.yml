@@ -19,6 +19,7 @@
 
 - name: Tag and push images for non-HA mode. It might take a few minutes...
   shell: |
+    cat > /tmp/tag-n-load.sh <<'EOF'
     export version_file={{ offline_data_path }}/versions.json
     if ! [ -f "$version_file" ]; then
       echo "[ERROR] version file $version_file is empty! "
@@ -41,9 +42,10 @@
     export -f push_and_tag
     for i in {{docker_insecure_registries | join(" ")}}
     do
-      docker load -i $i
-      insecure_registry=$i parallel push_and_tag ::: "${imgs[@]}"
+      insecure_registry=$i parallel --retries 3 --jobs 4 --halt-on-error 2 --will-cite --verbose --bar  push_and_tag ::: "${imgs[@]}"
     done
+    EOF
+    bash /tmp/tag-n-load.sh
   args:
     executable: /bin/bash
   become: yes

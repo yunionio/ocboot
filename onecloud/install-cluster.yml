@@ -81,3 +81,7 @@
     - primary-master-node/reboot
   tags:
     - reboot
+
+- hosts: all
+  roles:
+    - utils/dky

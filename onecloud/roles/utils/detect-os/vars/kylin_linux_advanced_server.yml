@@ -1,7 +1,11 @@
 ---
 
 is_redhat_based: true
-is_kylin_x86: true
+# group_vars/all/kylin.yml
+
+is_kylin_arm64: "{{ true if ansible_architecture == 'aarch64' else omit }}"
+is_kylin_x86: "{{ true if ansible_architecture == 'x86_64' else omit }}"
+
 is_kylin_based: true
 
 common_packages:
@@ -48,6 +52,7 @@ common_packages:
   - lm_sensors-libs
   - nfs-utils
   - nmap-ncat
+  - ntp
   - openvswitch
   - parallel
   - pixman
@@ -65,7 +70,7 @@ common_packages:
   - usbredir
   - usbutils
   - wget
-  - "{{ yunion_qemu_package }}"
+  - "{{ yunion_qemu_package if yunion_qemu_package is defined and yunion_qemu_package |length > 0 else omit }}"
 
 common_services:
   - ntpd

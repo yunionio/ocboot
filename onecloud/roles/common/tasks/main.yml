@@ -203,6 +203,24 @@
     when:
     - is_uos_kongzi|default(false) | bool == true
 
+  - name: Config docker file for Kylin Sp3
+    environment:
+      PATH: "{{ ansible_env.PATH }}:/usr/sbin"
+    shell: |
+      systemctl disable libvirtd.socket --now || :
+      ip link delete dev virbr0-nic || :
+      ip link delete dev virbr0 || :
+      if ! ip a |grep -wq docker0 ; then
+        ip link add name docker0 type bridge || :
+        ip addr add dev docker0 172.1.0.1/16 || :
+      fi
+    become: true
+    args:
+      executable: /bin/bash
+    when:
+    - ansible_distribution_release == 'Kivity'
+    - ansible_distribution_version == 'V10'
+
   - name: Restart docker service
     service: name=docker state=restarted daemon_reload=yes enabled=yes
     become: true
