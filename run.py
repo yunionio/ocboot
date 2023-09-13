@@ -382,7 +382,10 @@ def main():
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
-        install_packages(['python3-pip', 'python2-pyyaml', 'PyYAML'])
+        if os.system('grep -wq "Ubuntu" /etc/os-release') == 0:
+            install_packages(['python3-pip', 'python3-yaml'])
+        else:
+            install_packages(['python3-pip', 'python2-pyyaml', 'PyYAML'])
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf)
