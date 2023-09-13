@@ -1,11 +1,11 @@
-debian_based_arch: arm64
 is_debian_based: true
+is_ubuntu_based: true
+debian_based_arch: amd64
 
 common_packages:
   - apt-transport-https
   - bash-completion
   - bridge-utils
-  - ca-certificates
   - ceph-common
   - chntpw
   - conntrack
@@ -23,26 +23,30 @@ common_packages:
   - kubeadm=1.15.12-00 
   - kubectl=1.15.12-00 
   - kubelet=1.15.12-00 
-  - librbd1
-  - libspice-server1
   - libusb-1.0-0
   - libusbredirparser1
+  - librbd1
+  - libspice-server1
+  - libiscsi7
+  - libcapstone4
   - nfs-common
   - ntp
   - openvswitch-switch
   - ovmf
-  - python-pymysql
-  - python-selinux
-  - python-yaml
-  - python3-pip
+  - parallel
+  - python3-selinux
   - software-properties-common
+  - usbutils
   - wget
-  - yunion-climc
-  - yunion-executor
-  - yunion-fetcherfs
-  - yunion-ocadm
   - "{{ yunion_qemu_package }}"
 
 common_services:
     - ntp
     - yunion-executor
+
+latest_packages:
+    - ca-certificates
+    - yunion-climc
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
