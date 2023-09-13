@@ -31,7 +31,7 @@ operator:
     repository: "registry.cn-beijing.aliyuncs.com/yunion/onecloud-operator"
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v3.9.11"
+    tag: "v3.9.13"
 
   imagePullSecrets: []
 
