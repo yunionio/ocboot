@@ -1,5 +1,6 @@
 # encoding: utf-8
 from datetime import datetime, tzinfo, timedelta
+import os
 
 def ensure_ascii(s):
     if not isinstance(s, str):
@@ -70,3 +71,28 @@ def print_title(title):
     print('=' * 80)
     print(title)
     print('=' * 80)
+
+
+def init_local_user_path():
+    import os
+    path = os.environ['PATH']
+    user_bin = os.path.expanduser('~/.local/bin')
+    if user_bin not in path.split(os.pathsep):
+        path = f'{path}:{user_bin}'
+        os.environ['PATH'] = path
+
+
+def prRed(skk):
+    print("\033[31m{}\033[00m" .format(skk))
+
+
+def tryBackupFile(filename):
+    # only for no write access
+    if not os.path.exists(filename):
+        return
+    if os.access(filename, os.W_OK):
+        return
+
+    date = datetime.now().strftime('%Y%m%d')
+    new_path = f'{filename}.{date}'
+    os.system(f'sudo mv {filename} {new_path}')

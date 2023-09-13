@@ -81,6 +81,7 @@
       name: clickhouse-server
       state: restarted
       enabled: yes
+  become: yes
   when:
   - offline_data_path is defined
   - offline_data_path | length > 0

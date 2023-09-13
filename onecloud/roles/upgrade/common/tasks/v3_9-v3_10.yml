@@ -43,6 +43,7 @@
     if [ -n "$rpms" ]; then
       yum remove -y $rpms
     fi
+  become: yes
   when:
   - is_centos_based is defined
   args:
@@ -56,8 +57,10 @@
       - yunion-climc-ee
       - yunion-executor
       - yunion-qemu-4.2.0
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+      - openvswitch
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     state: latest
+  become: yes
   when:
   - is_centos_based is defined

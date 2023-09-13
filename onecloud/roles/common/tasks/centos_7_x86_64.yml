@@ -8,31 +8,63 @@
 
 - name: install common packages via loop
   package:
-    name: "{{ item }}"
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    name: "{{ package_item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
   with_items:
   - "{{ common_packages }}"
-  when:
-  - common_packages is defined
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  become: yes
+  tags:
+  - package
 
 - name: install latest packages via loop
   package:
-    name: "{{ item }}"
+    name: "{{ package_item }}"
     state: latest
-    disablerepo: "*"
-    enablerepo: "yunion-*"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
   with_items:
   - "{{ latest_packages }}"
+  become: yes
+  retries: 6
+  delay: 10
+  register: latest_pkg_result
+  until: latest_pkg_result.rc == 0
+  ignore_errors: yes
   when:
   - latest_packages is defined
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ latest_packages | length }}] {{ package_item }}"
+    loop_var: package_item
+  tags:
+  - package
 
 - name: install misc obsolete packages
-  package: name="{{ item }}" disablerepo="*" enablerepo="yunion-*"
+  package:
+    name: "{{ package_item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: yes
+  loop_control:
+    index_var: item_index
+    loop_var: package_item
   with_items:
   - yunion-qemu-2.12.1
   when:
   - is_centos_x86 is defined
+  tags:
+  - package
+
+- name: Selinux Status
+  shell: |
+    sestatus |grep '^SELinux status:' |awk '{print $3}'
+  register: selinux_status
+  ignore_errors: yes
 
 - name: Check that if selinux config exists
   stat:
@@ -42,6 +74,7 @@
 - name: Turn off selinux
   selinux:
     state: disabled
+  become: yes
   when:
+    - selinux_status.stdout | default("") != "disabled"
     - selinux_conf_exists.stat.exists
-    - is_kylin_arm64 | default(false) | bool == false

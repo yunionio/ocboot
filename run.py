@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 from __future__ import unicode_literals
 from __future__ import absolute_import
@@ -11,6 +11,10 @@ import re
 import argparse
 from lib import install
 from lib import cmd
+from lib.utils import init_local_user_path
+from lib.utils import prRed
+from lib.utils import tryBackupFile
+from lib.get_interface_by_ip import get_interface_by_ip
 
 
 def show_usage():
@@ -31,6 +35,13 @@ def versiontuple(v):
 
 def version_ge(v1, v2):
     return versiontuple(v1) >= versiontuple(v2)
+
+
+def get_username():
+    import getpass
+    # python2 / python3 are all tested to get username
+    return getpass.getuser()
+
 
 def check_pip3():
     ret = os.system("pip3 --version >/dev/null 2>&1")
@@ -60,31 +71,49 @@ def check_ansible():
         raise e
 
 def install_packages(pkgs):
-    if os.system('grep -Pq "Kylin Linux Advanced Server|CentOS Linux" /etc/os-release') == 0:
-        return os.system("yum install -y %s" % (" ".join(pkgs)))
-    elif os.system('grep -wq "Debian GNU/Linux" /etc/os-release') == 0:
-        return os.system("apt install -y %s" % (" ".join(pkgs)))
-    else:
-        print("Unsupported OS")
-        return 255
+    ignore_check = os.getenv("IGNORE_ALL_CHECKS")
+    if ignore_check == "true":
+        return
+
+    packager = None
+
+    for p in ['/usr/bin/dnf', '/usr/bin/yum', '/usr/bin/apt']:
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            packager = p
+            break
+
+    if packager is None:
+        print('Current os-release:')
+        with open('/etc/os-release', 'r') as f:
+            print(f.read())
+        raise Exception("Install ansible failed for os-release is not supported.")
+    cmdline = 'sudo %s install -y %s' % (packager, ' '.join(pkgs))
+    return os.system(cmdline)
 
 def install_ansible():
     for pkg in ['python2-pyyaml', 'PyYAML']:
         install_packages([pkg])
-    ret = os.system('python3 -m pip install --upgrade pip setuptools wheel')
-    if ret != 0:
-        raise Exception("Install/updrade pip3 failed. ")
-    ret = os.system('python3 -m pip install --upgrade ansible')
+
+    if os.system('rpm -qa |grep -q python3-pip') != 0:
+        ret = os.system(
+            'python3 -m pip install --user --upgrade pip setuptools wheel')
+        if ret != 0:
+            raise Exception("Install/updrade pip3 failed. ")
+    os.system('python3 -m pip install --user --upgrade pip')
+    ret = os.system('python3 -m pip install --user --upgrade ansible')
     if ret != 0:
         raise Exception("Install ansible failed. ")
 
 def check_passless_ssh(ipaddr):
-    cmd = "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr)
+    username = get_username()
+    cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} uptime"
+    print('cmd:', cmd)
     ret = os.system(cmd)
     if ret == 0:
         return
     else:
-        raise Exception("Passwordless ssh failed, please configure passwordless ssh to root@%s" % (ipaddr))
+        raise Exception(
+            "Passwordless ssh failed, please configure passwordless ssh to %s@%s" % (username, ipaddr))
     try:
         install_passless_ssh(ipaddr)
     except Exception as e:
@@ -93,6 +122,7 @@ def check_passless_ssh(ipaddr):
 
 
 def install_passless_ssh(ipaddr):
+    username = get_username()
     rsa_path = os.path.join(os.environ.get("HOME"), ".ssh/id_rsa")
     if not os.path.exists(rsa_path):
         ret = os.system("ssh-keygen -f %s -P '' -N ''" % (rsa_path))
@@ -100,19 +130,24 @@ def install_passless_ssh(ipaddr):
             raise Exception("ssh-keygen")
     print("We are going to run the following command to enable passwordless SSH login:")
     print("")
-    print("    ssh-copy-id -i ~/.ssh/id_rsa.pub root@%s" % (ipaddr))
+    print("    ssh-copy-id -i ~/.ssh/id_rsa.pub %s@%s" % (username, ipaddr))
     print("")
-    print("Press any key to continue and then input root password to %s" % (ipaddr))
+    print("Press any key to continue and then input %s's password to %s" % (username, ipaddr))
     os.system("read")
-    ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub root@%s" % (ipaddr))
+    ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub %s@%s" % (username, ipaddr))
     if ret != 0:
         raise Exception("ssh-copy-id")
-    ret = os.system("ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' root@%s hostname" % (ipaddr))
+    ret = os.system(
+        "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' %s@%s hostname" % (username, ipaddr))
     if ret != 0:
         raise Exception("check passwordless ssh login failed")
 
 
 def check_env(ipaddr=None):
+
+    ignore_check = os.getenv("IGNORE_ALL_CHECKS")
+    if ignore_check == "true":
+        return
     check_pip3()
     check_ansible()
     if ipaddr:
@@ -120,7 +155,7 @@ def check_env(ipaddr=None):
 
 
 def random_password(num):
-    assert(num >= 6)
+    assert (num >= 6)
     digits = r'23456789'
     letters = r'abcdefghjkmnpqrstuvwxyz'
     uppers = letters.upper()
@@ -153,7 +188,7 @@ conf = """
 #   # IP of the machine to be deployed
 #   hostname: 10.127.10.158
 #   # SSH Login username of the machine to be deployed
-#   user: root
+#   user: ocboot_user
 #   # Password of clickhouse
 #   ch_password: your-clickhouse-password
 # mariadb_node indicates the node where the mariadb service needs to be deployed
@@ -161,7 +196,7 @@ mariadb_node:
   # IP of the machine to be deployed
   hostname: 10.127.10.158
   # SSH Login username of the machine to be deployed
-  user: root
+  user: ocboot_user
   # Username of mariadb
   db_user: root
   # Password of mariadb
@@ -169,7 +204,7 @@ mariadb_node:
 # primary_master_node indicates the machine running Kubernetes and OneCloud Platform
 primary_master_node:
   hostname: 10.127.10.158
-  user: root
+  user: ocboot_user
   # Database connection address
   db_host: 10.127.10.158
   # Database connection username
@@ -188,14 +223,34 @@ primary_master_node:
   onecloud_user_password: admin@123
   # This machine serves as a OneCloud private cloud computing node
   as_host: true
+  # as_host_on_vm: true
   # enable_eip_man for all-in-one mode only
   enable_eip_man: true
   # chose product_version in ['FullStack', 'CMP', 'Edge']
-  product_version: 'FullStack'
+  product_version: 'product_stack'
   image_repository: registry.cn-beijing.aliyuncs.com/yunion
+  # host_networks: '<interface>/br0/<ip>'
 """
 
-def gen_config(ipaddr):
+
+def dynamic_load():
+    username = get_username()
+
+    import glob
+    paths = glob.glob('/usr/local/lib64/python3.?/site-packages/') + \
+        glob.glob('/usr/local/lib64/python3.??/site-packages/') + \
+        glob.glob(f'/home/{username}/.local/lib/python3.?/site-packages') + \
+        glob.glob(f'/home/{username}/.local/lib/python3.??/site-packages')
+
+    print("loading path:")
+
+    for p in paths:
+        if os.path.isdir(p) and p not in sys.path:
+            sys.path.append(p)
+            print("\t%s" % p)
+
+
+def gen_config(ipaddr, product_stack):
     global conf
     import os.path
     import yaml
@@ -207,6 +262,7 @@ def gen_config(ipaddr):
     if not config_dir:
         config_dir = cur_path
     temp = os.path.join(config_dir, "config-allinone-current.yml")
+    tryBackupFile(temp)
     verf = os.path.join(cur_path, "VERSION")
     with open(verf, 'r') as f:
         ver = f.read().strip()
@@ -229,13 +285,39 @@ def gen_config(ipaddr):
                 raise Exception("paring %s error: %s" % (temp, exc))
 
     mypass_clickhouse = random_password(12)
-    mypass_mariadb  = random_password(12)
+    mypass_mariadb = random_password(12)
+    interface = get_interface_by_ip(ipaddr)
+    host_networks = f'''host_networks: "{interface}/br0/{ipaddr}"'''
     with open(temp, 'w') as f:
         f.write(conf.replace('10.127.10.158', ipaddr)
                 .replace('your-sql-password', mypass_mariadb)
                 .replace('your-clickhouse-password', mypass_clickhouse)
-                .replace('v3.4.12', ver))
+                .replace('ocboot_user', get_username())
+                .replace('v3.4.12', ver)
+                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks)
+                .replace('product_stack', product_stack))
     return temp
+
+
+def update_config(conf_file, product_version):
+    if not os.path.exists(conf_file):
+        raise f"Conf file {conf_file} dose not exist!"
+        return
+
+    if product_version not in ['FullStack', 'CMP', 'Edge']:
+        raise f"Product version {product_version} is not valid! Only 'FullStack', 'CMP', 'Edge' ar supported. "
+        return
+
+    with open(conf_file, 'r') as f:
+        conf = f.read().strip()
+
+    with open(conf_file, 'w') as f:
+        regex = r"^  product_version: (.*)"
+        subst = f"  product_version: '{product_version}'"
+        conf = re.sub(regex, subst, conf, 0, re.MULTILINE)
+        f.write(conf)
+        print('conf updated.')
+        return conf
 
 
 parser = None
@@ -244,15 +326,32 @@ def get_args():
     """show argpase snippets"""
     global parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('IP_CONF', nargs=1, type=str, help="Input the target IPv4 or Config file")
-    parser.add_argument('--offline-data-path', nargs='?', help="offline packages location")
+    parser.add_argument('IP_CONF', nargs=1, type=str,
+                        help="Input the target IPv4 or Config file")
+    parser.add_argument('--offline-data-path', nargs='?',
+                        help="offline packages location")
+    parser.add_argument('--stack', type=str, default='fullstack',
+                        help="choose product version",
+                        choices=['fullstack', 'cmp', 'edge'])
     return parser.parse_args()
+  # chose product_version in ['FullStack', 'CMP', 'Edge']
+#  product_version: 'FullStack'
 
 
 def main():
+    init_local_user_path()
     args = get_args()
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     ip_conf = str(args.IP_CONF[0])
+
+    product_stack = ''
+    got_stack = args.stack.lower()
+    if got_stack in ['fullstack', '', None]:
+        product_stack = 'FullStack'
+    elif got_stack == 'cmp':
+        product_stack = 'CMP'
+    elif got_stack == 'edge':
+        product_stack = 'Edge'
 
     # 1. try to get offline data path from optional args
     # 2. if not exist, try to get from os env
@@ -271,13 +370,17 @@ def main():
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf)
-        conf = gen_config(ip_conf)
+        conf = gen_config(ip_conf, product_stack)
     elif path.isfile(ip_conf):
+        sz = path.getsize(ip_conf)
+        if sz == 0:
+            prRed(f'Config file <{ip_conf}> is Empty!')
+            exit()
         check_env()
+        update_config(ip_conf, product_stack)
         conf = ip_conf
     else:
-        print("Wrong args!")
-        parser.print_help()
+        prRed(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()
     return install.start(conf)
 

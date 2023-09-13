@@ -1,13 +1,17 @@
 - name: test var enable_eip_man
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
+    source <(/opt/yunion/bin/ocadm cluster rcadmin)
     if grep -q '^sdn_enable_eip_man:' /etc/yunion/host.conf; then
       sed -i -e 's#^sdn_enable_eip_man.*#sdn_enable_eip_man: true#' /etc/yunion/host.conf
     else
       echo 'sdn_enable_eip_man: true' >> /etc/yunion/host.conf
     fi
-    export KUBECONFIG=/etc/kubernetes/admin.conf
     kubectl rollout restart ds -n onecloud default-host
   args:
     executable: /bin/bash
+  become: yes
   when:
-  - enable_eip_man|default(false)|bool == true
+  - enable_eip_man | default(false) | bool == true
+  - product_version | default('fullstack') | lower in ['fullstack', 'edge']

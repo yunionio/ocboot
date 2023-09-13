@@ -1,19 +1,79 @@
-- name: Import Install mariadb task
-  include_tasks: "{{ ansible_distribution | lower | replace(' ', '_')}}-{{ ansible_architecture }}.yml"
+---
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution | lower | regex_replace('[^a-zA-Z0-9 ]+|[ ]+$', '') |replace(' ','_') | lower}}-{{ansible_distribution_release}}.yml"
+        - "{{ ansible_distribution | lower | regex_replace('[^a-zA-Z0-9 ]+|[ ]+$', '') |replace(' ','_') | lower}}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution | lower | replace(' ', '_') }}.yml"
+        - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_os_family|lower }}.yml"
+        - defaults.yml
+
+- name: Install mariadb
+  package:
+    name: "{{ package_item }}"
+    state: "present"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: true
+  with_items:
+    - "{{ packages }}"
+  loop_control:
+    loop_var: package_item
+
+- name: pips for mysql/mariadb online
+  pip:
+    name: "{{ pip_item }}"
+  when:
+  - online_status == "online"
+  become: true
+  loop: "{{ pips }}"
+  loop_control:
+    loop_var: pip_item
+
+- name: pips for mysql/mariadb offline
+  pip:
+    name: PyMySQL
+    extra_args: "--no-index --find-links=file://{{ offline_data_path }}/pips"
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  when:
+  - online_status == "offline"
+  - offline_data_path is defined
+  - offline_data_path | length > 0
 
 - name: Copy my.cnf
   copy:
     src: my.cnf
     dest: /etc/my.cnf
+    backup: yes
+  become: true
+
+- name: create Mariadb Conf Path For Debian
+  file:
+    path: /etc/my.cnf.d
+    state: directory
+  become: true
+  when: ansible_distribution == "Debian"
 
 - name: enable and start mariadb
   systemd:
     name: mariadb
     enabled: yes
     state: started
+  become: true
 
 - name: Change root password
   mysql_user:
+    login_unix_socket: "{{ login_unix_socket }}"
     login_user: "{{ db_user }}"
     login_port: "{{ db_port | default(3306) }}"
     login_password: "{{ db_password }}"
@@ -22,35 +82,26 @@
     priv: '*.*:ALL,GRANT'
     host: "{{ item }}"
     check_implicit_admin: true
+  become: true
   loop:
-    - "{{ db_host }}"
     - "localhost"
     - "%"
     - "::1"
     - "127.0.0.1"
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
-  when:
-    - is_centos_based |default(false)|bool == true
 
-- name: Change root password for debian
-  mysql_user:
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-    login_user: "{{ db_user }}"
-    login_port: "{{ db_port | default(3306) }}"
-    login_password: "{{ db_password }}"
-    password: "{{ db_password }}"
-    name: "{{ db_user }}"
-    priv: '*.*:ALL,GRANT'
-    host: "{{ item }}"
-    check_implicit_admin: true
-  loop:
-    - "{{ db_host }}"
-    - "localhost"
-    - "%"
-    - "::1"
-    - "127.0.0.1"
-  when:
-    - is_debian_based |default(false)|bool == true
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
+- name: gather os specific Tasks for post installation
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_release|lower }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_distribution|lower | replace(' ', '_') }}.yml"
+        - "{{ ansible_os_family|lower }}-{{ ansible_architecture }}.yml"
+        - "{{ ansible_os_family|lower }}.yml"
+        - defaults.yml
+      skip: true
+

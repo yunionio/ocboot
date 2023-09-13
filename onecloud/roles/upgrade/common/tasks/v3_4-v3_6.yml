@@ -27,8 +27,8 @@
       - yunion-climc
       - yunion-executor
     state: latest
-    disablerepo: '*'
-    enablerepo: "yunion-*"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
   when:
   - is_centos_x86 is defined
 

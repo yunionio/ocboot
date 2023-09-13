@@ -1,20 +1,83 @@
 ---
+- name: Check if systemd.unified_cgroup_hierarchy=0 is in /proc/cmdline
+  shell: "grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline"
+  register: unified_cgroup_hierarchy
+  ignore_errors: true
+  failed_when: false
+
+- name: Check distribution and version
+  set_fact:
+    is_debian_11_or_later: true
+  when:
+    - ansible_distribution == 'Debian'
+    - ansible_distribution_major_version | int >= 11
+
+- block:
+  - name: Append systemd.unified_cgroup_hierarchy=0 to GRUB_CMDLINE_LINUX
+    shell: |
+      GRUB_FILE="/etc/default/grub"
+      SEARCH_PATTERN="^GRUB_CMDLINE_LINUX="
+      APPEND_TEXT="systemd.unified_cgroup_hierarchy=0 "
+
+      if ! grep -q "systemd.unified_cgroup_hierarchy=0" "$GRUB_FILE"; then
+          sed -i.bak.$(date +%Y%m%d-%H%M%S) "/$SEARCH_PATTERN/s/\"/& $APPEND_TEXT/" "$GRUB_FILE"
+      fi
+    args:
+      executable: /bin/bash
+    register: grub_update
+
+  - name: Update GRUB
+    command: update-grub
+
+  - name: Reboot the system
+    ansible.builtin.reboot:
+
+  - name: Wait for the system to become available
+    wait_for_connection:
+      timeout: 900
+  become: yes
+  when:
+  - is_debian_11_or_later| default(false)|bool == true
+  - unified_cgroup_hierarchy.rc != 0
+
+- name: get version tag
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    /usr/bin/kubectl get OnecloudCluster -n onecloud -o jsonpath='{.items[0].spec.version}'
+  args:
+      executable: /bin/bash
+  delegate_to: "{{ k8s_controlplane_host }}"
+  register: k8s_version_tag
+  ignore_errors: true
+  failed_when: false
+  when: k8s_controlplane_host is defined
+
+- name: set onecloud_version if not provided
+  set_fact:
+    onecloud_version: "{{ k8s_version_tag.stdout }}"
+  when:
+  - onecloud_version is not defined
+  - k8s_version_tag is defined
+  - k8s_version_tag.rc == 0
+
 - name: set var
   set_fact:
     onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
 
 - name: config iptables for debian
   shell: |
-    if iptables -V |grep -wq nf_tables && ls -l /usr/sbin/iptables |grep -wq alternatives; then
-      update-alternatives --set iptables /usr/sbin/iptables-legacy
-      update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-      update-alternatives --set arptables /usr/sbin/arptables-legacy
-      update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+    if sudo iptables -V |grep -wq nf_tables && ls -l /usr/sbin/iptables |grep -wq alternatives; then
+      sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
+      sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+      sudo update-alternatives --set arptables /usr/sbin/arptables-legacy
+      sudo update-alternatives --set ebtables /usr/sbin/ebtables-legacy
       if [ -x /usr/bin/aptitude ] && [ ! -x /usr/sbin/nft ]; then
-          aptitude install nftables -y
-          nft flush ruleset
+          sudo aptitude install nftables -y
+          sudo nft flush ruleset
       fi
     fi
+  become: true
   args:
     executable: /bin/bash
 
@@ -23,6 +86,7 @@
     url: https://iso.yunion.cn/debian/{{ ansible_distribution_major_version }}/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/yunion.gpg-key.asc
     dest: /tmp/yunion.gpg-key.asc
     validate_certs: no
+  become: true
 
 # https://iso.yunion.cn/debian/10/3.9/x86_64/
 - name: apply debian sig key
@@ -31,25 +95,38 @@
     apt-key add /tmp/yunion.gpg-key.asc;
     apt-get update -y;
     rm -f /tmp/yunion.gpg-key.asc
+  become: true
   args:
     executable: /bin/bash
 
 - name: install common packages via loop
   package:
-    name: "{{ item }}"
+    name: "{{ package_item }}"
+  become: true
   with_items:
   - "{{ common_packages }}"
-  when:
-  - common_packages is defined
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  tags:
+  - package
 
 - name: install latest packages via loop
   package:
-    name: "{{ item }}"
+    name: "{{ package_item }}"
     state: latest
+  become: true
   with_items:
   - "{{ latest_packages }}"
   when:
   - latest_packages is defined
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  tags:
+  - package
 
 - name: Check that if selinux config exists
   stat:
@@ -59,6 +136,7 @@
 - name: Turn off selinux
   selinux:
     state: disabled
+  become: true
   when:
     - selinux_conf_exists.stat.exists
 
@@ -71,6 +149,7 @@
     if [ ! -f /opt/cloud/contrib/OVMF.fd ]; then
       ln -s /usr/share/ovmf/OVMF.fd /opt/cloud/contrib/OVMF.fd
     fi
+  become: true
   args:
     executable: /bin/bash
 

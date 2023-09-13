@@ -11,38 +11,46 @@
   include_tasks: "{{ major_version_task_file }}"
 
 - name: Import OS Arch tasks
-  include_tasks: "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}_{{ ansible_architecture }}.yml"
+  include_tasks: "{{ item }}"
+  with_first_found:
+  - files:
+    - "{{ ansible_distribution | lower | regex_replace('[^a-zA-Z0-9 ]+|[ ]+$', '') | replace(' ','_') }}-{{ansible_distribution_release}}.yml"
+    - "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}_{{ ansible_architecture }}.yml"
+    - "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}.yml"
+    - "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
+    paths:
+    - ../tasks
 
 - name: reset iptables rules
   shell: |
     # backup iptable ruleset
     fn=/etc/iptables.backup.$(date +"%Y%m%d-%H%M%S")
-    iptables-save > "$fn"
+    sudo iptables-save > "$fn"
 
     # reset iptable rules
-    iptables -t nat -F
-    iptables -t nat -X
-    iptables -t nat -P PREROUTING ACCEPT
-    iptables -t nat -P POSTROUTING ACCEPT
-    iptables -t nat -P OUTPUT ACCEPT
-    iptables -t mangle -F
-    iptables -t mangle -X
-    iptables -t mangle -P PREROUTING ACCEPT
-    iptables -t mangle -P INPUT ACCEPT
-    iptables -t mangle -P FORWARD ACCEPT
-    iptables -t mangle -P OUTPUT ACCEPT
-    iptables -t mangle -P POSTROUTING ACCEPT
-    iptables -F
-    iptables -X
-    iptables -P FORWARD ACCEPT
-    iptables -P INPUT ACCEPT
-    iptables -P OUTPUT ACCEPT
-    iptables -t raw -F
-    iptables -t raw -X
-    iptables -t raw -P PREROUTING ACCEPT
-    iptables -t raw -P OUTPUT ACCEPT
-    service iptables save || :
-    service iptables restart || :
+    sudo iptables -t nat -F
+    sudo iptables -t nat -X
+    sudo iptables -t nat -P PREROUTING ACCEPT
+    sudo iptables -t nat -P POSTROUTING ACCEPT
+    sudo iptables -t nat -P OUTPUT ACCEPT
+    sudo iptables -t mangle -F
+    sudo iptables -t mangle -X
+    sudo iptables -t mangle -P PREROUTING ACCEPT
+    sudo iptables -t mangle -P INPUT ACCEPT
+    sudo iptables -t mangle -P FORWARD ACCEPT
+    sudo iptables -t mangle -P OUTPUT ACCEPT
+    sudo iptables -t mangle -P POSTROUTING ACCEPT
+    sudo iptables -F
+    sudo iptables -X
+    sudo iptables -P FORWARD ACCEPT
+    sudo iptables -P INPUT ACCEPT
+    sudo iptables -P OUTPUT ACCEPT
+    sudo iptables -t raw -F
+    sudo iptables -t raw -X
+    sudo iptables -t raw -P PREROUTING ACCEPT
+    sudo iptables -t raw -P OUTPUT ACCEPT
+    sudo service iptables save || :
+    sudo service iptables restart || :
   args:
     executable: /bin/bash
 
@@ -51,9 +59,12 @@
     for service in yunion-host-image yunion-host-sdnagent firewalld
     do
       if [ -f /usr/lib/systemd/system/$service.service ]; then
-        systemctl disable --now $service
+        sudo systemctl disable --now $service
       fi
     done
+  become: true
+  args:
+    executable: /bin/bash
 
 - name: Config NetworkManager
   include_role:
@@ -63,6 +74,7 @@
   modprobe:
     name: "{{ item }}"
     state: present
+  become: true
   loop:
   - br_netfilter
   - ip_conntrack
@@ -75,12 +87,14 @@
     dest: /etc/modules-load.d/kubernetes.conf
     content:
       br_netfilter
+  become: true
 
 - name: Change sysctl setting
   sysctl:
     name: "{{ item }}"
     value: "1"
     state: present
+  become: true
   loop:
   - net.bridge.bridge-nf-call-iptables
   - net.bridge.bridge-nf-call-ip6tables
@@ -91,12 +105,14 @@
     name: "fs.inotify.max_user_watches"
     value: "65536"
     state: present
+  become: true
 
 - name: Change sysctl fs.inotify.max_user_instances
   sysctl:
     name: "fs.inotify.max_user_instances"
     value: "8192"
     state: present
+  become: true
 
 - name: Disable systemd swap service
   shell: |
@@ -116,7 +132,7 @@
 
     cp -fv /etc/fstab /etc/fstab.$(date +"%Y%m%d-%H%M%S").bak
     sed -i '/swap/ s/^#*/#/' -i /etc/fstab
-
+  become: true
   args:
     executable: /bin/bash
   when:
@@ -128,12 +144,14 @@
     name: "{{ item }}"
     fstype: swap
     state: absent
+  become: true
   with_items:
   - swap
   - none
 
 - name: Turn off swap now
   command: swapoff -a
+  become: true
   when: ansible_swaptotal_mb > 0
 
 - name: Create sysconfig directory if does not exist
@@ -141,6 +159,7 @@
     path: /etc/sysconfig/modules/
     state: directory
     mode: '0755'
+  become: true
 
 - name: kernel module config
   include_role:
@@ -155,18 +174,40 @@
       state: directory
       owner: root
       group: root
+    become: true
 
   - name: Config docker file
     template: src=daemon.json.j2 dest=/etc/docker/daemon.json
+    become: true
+    when:
+    - is_uos_kongzi|default(false) | bool == false
+
+  - name: Config docker file
+    shell: |
+      cat > /etc/docker/daemon.json <<EOF
+      {
+        "bridge": "none",
+        "experimental": true,
+        "iptables": false,
+        "data-root": "/opt/docker"
+      }
+      EOF
+    become: true
+    args:
+      executable: /bin/bash
+    when:
+    - is_uos_kongzi|default(false) | bool == true
 
   - name: Restart docker service
     service: name=docker state=restarted daemon_reload=yes enabled=yes
+    become: true
   when:
     skip_docker_config is not defined or skip_docker_config|default(false)|bool == false
 
 # k8s packages
 - name: Enable kubelet
   service: name=kubelet enabled=yes
+  become: true
   tags: k8s
 
 - name: Export cloud bin path in /etc/profile
@@ -176,6 +217,7 @@
     state: present
     create: yes
     regexp: '^export PATH=.*/opt/yunion/bin'
+  become: true
   when: shell is undefined or shell == 'bash'
 
 - name: Enable cloud systemd services
@@ -183,6 +225,7 @@
     name: "{{ item }}"
     enabled: yes
     state: started
+  become: true
   loop:
   - yunion-executor
 

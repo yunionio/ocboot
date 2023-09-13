@@ -1,18 +1,29 @@
+- set_fact: default_interface=false
+
 - name: Get default gateway
   shell: "ip route get 1 | head -n 1 | awk '{print $3}'"
   register: default_gateway_ret
 
-- name: Set default gateway var
-  set_fact:
-    default_gateway: "{{ default_gateway_ret.stdout }}"
-
-- name: "Get default gateway {{ default_gateway }} local ip address"
+- name: Get default ip by node ip by command
   shell: "ip route get 1 | head -n 1 | awk '{print $7}'"
   register: default_ip_ret
 
-- name: Set default ip var
+- name: Parse default ip by node
   set_fact:
-    default_ip: "{{ default_ip_ret.stdout }}"
+    default_ip:  "{{ default_ip_ret.stdout }}"
+
+- name: Default interface
+  set_fact:
+    default_interface: true
+  when:
+  - node_ip is defined
+  - node_ip == default_ip
+  - node_ip is ansible.utils.ipv4
+
+- name: Set default Gateway
+  set_fact:
+    default_gateway: "{{ default_gateway_ret.stdout if default_interface else ''}}"
+    default_ip: "{{ default_ip if default_interface else node_ip }}"
 
 - name: "Get default ip address {{ default_ip }} masklen"
   shell: |
@@ -47,6 +58,7 @@
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: 'kubectl get crd | grep onecloudcluster'
+  become: yes
   retries: 30
   delay: 10
   register: result
@@ -112,6 +124,7 @@
   register: result
   until: result.rc == 0
   ignore_errors: yes
+  become: yes
   when:
   - OC_CLUSTER_COUNT.stdout|int == 0
 
@@ -121,6 +134,7 @@
   shell: |
     kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/minio/enable", "value": true}]'
     kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/glance/switchToS3", "value": true}]'
+  become: yes
   when:
   - enable_minio is defined
   - enable_minio|default(false)|bool == true
@@ -130,17 +144,45 @@
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
     kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/productVersion", "value": "{{ product_version }}"}]'
+  become: yes
   when:
   - product_version is defined
 
-- name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin"
+- name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin for root"
   shell: |
     /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin
+    /opt/yunion/bin/ocadm cluster rcadmin > /tmp/.onecloud_rcadmin
+  become: yes
   retries: 6
   delay: 10
   ignore_errors: yes
+  register: onecloud_rcadmin
 
-- name: "Source ~/.onecloud_rcadmin in ~/.bashrc"
+- name: Print message if ansible version is greater than 2.7.0
+  shell: |
+    if [ "$EUID" -eq 0 ]; then
+      rm -f /tmp/.onecloud_rcadmin
+    else
+      conf=~/.onecloud_rcadmin
+      sudo mv /tmp/.onecloud_rcadmin $conf
+      sudo chown {{ansible_user_id}}:{{ansible_user_id}} $conf
+    fi
+  args:
+    executable: /bin/bash
+
+- name: "Source ~/.onecloud_rcadmin in ~/.bashrc for root"
+  lineinfile:
+    dest: ~/.bashrc
+    line: "source ~/.onecloud_rcadmin"
+    state: present
+    create: yes
+    regexp: '^source ~/.onecloud_rcadmin'
+  become: yes
+  ignore_errors: yes
+  when:
+  - shell is undefined or shell == 'bash'
+
+- name: "Source ~/.onecloud_rcadmin in ~/.bashrc for current user"
   lineinfile:
     dest: ~/.bashrc
     line: "source ~/.onecloud_rcadmin"
@@ -150,23 +192,27 @@
   ignore_errors: yes
   when:
   - shell is undefined or shell == 'bash'
+  - ansible_user_id != 'root'
 
 - name: "Check onecloud user {{ onecloud_user }} exists"
   shell: |
     eval $(/opt/yunion/bin/ocadm cluster rcadmin)
     /opt/yunion/bin/climc user-list | grep -w {{ onecloud_user }} | wc -l
   register: OC_USER_COUNT
+  become: yes
   ignore_errors: yes
   retries: 3
   delay: 10
 
 - name: "Create onecloud web login user {{ onecloud_user }}"
   shell: |
-   eval $(/opt/yunion/bin/ocadm cluster rcadmin)
-   /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
+    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
   ignore_errors: yes
+  become: yes
   retries: 3
   delay: 10
+  register: create_user_ret
   args:
     executable: /bin/bash
   when:
@@ -175,9 +221,11 @@
 
 - name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
   shell: |
-    source ~/.onecloud_rcadmin
+    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
   retries: 3
+  register: update_user_ret
+  become: yes
   delay: 10
   args:
     executable: /bin/bash
@@ -188,6 +236,7 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc project-add-user system {{ onecloud_user }} admin
+  become: yes
   args:
     executable: /bin/bash
   when:
@@ -197,6 +246,7 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc network-show adm0 > /dev/null 2>&1
+  become: yes
   register: network_admin_exist
   ignore_errors: yes
   changed_when: false
@@ -207,23 +257,37 @@
 - name: "Check if network contains {{ default_ip }}"
   shell: |
     source ~/.onecloud_rcadmin
+    env |grep OS_AUTH
     /opt/yunion/bin/climc network-list --ip {{ default_ip }} | grep -v Total | wc -l
+  become: yes
   register: network_count_ret
   ignore_errors: yes
   args:
     executable: /bin/bash
 
-
 - name: set admin network count
   set_fact:
     admin_network_count: "{{ network_count_ret.stdout }}"
 
+- name: Set adm0 command
+  set_fact:
+    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} "
+
+- name: Update adm0 command
+  set_fact:
+    adm0_cmd: "{{ adm0_cmd }} --gateway {{ default_gateway }} "
+  when:
+  - default_gateway | length > 0
+
+- debug: var=adm0_cmd
+
 - name: "Register adm0 network for {{ default_ip }}/{{ default_masklen }}, gateway {{ default_gateway }}"
   shell: |
     source ~/.onecloud_rcadmin
-    /opt/yunion/bin/climc network-create --gateway {{ default_gateway }} --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} || :
+    {{ adm0_cmd }}
     /opt/yunion/bin/climc network-private adm0 || :
   when: network_admin_exist.rc != 0 and admin_network_count|int == 0
+  become: yes
   ignore_errors: yes
   args:
     executable: /bin/bash
@@ -243,5 +307,6 @@
       sh -c "$line" 2>&1 | tee -a /tmp/post-install.log
       echo "[DONE ]processing $line OK"
     done
+  become: yes
   args:
     executable: /bin/bash

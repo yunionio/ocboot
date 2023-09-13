@@ -1,14 +1,3 @@
-- name: Install mariadb
-  package:
-    name: "{{ item }}"
-    state: "present"
-  with_items:
-    - mariadb-server
-
-- name: pips for mysql/mariadb
-  pip:
-    name: PyMySQL
-
 - name: Allow remote hosts to connect (Debian)
   lineinfile:
     path: /etc/mysql/mariadb.conf.d/50-server.cnf
@@ -16,11 +5,7 @@
     regexp: '^bind-address'
     line: 'bind-address            = 0.0.0.0'
     state: present
-
-- name: make conf dir
-  file:
-    name: /etc/my.cnf.d
-    state: directory
+  become: yes
 
 # restart the mariadb service asap to allow remote access
 - name: Restart Mariadb
@@ -28,3 +13,4 @@
     name: mariadb
     state: restarted
     enabled: yes
+  become: yes

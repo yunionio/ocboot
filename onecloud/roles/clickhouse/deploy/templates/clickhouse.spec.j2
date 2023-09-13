@@ -1,6 +1,6 @@
 spec:
   clickhouse:
     username: "default"
-    host: {{ ansible_default_ipv4.address }}
+    host: {{ node_ip }}
     password: {{ ch_password }}
     port: {{ ch_port }}

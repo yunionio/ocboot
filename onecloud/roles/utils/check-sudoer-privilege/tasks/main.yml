@@ -1,0 +1,71 @@
+# block 1
+- block:
+  - name: set bin facts
+    set_fact:
+      sudo_nopasswd_bin_lists:
+        - /home/{{ansible_user_id}}/.local/bin/ansible
+        - /home/{{ansible_user_id}}/.local/bin/ansible-playbook
+        - /opt/yunion/bin/ocadm
+        - /usr/bin/chown
+        - /usr/bin/cp
+        - /usr/bin/docker
+        - /usr/bin/kubeadm
+        - /usr/bin/kubectl
+        - /usr/bin/kubelet
+        - /usr/bin/mkdir
+        - /usr/bin/mount
+        - /usr/bin/mv
+        - /usr/bin/python
+        - /usr/bin/python3
+        - /usr/bin/sed
+        - /usr/bin/sh
+        - /usr/bin/systemctl
+        - /usr/bin/umount
+        - /usr/sbin/dmidecode
+        - /usr/sbin/iptables
+        - /usr/sbin/iptables-save
+        - /usr/sbin/service
+        - /usr/sbin/update-alternatives
+
+  - name: Add executable commands to my_list
+    set_fact:
+      sudo_nopasswd_bin_lists: "{{ sudo_nopasswd_bin_lists + [item] }}"
+    loop:
+      - /usr/bin/yum
+      - /usr/bin/dnf
+      - /usr/bin/apt
+    when:
+    - lookup('file', item,errors='ignore') | default(None) is not none
+
+  - name: Test NOPASSWD ALL privilege
+    shell: |
+      sudo -lU "{{ansible_user_id}}" | grep -w NOPASSWD| sed -e 's#.*NOPASSWD##' | grep -iwq ALL
+    register: with_all_privilege
+    ignore_errors: true
+    failed_when: false
+
+  # block 2
+  - block:
+    - name: Test each file in sudo_nopasswd_bin_lists has been granted with NOPASSWD privilege.
+      shell: |
+        sudo -lU "{{ansible_user_id}}" | grep -w NOPASSWD| sed -e 's#.*NOPASSWD##' | grep -wo "{{item}}"
+      loop: "{{sudo_nopasswd_bin_lists | list}}"
+      register: show
+      ignore_errors: true
+
+    # block 3
+    - block:
+      - name: Privilege test result
+        debug:
+          msg: "following commands should be in user {{ansible_user_id}}'s sudoer file: {{ show.results | selectattr('rc', 'ne', 0) | map(attribute='item') | list | join(',') }}"
+
+      - shell: exit 1
+
+      # when3
+      when: show.results | selectattr('rc', 'ne', 0) | map(attribute='item') | list | length > 0
+    # when2
+    when: with_all_privilege.rc != 0
+  # when 1
+  when: ansible_user_id != 'root'
+  tags:
+  - sudoer
