@@ -44,6 +44,7 @@ common_services:
 latest_packages:
     - ca-certificates
     - yunion-climc
+    - yunion-climc-ee
     - yunion-executor
     - yunion-fetcherfs
     - yunion-ocadm
