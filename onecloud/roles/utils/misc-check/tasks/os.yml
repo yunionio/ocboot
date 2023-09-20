@@ -27,7 +27,7 @@
         ansible_distribution_name: "Kylin Linux Advanced Server"
         conditions:
           - "'{{ ansible_distribution_version }}' is version('V10', '==')"
-          - "'{{ ansible_distribution_release }}' in ['Kivity', 'Sword']"
+          - "'{{ ansible_distribution_release }}' in ['Kivity', 'Sword', 'SVS2.22.2 ZYJ aarch64']"
       uos:
         ansible_distribution_name: "UnionTech OS Server"
         conditions:

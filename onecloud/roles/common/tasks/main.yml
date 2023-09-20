@@ -70,6 +70,8 @@
   become: true
   args:
     executable: /bin/bash
+  when:
+  - ansible_distribution_release != 'SVS2.22.2 ZYJ aarch64'
 
 - name: Config NetworkManager
   include_role:
@@ -218,8 +220,38 @@
     args:
       executable: /bin/bash
     when:
-    - ansible_distribution_release == 'Kivity'
+    - ansible_distribution == 'Kylin Linux Advanced Server'
     - ansible_distribution_version == 'V10'
+
+  - name: Update docker.service
+    ansible.builtin.replace:
+      path: /usr/lib/systemd/system/docker.service
+      regexp: '^RestartSec=\d$'
+      replace: 'RestartSec=30'
+    become: true
+
+  - name: Comment out Requires line
+    ansible.builtin.replace:
+      path: /usr/lib/systemd/system/docker.service
+      regexp: '^Requires=docker.socket containerd.service$'
+      replace: '# Requires=docker.socket containerd.service'
+    become: true
+
+  - name: Modify dockerd service
+    ansible.builtin.replace:
+      path: /usr/lib/systemd/system/docker.service
+      regexp: '^ExecStart=/usr/bin/dockerd .*$'
+      replace: 'ExecStart=/usr/bin/dockerd'
+    become: true
+    when:
+    - ansible_distribution_release == 'SVS2.22.2 ZYJ aarch64'
+
+  - name: Reload systemd
+    ansible.builtin.systemd:
+      daemon_reload: yes
+    become: true
+
+  - shell: sleep 60
 
   - name: Restart docker service
     service: name=docker state=restarted daemon_reload=yes enabled=yes

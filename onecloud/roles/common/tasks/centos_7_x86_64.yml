@@ -6,7 +6,7 @@
   - extra_packages is defined
   - common_packages is defined
 
-- name: install common packages via loop
+- name: install common packages via loop for not {{ansible_distribution_release}}
   package:
     name: "{{ package_item }}"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
@@ -20,6 +20,29 @@
   become: yes
   tags:
   - package
+  when:
+  - ansible_distribution_release is defined
+  - ansible_distribution_release is not regex('^SVS2.22.2 ZYJ.*$')
+
+- name: install common packages via loop kylin3 v10 svs2
+  dnf:
+    name: "{{ package_item }}"
+    state: present
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+    allowerasing: true
+  with_items:
+  - "{{ common_packages }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  become: yes
+  tags:
+  - package
+  when:
+    - ansible_distribution_release is defined
+    - ansible_distribution_release is match('SVS2.22.2 ZYJ.*')
 
 - name: install latest packages via loop
   package:

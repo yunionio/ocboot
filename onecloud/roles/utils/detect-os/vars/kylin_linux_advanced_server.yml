@@ -49,7 +49,7 @@ common_packages:
   - libusb
   - libusbx
   - libverto-libevent
-  - lm_sensors-libs
+  # - lm_sensors-libs
   - nfs-utils
   - nmap-ncat
   - ntp
