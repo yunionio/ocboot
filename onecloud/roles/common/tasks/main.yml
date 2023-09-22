@@ -71,7 +71,7 @@
   args:
     executable: /bin/bash
   when:
-  - ansible_distribution_release != 'SVS2.22.2 ZYJ aarch64'
+  - ansible_distribution_release is not match('SVS2.22.2 ZYJ.*')
 
 - name: Config NetworkManager
   include_role:
@@ -244,7 +244,7 @@
       replace: 'ExecStart=/usr/bin/dockerd'
     become: true
     when:
-    - ansible_distribution_release == 'SVS2.22.2 ZYJ aarch64'
+    - ansible_distribution_release is match('SVS2.22.2 ZYJ.*')
 
   - name: Reload systemd
     ansible.builtin.systemd:

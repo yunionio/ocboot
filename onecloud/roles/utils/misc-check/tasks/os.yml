@@ -27,7 +27,7 @@
         ansible_distribution_name: "Kylin Linux Advanced Server"
         conditions:
           - "'{{ ansible_distribution_version }}' is version('V10', '==')"
-          - "'{{ ansible_distribution_release }}' in ['Kivity', 'Sword', 'SVS2.22.2 ZYJ aarch64']"
+          - "'{{ ansible_distribution_release }}' in ['Kivity', 'Sword'] or ansible_distribution_release is match('SVS2.22.2 ZYJ.*')"
       uos:
         ansible_distribution_name: "UnionTech OS Server"
         conditions:
@@ -55,20 +55,4 @@
   with_items: "{{ supported_os[supported_os_key].conditions }}"
   when:
     - ansible_distribution.startswith(supported_os[supported_os_key].ansible_distribution_name)
-
-- name: Turn off Kysec and Reboot for Kylin Sp3
-  shell: |
-    if [ -f /opt/yunion/upgrade/rpms/dky/hack.sh ]; then
-      cd /opt/yunion/upgrade/rpms/dky/
-      bash /opt/yunion/upgrade/rpms/dky/hack.sh
-    fi
-    systemctl disable --now systemctl || :
-    pkill -9 dnsmasq || :
-    mv -f /usr/sbin/dnsmasq /usr/sbin/dnsmasq.bak || :
-  become: true
-  args:
-    executable: /bin/bash
-  when:
-  - ansible_distribution_release == 'Kivity'
-  - ansible_distribution_version == 'V10'
 

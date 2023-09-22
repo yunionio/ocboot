@@ -9,19 +9,27 @@
     path: /etc/yunion/host.conf
     line: "generic_sm_host: true"
 
+- name: Turn off Kysec and Reboot for Kylin Sp3
+  shell: |
+    if [ -f /opt/yunion/upgrade/rpms/dky/hack.sh ]; then
+      cd /opt/yunion/upgrade/rpms/dky/
+      bash /opt/yunion/upgrade/rpms/dky/hack.sh
+    fi
+    systemctl disable --now systemctl || :
+    pkill -9 dnsmasq || :
+    mv -f /usr/sbin/dnsmasq /usr/sbin/dnsmasq.bak || :
+  become: true
+  args:
+    executable: /bin/bash
+  when:
+  - ansible_distribution_release == 'Kivity' or ansible_distribution_release is match('SVS2.22.2 ZYJ.*')
+
 - name: Notify host restart
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
     host=$(kubectl get nodes -n onecloud -o wide |grep -v '^NAME' |awk '{print $1}' |head -1)
     [ -n "$host" ] && /opt/yunion/bin/ocadm node enable-host-agent --node "$host" || :
-
-    ip=$(ip route get 1  |head -1 |awk '{print $7}' | sort -u |head -1)
-    if [ ! -s /opt/VMSecurity/vsoc/info/host_id_info ]; then
-      mkdir -p /opt/VMSecurity/vsoc/info
-      echo "1234567890123456" > /opt/VMSecurity/vsoc/info/host_id_info
-      echo "$ip" > /opt/VMSecurity/vsoc/info/server_ip_info
-    fi
 
     for i in {1..10}; do
     kubectl -n onecloud get  configmap default-host -o yaml > /tmp/host.yaml
@@ -51,4 +59,4 @@
   when:
   - group_names is defined
   - group_names | default([])| intersect(['primary_master_node']) | length > 0
-
+  - ansible_distribution_release == 'Kivity' or ansible_distribution_release is match('SVS2.22.2 ZYJ.*')
