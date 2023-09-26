@@ -24,10 +24,9 @@ def new_oc_manifest(version):
     glance = new_glance_service(version, mysql, keystone)
     kubeServer = KubeServerService(version, mysql, keystone)
     ansibleserver = new_ansibleserver_service(version, mysql, keystone)
-    test_version = "v3.10-lzx-0801.0"
-    climc = ClimcService(test_version, keystone, region)
-    apigateway = new_apigateway_service(test_version, keystone)
-    webconsole = new_webconsole_service(test_version, mysql, keystone)
+    climc = ClimcService(version, keystone, region)
+    apigateway = new_apigateway_service(version, keystone)
+    webconsole = new_webconsole_service(version, mysql, keystone)
     yunionconf = new_yunionconf_service(version, mysql, keystone)
     monitor = new_monitor_service(version, mysql, region)
     cloudmon = new_cloudmon_service(version, keystone)
