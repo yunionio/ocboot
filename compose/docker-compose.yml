@@ -640,7 +640,7 @@ services:
     - --component=climc
     - --step=init
   climc:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/climc:v3.10-lzx-0801.0
+    image: registry.cn-beijing.aliyuncs.com/yunionio/climc:v3.10.5
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/rcadmin:/etc/yunion/rcadmin:ro
@@ -725,7 +725,7 @@ services:
     - --component=apigateway
     - --step=init
   apigateway:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/apigateway:v3.10-lzx-0801.0
+    image: registry.cn-beijing.aliyuncs.com/yunionio/apigateway:v3.10.5
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/apigateway.conf:/etc/yunion/apigateway.conf:ro
@@ -775,7 +775,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   webconsole:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/webconsole:v3.10-lzx-0801.0
+    image: registry.cn-beijing.aliyuncs.com/yunionio/webconsole:v3.10.5
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/webconsole.conf:/etc/yunion/webconsole.conf:ro
