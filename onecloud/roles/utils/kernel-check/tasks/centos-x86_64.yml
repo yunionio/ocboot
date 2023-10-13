@@ -1,6 +1,24 @@
 # This role contains common plays that will run on all nodes
+- name: version test
+  debug:
+    msg: "onecloud_version: {{onecloud_version }} online_status: {{online_status}} ansible_python_interpreter: {{ansible_python_interpreter}}"
 
-- name: Install Cloud Kernel
+- name: Install kernel-5.4.130-1.yn20230805.el7 when GE v3.10.7
+  yum:
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    name:
+    - kernel-5.4.130-1.yn20230805.el7
+    - kernel-devel-5.4.130-1.yn20230805.el7
+    - kernel-headers-5.4.130-1.yn20230805.el7
+  vars:
+    ansible_python_interpreter: /usr/bin/python2
+  become: yes
+  when:
+  - onecloud_version is defined
+  - onecloud_version is version('v3.10.7', '>=') or online_status == 'offline'
+
+- name: Install kernel-5.4.130-1.yn20221208.el7 when LE v3.10.6
   yum:
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
@@ -8,7 +26,9 @@
     - kernel-5.4.130-1.yn20221208.el7
     - kernel-devel-5.4.130-1.yn20221208.el7
     - kernel-headers-5.4.130-1.yn20221208.el7
-    # - kernel-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
-    # - kernel-devel-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
-    # - kernel-headers-0:3.10.0-1160.53.1.el7.yn20220518.x86_64
+  vars:
+    ansible_python_interpreter: /usr/bin/python2
   become: yes
+  when:
+  - onecloud_version is defined
+  - onecloud_version is version('v3.10.7', '<')

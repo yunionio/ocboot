@@ -15,6 +15,7 @@ from lib.utils import init_local_user_path
 from lib.utils import prRed
 from lib.utils import tryBackupFile
 from lib.get_interface_by_ip import get_interface_by_ip
+import subprocess
 
 
 def show_usage():
@@ -340,6 +341,40 @@ def get_args():
 #  product_version: 'FullStack'
 
 
+def ensure_python3_yaml(os):
+
+    if os == 'redhat':
+        query = "sudo rpm -qa"
+        installer = "yum"
+    elif os == 'debian':
+        query = "sudo dpkg -l"
+        installer = "apt"
+    else:
+        print("OS not supported")
+        exit(1)
+
+    print(f'ensure_python3_yaml: os: {os}; query: {query}; installer: {installer}')
+    output = subprocess.check_output(query, shell=True).decode('utf-8')
+
+    if "python3.*pyyaml" in output:
+        print("PyYAML already installed")
+        return
+
+    output = subprocess.check_output(f"sudo {installer} search pyyaml", shell=True).decode('utf-8')
+
+    match = re.search(r'python3\d?-pyyaml', output, re.IGNORECASE)
+    if match:
+        pkg = match.group(0)
+    else:
+        pkg = None
+
+    if not pkg:
+        print("No python3 package found")
+        exit(1)
+    else:
+        subprocess.run(f"sudo {installer} install -y {pkg}", shell=True)
+
+
 def main():
     init_local_user_path()
     args = get_args()
@@ -368,7 +403,12 @@ def main():
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
-        install_packages(['python3-pip', 'python2-pyyaml', 'PyYAML'])
+        if os.system('[[ -x /usr/bin/apt ]]') == 0:
+            install_packages(['python3-pip'])
+            ensure_python3_yaml('debian')
+        elif os.system('[[ -x /usr/bin/yum ]]') == 0:
+            install_packages(['python3-pip', 'python2-pyyaml'])
+            ensure_python3_yaml('redhat')
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf)
