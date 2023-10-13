@@ -3,7 +3,7 @@
   debug:
     msg: "onecloud_version: {{onecloud_version }} online_status: {{online_status}} ansible_python_interpreter: {{ansible_python_interpreter}}"
 
-- name: Install kernel-5.4.130-1.yn20230805.el7 when GE v3.10.7 {{online_status}}
+- name: Install kernel-5.4.130-1.yn20230805.el7 when GE v3.10.7
   yum:
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
@@ -16,10 +16,9 @@
   become: yes
   when:
   - onecloud_version is defined
-  - onecloud_version is version('v3.10.7', '>=')
-  - onecloud_version is version('v3.10', '>=')
+  - onecloud_version is version('v3.10.7', '>=') or online_status == 'offline'
 
-- name: Install kernel-5.4.130-1.yn20221208.el7 when LE v3.10.6 {{online_status}}
+- name: Install kernel-5.4.130-1.yn20221208.el7 when LE v3.10.6
   yum:
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
@@ -32,4 +31,4 @@
   become: yes
   when:
   - onecloud_version is defined
-  - onecloud_version is version('v3.10.6', '<=')
+  - onecloud_version is version('v3.10.7', '<')

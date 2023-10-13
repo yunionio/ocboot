@@ -1,6 +1,6 @@
 ---
 - name: Define kernel regex
-  set_fact: kerzel_regex="\.yn[0-9]{8}\."
+  set_fact: kernel_regex="\.yn[0-9]{8}\."
 
 - name: test if nbd is supported
   environment:
