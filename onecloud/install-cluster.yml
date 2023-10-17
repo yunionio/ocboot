@@ -24,8 +24,6 @@
 - hosts: registry_node
   roles:
     - registry
-  tags:
-  - registry
 
 - hosts: primary_master_node
   roles:
