@@ -9,7 +9,7 @@ primary_master_node:
   db_host: 10.127.10.156
   db_user: root
   db_password: your-sql-password
-  onecloud_version: v3.9.8
+  onecloud_version: v3.10.6
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
   as_host: true
