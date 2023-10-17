@@ -1,0 +1,6 @@
+[yunion-local]
+name=Packages for Yunion- $basearch
+baseurl=file:///opt/yunion/upgrade
+failovermethod=priority
+enabled=1
+gpgcheck=0
