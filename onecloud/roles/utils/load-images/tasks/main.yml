@@ -14,89 +14,23 @@
   when:
   - offline_data_path is defined
 
-- block:
-  - name: cp load-images.sh
-    copy:
-      mode: "0755"
-      src: load-images.sh
-      dest: /tmp/load-images.sh
-    become: yes
-    delegate_to: '{{ item }}'
-    with_items:
-    - "{{ offline_node_list }}"
-
-  - name: loading images
-    shell: /tmp/load-images.sh
-    delegate_to: '{{ item }}'
-    with_items:
-    - "{{ offline_node_list }}"
-    become: yes
-
-  - name: Prepare Pushing images
-    copy:
-      mode: "0755"
-      src: push-images.sh
-      dest: /tmp/push-images.sh
-    become: yes
-    when:
-    - high_availability_vip is not defined
-
-  - name: Pushing images to local
-    shell: |
-      for i in {{docker_insecure_registries | join(" ")}}
-      do
-         OFFLINE_DATA_PATH={{ offline_data_path }} INSECURE_REGISTRY=$i /tmp/push-images.sh
-      done
-    delegate_to: '{{ item }}'
-    with_items:
-    - "{{ offline_node_list }}"
-    become: yes
-    when:
-    - high_availability_vip is not defined
-
+- name: cp load-images.sh
+  copy:
+    mode: "0755"
+    src: load-images.sh
+    dest: /tmp/load-images.sh
+  become: yes
   when:
   - offline_node_list | length > 0
-  - lookup('env', 'SECOND_IMAGE_PATH') is not defined or lookup('env', 'SECOND_IMAGE_PATH') | length == 0
-  - docker_insecure_registries | default([]) | length > 0
-  - online_status is defined and online_status == "offline"
-  - offline_data_path | default("") | length > 0
+  delegate_to: '{{ item }}'
+  with_items:
+  - "{{ offline_node_list }}"
 
-# bi arch images section
-- block:
-  - name: Load Version json
-    ansible.builtin.include_vars:
-      file: "{{offline_data_path}}/versions.json"
-      name: versions
-
-  - name: Cp Bi Registry Script
-    copy:
-      mode: "0755"
-      dest: /tmp/load-bi-images.sh
-      src: load-bi-images.sh
-    become: true
-    delegate_to: '{{ item }}'
-    with_items:
-    - "{{ offline_node_list }}"
-
-  - name: Manifest Bi Arch Image Registry
-    shell: |
-      for insecure_registry in {{docker_insecure_registries | join(" ")}}; do
-        OFFLINE_DATA_PATH={{offline_data_path}} VERSIONS_REGISTRY={{versions.registry}} SECOND_IMAGE_PATH=${SECOND_IMAGE_PATH}  ITEM_KEY={{item.key}}  ITEM_VALUE={{item.value}}  INSECURE_REGISTRY=$insecure_registry  /tmp/load-bi-images.sh
-      done
-    loop: "{{ versions.dockers|dict2items }}"
-    loop_control:
-      index_var: item_index
-      label: "[{{ item_index + 1 }}/{{ versions.dockers|dict2items | length }}] {{ item }}"
-    register: img_ret
-    args:
-      executable: /bin/bash
-    become: true
-    when:
-    - high_availability_vip is not defined
-
+- name: loading images
+  shell: /tmp/load-images.sh
+  delegate_to: '{{ item }}'
+  with_items:
+  - "{{ offline_node_list }}"
   when:
-  - lookup('env','SECOND_IMAGE_PATH') | length > 0
   - offline_node_list | length > 0
-  - docker_insecure_registries | default([]) | length > 0
-  - online_status is defined and online_status == "offline"
-  - offline_data_path | default("") | length > 0
+  become: yes
