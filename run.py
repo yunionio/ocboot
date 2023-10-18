@@ -267,7 +267,7 @@ def dynamic_load():
             print("\t%s" % p)
 
 
-def gen_config(ipaddr, product_stack):
+def gen_config(ipaddr, product_stack, enable_host_on_vm):
     global conf
     import os.path
     import os
@@ -311,13 +311,17 @@ def gen_config(ipaddr, product_stack):
     interface = get_interface_by_ip(ipaddr)
     host_networks = f'''host_networks: "{interface}/br0/{ipaddr}"'''
     with open(temp, 'w') as f:
-        f.write(conf.replace('10.127.10.158', ipaddr)
-                .replace('your-sql-password', mypass_mariadb)
-                .replace('your-clickhouse-password', mypass_clickhouse)
-                .replace('ocboot_user', get_username())
-                .replace('v3.4.12', ver)
-                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks)
-                .replace('product_stack', product_stack))
+        conf_result = conf.replace('10.127.10.158', ipaddr) \
+                .replace('your-sql-password', mypass_mariadb) \
+                .replace('your-clickhouse-password', mypass_clickhouse) \
+                .replace('ocboot_user', get_username()) \
+                .replace('v3.4.12', ver) \
+                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks) \
+                .replace('product_stack', product_stack)
+        if enable_host_on_vm:
+            conf_result = conf_result.replace('# as_host_on_vm: true', 'as_host_on_vm: true')
+
+        f.write(conf_result)
     return temp
 
 
@@ -434,7 +438,7 @@ def main():
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf, pip_mirror=args.pip_mirror)
-        conf = gen_config(ip_conf, product_stack)
+        conf = gen_config(ip_conf, product_stack, args.enable_host_on_vm)
     elif path.isfile(ip_conf):
         sz = path.getsize(ip_conf)
         if sz == 0:

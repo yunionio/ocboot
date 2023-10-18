@@ -78,7 +78,8 @@ def inject_add_nodes_options(parser):
 def inject_add_hostagent_options(parser):
     parser.add_argument("--enable-host-on-vm",
                         dest="enable_host_on_vm",
-                        action="store_true", default=False)
+                        action="store_true", default=False,
+                        help="enable kvm host service inside virtual machine")
 
 
 def inject_auto_backup_options(parser):
