@@ -64,6 +64,11 @@
   become: true
   when: ansible_distribution == "Debian"
 
+- name: make conf dir
+  file:
+    name: /etc/my.cnf.d
+    state: directory
+
 - name: enable and start mariadb
   systemd:
     name: mariadb
@@ -79,12 +84,13 @@
     login_password: "{{ db_password }}"
     password: "{{ db_password }}"
     name: "{{ db_user }}"
-    priv: '*.*:ALL,GRANT'
+    priv: "*.*:ALL,GRANT"
     host: "{{ item }}"
     check_implicit_admin: true
   become: true
   loop:
     - "localhost"
+    - "{{ db_host }}"
     - "%"
     - "::1"
     - "127.0.0.1"
@@ -104,4 +110,3 @@
         - "{{ ansible_os_family|lower }}.yml"
         - defaults.yml
       skip: true
-

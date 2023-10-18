@@ -413,8 +413,11 @@ def main():
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
         if os.system('[[ -x /usr/bin/apt ]]') == 0:
-            install_packages(['python3-pip'])
-            ensure_python3_yaml('debian')
+            if os.system('grep -wq "Ubuntu" /etc/os-release') == 0:
+                install_packages(['python3-pip', 'python3-yaml'])
+            else:
+                install_packages(['python3-pip'])
+                ensure_python3_yaml('debian')
         elif os.system('[[ -x /usr/bin/yum ]]') == 0:
             install_packages(['python3-pip', 'python2-pyyaml'])
             ensure_python3_yaml('redhat')
