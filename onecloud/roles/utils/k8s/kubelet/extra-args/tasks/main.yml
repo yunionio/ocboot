@@ -19,4 +19,5 @@
       state: restarted
     become: true
   when:
-    kubelet_result.rc == 0
+  - is_centos_based is defined
+  - kubelet_result.rc == 0
