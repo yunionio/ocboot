@@ -257,7 +257,7 @@ def dynamic_load():
             print("\t%s" % p)
 
 
-def gen_config(ipaddr, product_stack):
+def gen_config(ipaddr, product_stack, enable_host_on_vm):
     global conf
     import os.path
     import os
@@ -299,13 +299,17 @@ def gen_config(ipaddr, product_stack):
     interface = get_interface_by_ip(ipaddr)
     host_networks = f'''host_networks: "{interface}/br0/{ipaddr}"'''
     with open(temp, 'w') as f:
-        f.write(conf.replace('10.127.10.158', ipaddr)
-                .replace('your-sql-password', mypass_mariadb)
-                .replace('your-clickhouse-password', mypass_clickhouse)
-                .replace('ocboot_user', get_username())
-                .replace('v3.4.12', ver)
-                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks)
-                .replace('product_stack', product_stack))
+        conf_result = conf.replace('10.127.10.158', ipaddr) \
+                .replace('your-sql-password', mypass_mariadb) \
+                .replace('your-clickhouse-password', mypass_clickhouse) \
+                .replace('ocboot_user', get_username()) \
+                .replace('v3.4.12', ver) \
+                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks) \
+                .replace('product_stack', product_stack)
+        if enable_host_on_vm:
+            conf_result = conf_result.replace('# as_host_on_vm: true', 'as_host_on_vm: true')
+
+        f.write(conf_result)
     return temp
 
 
@@ -412,19 +416,19 @@ def main():
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
-        if os.system('[[ -x /usr/bin/apt ]]') == 0:
+        if os.system('test -x /usr/bin/apt') == 0:
             if os.system('grep -wq "Ubuntu" /etc/os-release') == 0:
                 install_packages(['python3-pip', 'python3-yaml'])
             else:
                 install_packages(['python3-pip'])
                 ensure_python3_yaml('debian')
-        elif os.system('[[ -x /usr/bin/yum ]]') == 0:
+        elif os.system('test -x /usr/bin/yum') == 0:
             install_packages(['python3-pip', 'python2-pyyaml'])
             ensure_python3_yaml('redhat')
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf, pip_mirror=args.pip_mirror)
-        conf = gen_config(ip_conf, product_stack)
+        conf = gen_config(ip_conf, product_stack, args.enable_host_on_vm)
     elif path.isfile(ip_conf):
         sz = path.getsize(ip_conf)
         if sz == 0:
