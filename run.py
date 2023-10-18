@@ -11,10 +11,10 @@ import re
 import argparse
 from lib import install
 from lib import cmd
+from lib.parser import inject_add_hostagent_options
 from lib.utils import init_local_user_path
 from lib.utils import prRed
 from lib.utils import tryBackupFile
-from lib.get_interface_by_ip import get_interface_by_ip
 import subprocess
 
 
@@ -57,7 +57,7 @@ def check_pip3():
     raise Exception("install python3-pip failed")
 
 
-def check_ansible():
+def check_ansible(pip_mirror):
     minimal_ansible_version = '2.9.27'
     cmd.init_ansible_playbook_path()
     ret = os.system("ansible-playbook --version >/dev/null 2>&1")
@@ -73,7 +73,7 @@ def check_ansible():
     else:
         print("No ansible found. Installing ... ")
     try:
-        install_ansible()
+        install_ansible(pip_mirror)
     except Exception as e:
         print("Install ansible failed, please try to install ansible manually")
         raise e
@@ -100,17 +100,23 @@ def install_packages(pkgs):
     return os.system(cmdline)
 
 
-def install_ansible():
+def install_ansible(mirror):
+
+    def get_pip_install_cmd(suffix_cmd, mirror):
+        cmd = "python3 -m pip install --user --upgrade"
+        if mirror:
+            cmd = f'{cmd} -i {mirror}'
+        return f'{cmd} {suffix_cmd}'
+
     for pkg in ['python2-pyyaml', 'PyYAML']:
         install_packages([pkg])
 
-    if os.system('rpm -qa |grep -q python3-pip') != 0:
-        ret = os.system(
-            'python3 -m pip install --user --upgrade pip setuptools wheel')
+    if os.system('rpm -qa | grep -q python3-pip') != 0:
+        ret = os.system(get_pip_install_cmd('pip setuptools wheel', mirror))
         if ret != 0:
             raise Exception("Install/updrade pip3 failed. ")
-    os.system('python3 -m pip install --user --upgrade pip')
-    ret = os.system('python3 -m pip install --user --upgrade ansible')
+    os.system(get_pip_install_cmd('pip', mirror))
+    ret = os.system(get_pip_install_cmd('ansible', mirror))
     if ret != 0:
         raise Exception("Install ansible failed. ")
 
@@ -154,13 +160,13 @@ def install_passless_ssh(ipaddr):
         raise Exception("check passwordless ssh login failed")
 
 
-def check_env(ipaddr=None):
+def check_env(ipaddr=None, pip_mirror=None):
 
     ignore_check = os.getenv("IGNORE_ALL_CHECKS")
     if ignore_check == "true":
         return
     check_pip3()
-    check_ansible()
+    check_ansible(pip_mirror)
     if ipaddr:
         check_passless_ssh(ipaddr)
 
@@ -267,6 +273,7 @@ def gen_config(ipaddr, product_stack):
     import os
     dynamic_load()
     import yaml
+    from lib.get_interface_by_ip import get_interface_by_ip
 
     config_dir = os.getenv("OCBOOT_CONFIG_DIR")
     image_repository = os.getenv('IMAGE_REPOSITORY')
@@ -316,12 +323,10 @@ def gen_config(ipaddr, product_stack):
 
 def update_config(conf_file, product_version):
     if not os.path.exists(conf_file):
-        raise f"Conf file {conf_file} dose not exist!"
-        return
+        raise Exception(f"Conf file {conf_file} dose not exist!")
 
     if product_version not in ['FullStack', 'CMP', 'Edge']:
-        raise f"Product version {product_version} is not valid! Only 'FullStack', 'CMP', 'Edge' ar supported. "
-        return
+        raise Exception(f"Product version {product_version} is not valid! Only 'FullStack', 'CMP', 'Edge' ar supported.")
 
     with open(conf_file, 'r') as f:
         conf = f.read().strip()
@@ -346,12 +351,16 @@ def get_args():
                         help="Input the target IPv4 or Config file")
     parser.add_argument('--offline-data-path', nargs='?',
                         help="offline packages location")
+    # chose product_version in ['FullStack', 'CMP', 'Edge']
     parser.add_argument('--stack', type=str, default='fullstack',
                         help="choose product version",
                         choices=['fullstack', 'cmp', 'edge'])
+    pip_mirror_help = "specify pip mirror to install python packages smoothly"
+    pip_mirror_suggest = "https://mirrors.aliyun.com/pypi/simple/"
+    parser.add_argument('--pip-mirror', '-m', type=str, dest='pip_mirror',
+                        help=f"{pip_mirror_help}, e.g.: {pip_mirror_suggest}")
+    inject_add_hostagent_options(parser)
     return parser.parse_args()
-  # chose product_version in ['FullStack', 'CMP', 'Edge']
-#  product_version: 'FullStack'
 
 
 def ensure_python3_yaml(os):
@@ -410,8 +419,7 @@ def main():
     if args.offline_data_path and os.path.isdir(args.offline_data_path):
         offline_data_path = os.path.realpath(args.offline_data_path)
     elif os.environ.get('OFFLINE_DATA_PATH') and os.path.isdir(os.environ.get('OFFLINE_DATA_PATH')):
-        offline_data_path = os.path.realpath(
-            os.environ.get('OFFLINE_DATA_PATH'))
+        offline_data_path = os.path.realpath( os.environ.get('OFFLINE_DATA_PATH'))
 
     if offline_data_path:
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
@@ -425,19 +433,19 @@ def main():
             ensure_python3_yaml('redhat')
 
     if match_ip4addr(ip_conf):
-        check_env(ip_conf)
+        check_env(ip_conf, pip_mirror=args.pip_mirror)
         conf = gen_config(ip_conf, product_stack)
     elif path.isfile(ip_conf):
         sz = path.getsize(ip_conf)
         if sz == 0:
             prRed(f'Config file <{ip_conf}> is Empty!')
             exit()
-        check_env()
+        check_env(pip_mirror=args.pip_mirror)
         update_config(ip_conf, product_stack)
         conf = ip_conf
     else:
         prRed(f'The configuration file <{ip_conf}> does not exist or is not valid!')
-        exit()
+        exit(1)
     return install.start(conf)
 
 
