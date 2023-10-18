@@ -1,0 +1,16 @@
+- name: config iptables to legacy way
+  shell: |
+    if sudo iptables -V |grep -wq nf_tables && ls -l /usr/sbin/iptables |grep -wq alternatives; then
+      sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
+      sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+      sudo update-alternatives --set arptables /usr/sbin/arptables-legacy
+      sudo update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+      if [ -x /usr/bin/aptitude ] && [ ! -x /usr/sbin/nft ]; then
+          sudo aptitude install nftables -y
+          sudo nft flush ruleset
+      fi
+    fi
+  become: true
+  args:
+    executable: /bin/bash
+

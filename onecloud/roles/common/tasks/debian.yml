@@ -1,10 +1,4 @@
 ---
-- name: Check if systemd.unified_cgroup_hierarchy=0 is in /proc/cmdline
-  shell: "grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline"
-  register: unified_cgroup_hierarchy
-  ignore_errors: true
-  failed_when: false
-
 - name: Check distribution and version
   set_fact:
     is_debian_11_or_later: true
@@ -12,33 +6,10 @@
     - ansible_distribution == 'Debian'
     - ansible_distribution_major_version | int >= 11
 
-- block:
-  - name: Append systemd.unified_cgroup_hierarchy=0 to GRUB_CMDLINE_LINUX
-    shell: |
-      GRUB_FILE="/etc/default/grub"
-      SEARCH_PATTERN="^GRUB_CMDLINE_LINUX="
-      APPEND_TEXT="systemd.unified_cgroup_hierarchy=0 "
-
-      if ! grep -q "systemd.unified_cgroup_hierarchy=0" "$GRUB_FILE"; then
-          sed -i.bak.$(date +%Y%m%d-%H%M%S) "/$SEARCH_PATTERN/s/\"/& $APPEND_TEXT/" "$GRUB_FILE"
-      fi
-    args:
-      executable: /bin/bash
-    register: grub_update
-
-  - name: Update GRUB
-    command: update-grub
-
-  - name: Reboot the system
-    ansible.builtin.reboot:
-
-  - name: Wait for the system to become available
-    wait_for_connection:
-      timeout: 900
-  become: yes
+- name: Import task utils/unified_cgroup_hierarchy.yml
+  include_tasks: utils/unified_cgroup_hierarchy.yml
   when:
   - is_debian_11_or_later| default(false)|bool == true
-  - unified_cgroup_hierarchy.rc != 0
 
 - name: get version tag
   environment:
@@ -65,21 +36,8 @@
   set_fact:
     onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
 
-- name: config iptables for debian
-  shell: |
-    if sudo iptables -V |grep -wq nf_tables && ls -l /usr/sbin/iptables |grep -wq alternatives; then
-      sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
-      sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-      sudo update-alternatives --set arptables /usr/sbin/arptables-legacy
-      sudo update-alternatives --set ebtables /usr/sbin/ebtables-legacy
-      if [ -x /usr/bin/aptitude ] && [ ! -x /usr/sbin/nft ]; then
-          sudo aptitude install nftables -y
-          sudo nft flush ruleset
-      fi
-    fi
-  become: true
-  args:
-    executable: /bin/bash
+- name: Import task utils/config_iptables.yml
+  include_tasks: utils/config_iptables.yml
 
 - name: init apt cache for debian
   get_url:
@@ -146,16 +104,5 @@
   when:
     - selinux_conf_exists.stat.exists
 
-- name: fix ovmf path
-  shell: |
-    if [ ! -f /usr/share/ovmf/OVMF.fd ]; then
-      exit 1
-    fi
-    mkdir -p /opt/cloud/contrib/
-    if [ ! -f /opt/cloud/contrib/OVMF.fd ]; then
-      ln -s /usr/share/ovmf/OVMF.fd /opt/cloud/contrib/OVMF.fd
-    fi
-  become: true
-  args:
-    executable: /bin/bash
-
+- name: Import task utils/fix_ovmf_path
+  include_tasks: utils/fix_ovmf_path.yml

@@ -117,7 +117,7 @@
   include_role:
     name: utils/sync-user/on
 
-- name: "Create essential services, wait for a few minutes. You can open another terminal and execute `kubectl get pods -n onecloud -w` to view the process."
+- name: "Create essential services, wait for a few minutes. You can open another terminal and execute `kubectl get pods -n onecloud -w` to watch the process."
   shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait"
   retries: 6
   delay: 10
