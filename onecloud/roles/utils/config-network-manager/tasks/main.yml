@@ -22,11 +22,11 @@
   become: true
   when: nm_check.rc == 0
 
-- name: Prevent NetworkManager from managing Calico interfaces
+- name: Prevent NetworkManager from managing Cluster interfaces
   copy:
     content: |
       [keyfile]
-      unmanaged-devices=interface-name:cali*;interface-name:tunl*
+      unmanaged-devices=interface-name:cali*;interface-name:tunl*:br*
     dest: /etc/NetworkManager/conf.d/calico.conf
   become: true
   when:
