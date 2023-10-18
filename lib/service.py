@@ -155,6 +155,7 @@ class AddNodesConfig(object):
             # can't enable lbagent and host at same time
             as_host = False
         woker_config_dict = {
+            'onecloud_version': self.current_version,
             'hosts': nodes_conf,
             'controlplane_host': controlplane_host,
             'as_controller': False,
