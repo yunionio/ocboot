@@ -99,3 +99,27 @@
   become: true
   when:
     - selinux_conf_exists.stat.exists
+
+# use legacy DNS resolve way
+- block:
+  - name: Write /etc/systemd/resolved.conf
+    become: true
+    template:
+      src: etc_systemd_resolved.conf.j2
+      dest: /etc/systemd/resolved.conf
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Restart systemd-resolved
+    become: true
+    service:
+      name: systemd-resolved
+      state: restarted
+
+  - name: Link /etc/resolv.conf to /run/systemd/resolve/resolve.conf
+    become: true
+    shell: |
+      ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+    args:
+      executable: /bin/bash
