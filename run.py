@@ -419,16 +419,16 @@ def main():
     if args.offline_data_path and os.path.isdir(args.offline_data_path):
         offline_data_path = os.path.realpath(args.offline_data_path)
     elif os.environ.get('OFFLINE_DATA_PATH') and os.path.isdir(os.environ.get('OFFLINE_DATA_PATH')):
-        offline_data_path = os.path.realpath( os.environ.get('OFFLINE_DATA_PATH'))
+        offline_data_path = os.path.realpath(os.environ.get('OFFLINE_DATA_PATH'))
 
     if offline_data_path:
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
-        if os.system('[[ -x /usr/bin/apt ]]') == 0:
+        if os.system('test -x /usr/bin/apt') == 0:
             install_packages(['python3-pip'])
             ensure_python3_yaml('debian')
-        elif os.system('[[ -x /usr/bin/yum ]]') == 0:
+        elif os.system('test -x /usr/bin/yum') == 0:
             install_packages(['python3-pip', 'python2-pyyaml'])
             ensure_python3_yaml('redhat')
 
