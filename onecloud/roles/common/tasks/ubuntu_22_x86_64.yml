@@ -3,54 +3,11 @@
   set_fact:
     onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
 
-- name: Check if systemd.unified_cgroup_hierarchy=0 is in /proc/cmdline
-  shell: "grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline"
-  register: unified_cgroup_hierarchy
-  ignore_errors: true
-  failed_when: false
+- name: Import task utils/unified_cgroup_hierarchy.yml
+  include_tasks: utils/unified_cgroup_hierarchy.yml
 
-- block:
-  - name: Append systemd.unified_cgroup_hierarchy=0 to GRUB_CMDLINE_LINUX
-    shell: |
-      GRUB_FILE="/etc/default/grub"
-      SEARCH_PATTERN="^GRUB_CMDLINE_LINUX="
-      APPEND_TEXT="systemd.unified_cgroup_hierarchy=0 "
-
-      if ! grep -q "systemd.unified_cgroup_hierarchy=0" "$GRUB_FILE"; then
-          sed -i.bak.$(date +%Y%m%d-%H%M%S) "/$SEARCH_PATTERN/s/\"/& $APPEND_TEXT/" "$GRUB_FILE"
-      fi
-    args:
-      executable: /bin/bash
-    register: grub_update
-
-  - name: Update GRUB
-    command: update-grub
-
-  - name: Reboot the system
-    ansible.builtin.reboot:
-
-  - name: Wait for the system to become available
-    wait_for_connection:
-      timeout: 900
-
-  when:
-  - unified_cgroup_hierarchy.rc != 0
-
-- name: config iptables for ubuntu 
-  shell: |
-    if iptables -V |grep -wq nf_tables && ls -l /usr/sbin/iptables |grep -wq alternatives; then
-      update-alternatives --set iptables /usr/sbin/iptables-legacy
-      update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-      update-alternatives --set arptables /usr/sbin/arptables-legacy
-      update-alternatives --set ebtables /usr/sbin/ebtables-legacy
-      if [ -x /usr/bin/aptitude ] && [ ! -x /usr/sbin/nft ]; then
-          aptitude install nftables -y
-          nft flush ruleset
-      fi
-    fi
-  become: true
-  args:
-    executable: /bin/bash
+- name: Import task utils/config_iptables.yml
+  include_tasks: utils/config_iptables.yml
 
 - name: init apt cache for ubuntu 
   get_url:
@@ -99,6 +56,9 @@
   become: true
   when:
     - selinux_conf_exists.stat.exists
+
+- name: Import task utils/fix_ovmf_path
+  include_tasks: utils/fix_ovmf_path.yml
 
 # use legacy DNS resolve way
 - block:
