@@ -9,12 +9,14 @@ from os import path
 import sys
 import re
 import argparse
+import subprocess
 from lib import install
 from lib import cmd
 from lib.utils import init_local_user_path
 from lib.utils import prRed
 from lib.utils import tryBackupFile
-from lib.get_interface_by_ip import get_interface_by_ip
+from lib.utils import regex_search
+from lib import ocboot
 
 
 def show_usage():
@@ -87,7 +89,12 @@ def install_packages(pkgs):
         with open('/etc/os-release', 'r') as f:
             print(f.read())
         raise Exception("Install ansible failed for os-release is not supported.")
-    cmdline = 'sudo %s install -y %s' % (packager, ' '.join(pkgs))
+
+    username = get_username()
+    if packager == '/usr/bin/apt' and username != 'root':
+        packager == 'sudo /usr/bin/apt'
+
+    cmdline = '%s install -y %s' % (packager, ' '.join(pkgs))
     return os.system(cmdline)
 
 def install_ansible():
@@ -235,12 +242,13 @@ primary_master_node:
 
 def dynamic_load():
     username = get_username()
+    homepath = '/root' if username == 'root' else os.path.expanduser("~" + username)
 
     import glob
     paths = glob.glob('/usr/local/lib64/python3.?/site-packages/') + \
         glob.glob('/usr/local/lib64/python3.??/site-packages/') + \
-        glob.glob(f'/home/{username}/.local/lib/python3.?/site-packages') + \
-        glob.glob(f'/home/{username}/.local/lib/python3.??/site-packages')
+        glob.glob(f'{homepath}/.local/lib/python3.?/site-packages') + \
+        glob.glob(f'{homepath}/.local/lib/python3.??/site-packages')
 
     print("loading path:")
 
@@ -254,7 +262,8 @@ def gen_config(ipaddr, product_stack):
     global conf
     import os.path
     import yaml
-    import os
+    from lib.get_interface_by_ip import get_interface_by_ip
+
     config_dir = os.getenv("OCBOOT_CONFIG_DIR")
     image_repository = os.getenv('IMAGE_REPOSITORY')
 
@@ -289,13 +298,17 @@ def gen_config(ipaddr, product_stack):
     interface = get_interface_by_ip(ipaddr)
     host_networks = f'''host_networks: "{interface}/br0/{ipaddr}"'''
     with open(temp, 'w') as f:
-        f.write(conf.replace('10.127.10.158', ipaddr)
-                .replace('your-sql-password', mypass_mariadb)
-                .replace('your-clickhouse-password', mypass_clickhouse)
-                .replace('ocboot_user', get_username())
-                .replace('v3.4.12', ver)
-                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks)
-                .replace('product_stack', product_stack))
+        conf_result = conf.replace('10.127.10.158', ipaddr) \
+            .replace('your-sql-password', mypass_mariadb) \
+            .replace('your-clickhouse-password', mypass_clickhouse) \
+            .replace('ocboot_user', get_username()) \
+            .replace('v3.4.12', ver) \
+            .replace("# host_networks: '<interface>/br0/<ip>'", host_networks) \
+            .replace('product_stack', product_stack)
+        # if enable_host_on_vm:
+        #     conf_result = conf_result.replace('# as_host_on_vm: true', 'as_host_on_vm: true')
+        #
+        f.write(conf_result)
     return temp
 
 
@@ -334,8 +347,43 @@ def get_args():
                         help="choose product version",
                         choices=['fullstack', 'cmp', 'edge'])
     return parser.parse_args()
-  # chose product_version in ['FullStack', 'CMP', 'Edge']
-#  product_version: 'FullStack'
+
+
+def ensure_python3_yaml(os):
+
+    username = get_username()
+    if os == 'redhat':
+        query = "sudo rpm -qa"
+        installer = "yum"
+    elif os == 'debian':
+        if username == 'root':
+            query = "dpkg -l"
+            installer = "apt"
+        else:
+            query = "sudo dpkg -l"
+            installer = "sudo apt"
+        subprocess.check_output(f"{installer} update", shell=True)
+    else:
+        print("OS not supported")
+        exit(1)
+
+    print(f'ensure_python3_yaml: os: {os}; query: {query}; installer: {installer}')
+
+    output = subprocess.check_output(query, shell=True).decode('utf-8')
+
+    if regex_search(r'python3.*pyyaml', output, ignore_case=True):
+        print("PyYAML already installed")
+        return
+
+    output = subprocess.check_output(f"{installer} search yaml", shell=True).decode('utf-8')
+
+    pkg = regex_search(r'python3\d?-(py)?yaml|PyYAML', output, ignore_case=True)
+    if not pkg:
+        print("No python3 package found")
+    else:
+        cmd = f"{installer} install -y {pkg}"
+        print(f'command to run : [{cmd}]')
+        subprocess.run(f"{installer} install -y {pkg}", shell=True)
 
 
 def main():
@@ -366,7 +414,12 @@ def main():
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
-        install_packages(['python3-pip', 'python2-pyyaml', 'PyYAML'])
+        if os.system('test -x /usr/bin/apt') == 0:
+            install_packages(['python3-pip'])
+            ensure_python3_yaml('debian')
+        elif os.system('test -x /usr/bin/yum') == 0:
+            install_packages(['python3-pip', 'python2-pyyaml'])
+            ensure_python3_yaml('redhat')
 
     if match_ip4addr(ip_conf):
         check_env(ip_conf)
