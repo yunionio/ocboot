@@ -151,7 +151,7 @@
 
   - name: show ocadm join args
     debug:
-      msg "/opt/yunion/bin/ocadm {{ join_args }}"
+      msg: "/opt/yunion/bin/ocadm {{ join_args }}"
 
   - name: Wait for port {{ k8s_controlplane_host }}:{{ k8s_controlplane_port | default(6443)}} to be ready
     wait_for:
