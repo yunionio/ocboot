@@ -18,6 +18,11 @@ GROUP_MASTER_NODES = "master_nodes"
 GROUP_WORKER_NODES = "worker_nodes"
 GROUP_NODES = "nodes"
 
+KEY_HOSTNAME = 'hostname'
+KEY_ONECLOUD_VERSION = 'onecloud_version'
+KEY_OPERATOR_VERSION = 'operator_version'
+KEY_ONECLOUD_MAJOR_VERSION = 'onecloud_major_version'
+KEY_EXTRA_PACKAGES = 'extra_packages'
 
 def load_config(config_file):
     import yaml
@@ -29,8 +34,9 @@ def load_config(config_file):
 def get_ansible_global_vars(version):
     major_version = utils.get_major_version(version)
     vars = {
-        "onecloud_major_version": major_version,
-        'extra_packages': [],
+        KEY_ONECLOUD_VERSION: version,
+        KEY_ONECLOUD_MAJOR_VERSION: major_version,
+        KEY_EXTRA_PACKAGES: [],
     }
 
     # set yunion_qemu_package for pre released version
@@ -42,7 +48,7 @@ def get_ansible_global_vars(version):
         extra_packages.append('yunion-climc-ee')
     if yunion_qemu_package:
         vars['yunion_qemu_package'] = yunion_qemu_package
-    vars['extra_packages'] = extra_packages
+    vars[KEY_EXTRA_PACKAGES] = extra_packages
     return vars
 
 
@@ -101,7 +107,7 @@ class OcbootConfig(object):
         for node in [self.mariadb_config, self.mariadb_ha_config, self.clickhouse_config, self.registry_config, self.primary_master_config, self.master_config, self.worker_config]:
             if not node:
                 continue
-            version = getattr(node, 'onecloud_version', None)
+            version = getattr(node, KEY_ONECLOUD_VERSION, None)
             if version:
                 return version
         raise Exception("get attr onecloud_version error")
@@ -357,7 +363,7 @@ class OnecloudConfig(object):
         self.skip_docker_config = config.get('skip_docker_config', False)
 
         self.node_ip = config.get('node_ip', None)
-        self.onecloud_version = config.get('onecloud_version', None)
+        self.onecloud_version = config.get(KEY_ONECLOUD_VERSION, None)
         self.high_availability = config.get('high_availability', False)
         self.high_availability_vip = None
         self.keepalived_version_tag = None
@@ -386,7 +392,7 @@ class OnecloudConfig(object):
             vars['high_availability_vip'] = self.high_availability_vip
             vars['keepalived_version_tag'] = self.keepalived_version_tag
         if self.onecloud_version:
-            vars['onecloud_version'] = self.onecloud_version
+            vars[KEY_ONECLOUD_VERSION] = self.onecloud_version
         if self.node_ip:
             vars['node_ip'] = self.node_ip
         if self.iso_install_mode:
@@ -418,8 +424,8 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.db_host = config.ensure_get('db_host')
         self.db_port = config.get('db_port', 3306)
         self.db_password = config.ensure_get('db_password')
-        self.onecloud_version = config.ensure_get('onecloud_version')
-        self.operator_version = config.get('operator_version', self.onecloud_version)
+        self.onecloud_version = config.ensure_get(KEY_ONECLOUD_VERSION)
+        self.operator_version = config.get(KEY_OPERATOR_VERSION, self.onecloud_version)
         self.restore_mode = config.get('restore_mode', False)
 
         # set calico ip_autodetection_method only in primary master
@@ -457,8 +463,8 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['db_port'] = self.db_port
         vars['db_user'] = self.db_user
         vars['db_password'] = self.db_password
-        vars['onecloud_version'] = self.onecloud_version
-        vars['operator_version'] = self.operator_version
+        vars[KEY_ONECLOUD_VERSION] = self.onecloud_version
+        vars[KEY_OPERATOR_VERSION] = self.operator_version
         vars['onecloud_user'] = self.onecloud_user
         vars['onecloud_user_password'] = self.onecloud_user_password
         vars['use_ee'] = self.use_ee
