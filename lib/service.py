@@ -12,6 +12,7 @@ from . import ansible
 from .cluster import construct_cluster
 from .ocboot import WorkerConfig, Config
 from .ocboot import get_ansible_global_vars
+from .ocboot import KEY_ONECLOUD_VERSION
 
 
 class BaseService(object):
@@ -155,7 +156,7 @@ class AddNodesConfig(object):
             # can't enable lbagent and host at same time
             as_host = False
         woker_config_dict = {
-            'onecloud_version': self.current_version,
+            KEY_ONECLOUD_VERSION: self.current_version,
             'hosts': nodes_conf,
             'controlplane_host': controlplane_host,
             'as_controller': False,

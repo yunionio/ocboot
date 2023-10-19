@@ -9,13 +9,15 @@ from os import path
 import sys
 import re
 import argparse
+import subprocess
+
 from lib import install
 from lib import cmd
 from lib.parser import inject_add_hostagent_options
 from lib.utils import init_local_user_path
 from lib.utils import prRed
 from lib.utils import tryBackupFile
-import subprocess
+from lib import ocboot
 
 
 def show_usage():
@@ -287,8 +289,8 @@ def gen_config(ipaddr, product_stack, enable_host_on_vm):
         with open(temp, 'r') as stream:
             try:
                 data = (yaml.safe_load(stream))
-                if data.get('primary_master_node', {}).get('hostname', '') == ipaddr and \
-                   data.get('primary_master_node', {}).get('onecloud_version', '') == ver:
+                if data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipaddr and \
+                   data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
                     print("reuse current yaml: %s" % temp)
                     return temp
             except yaml.YAMLError as exc:
