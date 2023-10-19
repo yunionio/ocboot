@@ -17,6 +17,7 @@ from lib.parser import inject_add_hostagent_options
 from lib.utils import init_local_user_path
 from lib.utils import prRed
 from lib.utils import tryBackupFile
+from lib.utils import regex_search
 from lib import ocboot
 
 
@@ -98,7 +99,12 @@ def install_packages(pkgs):
         with open('/etc/os-release', 'r') as f:
             print(f.read())
         raise Exception("Install ansible failed for os-release is not supported.")
-    cmdline = 'sudo %s install -y %s' % (packager, ' '.join(pkgs))
+
+    username = get_username()
+    if packager == '/usr/bin/apt' and username != 'root':
+        packager == 'sudo /usr/bin/apt'
+
+    cmdline = '%s install -y %s' % (packager, ' '.join(pkgs))
     return os.system(cmdline)
 
 
@@ -254,12 +260,13 @@ primary_master_node:
 
 def dynamic_load():
     username = get_username()
+    homepath = '/root' if username == 'root' else os.path.expanduser("~" + username)
 
     import glob
     paths = glob.glob('/usr/local/lib64/python3.?/site-packages/') + \
         glob.glob('/usr/local/lib64/python3.??/site-packages/') + \
-        glob.glob(f'/home/{username}/.local/lib/python3.?/site-packages') + \
-        glob.glob(f'/home/{username}/.local/lib/python3.??/site-packages')
+        glob.glob(f'{homepath}/.local/lib/python3.?/site-packages') + \
+        glob.glob(f'{homepath}/.local/lib/python3.??/site-packages')
 
     print("loading path:")
 
@@ -314,12 +321,12 @@ def gen_config(ipaddr, product_stack, enable_host_on_vm):
     host_networks = f'''host_networks: "{interface}/br0/{ipaddr}"'''
     with open(temp, 'w') as f:
         conf_result = conf.replace('10.127.10.158', ipaddr) \
-                .replace('your-sql-password', mypass_mariadb) \
-                .replace('your-clickhouse-password', mypass_clickhouse) \
-                .replace('ocboot_user', get_username()) \
-                .replace('v3.4.12', ver) \
-                .replace("# host_networks: '<interface>/br0/<ip>'", host_networks) \
-                .replace('product_stack', product_stack)
+            .replace('your-sql-password', mypass_mariadb) \
+            .replace('your-clickhouse-password', mypass_clickhouse) \
+            .replace('ocboot_user', get_username()) \
+            .replace('v3.4.12', ver) \
+            .replace("# host_networks: '<interface>/br0/<ip>'", host_networks) \
+            .replace('product_stack', product_stack)
         if enable_host_on_vm:
             conf_result = conf_result.replace('# as_host_on_vm: true', 'as_host_on_vm: true')
 
@@ -371,36 +378,39 @@ def get_args():
 
 def ensure_python3_yaml(os):
 
+    username = get_username()
     if os == 'redhat':
         query = "sudo rpm -qa"
         installer = "yum"
     elif os == 'debian':
-        query = "sudo dpkg -l"
-        installer = "apt"
+        if username == 'root':
+            query = "dpkg -l"
+            installer = "apt"
+        else:
+            query = "sudo dpkg -l"
+            installer = "sudo apt"
+        subprocess.check_output(f"{installer} update", shell=True)
     else:
         print("OS not supported")
         exit(1)
 
     print(f'ensure_python3_yaml: os: {os}; query: {query}; installer: {installer}')
+
     output = subprocess.check_output(query, shell=True).decode('utf-8')
 
-    if "python3.*pyyaml" in output:
+    if regex_search(r'python3.*pyyaml', output, ignore_case=True):
         print("PyYAML already installed")
         return
 
-    output = subprocess.check_output(f"sudo {installer} search pyyaml", shell=True).decode('utf-8')
+    output = subprocess.check_output(f"{installer} search yaml", shell=True).decode('utf-8')
 
-    match = re.search(r'python3\d?-pyyaml', output, re.IGNORECASE)
-    if match:
-        pkg = match.group(0)
-    else:
-        pkg = None
-
+    pkg = regex_search(r'python3\d?-(py)?yaml|PyYAML', output, ignore_case=True)
     if not pkg:
         print("No python3 package found")
-        exit(1)
     else:
-        subprocess.run(f"sudo {installer} install -y {pkg}", shell=True)
+        cmd = f"{installer} install -y {pkg}"
+        print(f'command to run : [{cmd}]')
+        subprocess.run(f"{installer} install -y {pkg}", shell=True)
 
 
 def main():
