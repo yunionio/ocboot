@@ -1,6 +1,7 @@
 # encoding: utf-8
 from datetime import datetime, tzinfo, timedelta
 import os
+import re
 
 
 def ensure_ascii(s):
@@ -98,3 +99,11 @@ def tryBackupFile(filename):
     date = datetime.now().strftime('%Y%m%d')
     new_path = f'{filename}.{date}'
     os.system(f'sudo mv {filename} {new_path}')
+
+# simply search for regex match
+def regex_search(pattern, string, ignore_case=False):
+    flags = re.IGNORECASE if ignore_case else 0
+    match = re.search(pattern, string, flags)
+    if match:
+        return match.group(0)
+    return None
