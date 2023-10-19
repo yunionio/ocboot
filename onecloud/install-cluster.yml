@@ -1,4 +1,5 @@
 - hosts: all
+  any_errors_fatal: true
   roles:
     - utils/misc-check
     - utils/detect-os
