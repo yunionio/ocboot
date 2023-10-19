@@ -6,6 +6,7 @@
   shell: |
       source <(/opt/yunion/bin/ocadm cluster rcadmin)
       ocadm cluster update --use-ee --wait
+      kubectl -n onecloud patch onecloudcluster default --type='json' -p="[{'op': 'replace', 'path': '/spec/web/imageName', 'value': 'web-ee'}]"
       kubectl delete configmap -n onecloud default-web
       kubectl rollout restart deployment -n onecloud default-web
       sleep 3
