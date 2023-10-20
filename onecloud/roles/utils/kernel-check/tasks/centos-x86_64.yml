@@ -1,7 +1,7 @@
 # This role contains common plays that will run on all nodes
 - name: version test
   debug:
-    msg: "onecloud_version: {{onecloud_version }} online_status: {{online_status}} ansible_python_interpreter: {{ansible_python_interpreter}}"
+    msg: "onecloud_version: {{onecloud_version }} online_status: {{online_status}}"
 
 - name: Install kernel-5.4.130-1.yn20230805.el7 when GE v3.10.7
   yum:
@@ -26,8 +26,6 @@
     - kernel-5.4.130-1.yn20221208.el7
     - kernel-devel-5.4.130-1.yn20221208.el7
     - kernel-headers-5.4.130-1.yn20221208.el7
-  vars:
-    ansible_python_interpreter: /usr/bin/python2
   become: yes
   when:
   - onecloud_version is defined
