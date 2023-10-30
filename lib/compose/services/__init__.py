@@ -88,8 +88,8 @@ def new_glance_service(version, db_svc, keystone_svc):
     return svc
 
 
-def new_apigateway_service(version, keystone_svc):
-    return new_cloud_service(SVC_APIGATEWAY, version, SVC_PORT_APIGATEWAY, keystone_svc=keystone_svc)
+def new_apigateway_service(version, keystone_svc, depend_svc):
+    return new_cloud_service(SVC_APIGATEWAY, version, SVC_PORT_APIGATEWAY, keystone_svc=keystone_svc, depend_svc=depend_svc)
 
 
 def new_webconsole_service(version, db_svc, keystone_svc):
