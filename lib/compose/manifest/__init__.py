@@ -25,7 +25,7 @@ def new_oc_manifest(version):
     kubeServer = KubeServerService(version, mysql, keystone)
     ansibleserver = new_ansibleserver_service(version, mysql, keystone)
     climc = ClimcService(version, keystone, region)
-    apigateway = new_apigateway_service(version, keystone)
+    apigateway = new_apigateway_service(version, keystone, region)
     webconsole = new_webconsole_service(version, mysql, keystone)
     yunionconf = new_yunionconf_service(version, mysql, keystone)
     monitor = new_monitor_service(version, mysql, region)
