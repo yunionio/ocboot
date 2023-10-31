@@ -15,8 +15,7 @@ from lib import install
 from lib import cmd
 from lib.parser import inject_add_hostagent_options
 from lib.utils import init_local_user_path
-from lib.utils import prRed
-from lib.utils import tryBackupFile
+from lib.utils import pr_red, pr_green
 from lib.utils import regex_search
 from lib import ocboot
 
@@ -30,12 +29,16 @@ Usage: %s [master_ip|<config_file>.yml]
 
 IPADDR_REG_PATTERN = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 IPADDR_REG = re.compile(IPADDR_REG_PATTERN)
+
+
 def match_ip4addr(string):
     global IPADDR_REG
     return IPADDR_REG.match(string) is not None
 
+
 def versiontuple(v):
     return tuple(map(int, (v.split("."))))
+
 
 def version_ge(v1, v2):
     return versiontuple(v1) >= versiontuple(v2)
@@ -55,6 +58,7 @@ def check_pip3():
         return
     raise Exception("install python3-pip failed")
 
+
 def check_ansible(pip_mirror):
     minimal_ansible_version = '2.9.27'
     cmd.init_ansible_playbook_path()
@@ -73,6 +77,7 @@ def check_ansible(pip_mirror):
     except Exception as e:
         print("Install ansible failed, please try to install ansible manually")
         raise e
+
 
 def install_packages(pkgs):
     ignore_check = os.getenv("IGNORE_ALL_CHECKS")
@@ -99,6 +104,7 @@ def install_packages(pkgs):
     cmdline = '%s install -y %s' % (packager, ' '.join(pkgs))
     return os.system(cmdline)
 
+
 def install_ansible(mirror):
 
     def get_pip_install_cmd(suffix_cmd, mirror):
@@ -118,6 +124,7 @@ def install_ansible(mirror):
     ret = os.system(get_pip_install_cmd('ansible', mirror))
     if ret != 0:
         raise Exception("Install ansible failed. ")
+
 
 def check_passless_ssh(ipaddr):
     username = get_username()
@@ -237,11 +244,10 @@ primary_master_node:
   # OneCloud login user's password
   onecloud_user_password: admin@123
   # This machine serves as a OneCloud private cloud computing node
-  as_host: true
+  # as_host: true
   # as_host_on_vm: true
   # enable_eip_man for all-in-one mode only
   enable_eip_man: true
-  # chose product_version in ['FullStack', 'CMP', 'Edge']
   product_version: 'product_stack'
   image_repository: registry.cn-beijing.aliyuncs.com/yunion
   # host_networks: '<interface>/br0/<ip>'
@@ -266,7 +272,39 @@ def dynamic_load():
             print("\t%s" % p)
 
 
-def gen_config(ipaddr, product_stack, enable_host_on_vm):
+def update_config(yaml_conf, produc_stack):
+    import os.path
+    import os
+    import yaml
+    yaml_data = {}
+    to_write = False
+
+    assert produc_stack in ocboot.KEY_STACK_LIST
+    try:
+        if path.isfile(yaml_conf) and path.getsize(yaml_conf) > 0:
+            with open(yaml_conf, 'r') as stream:
+                yaml_data.update(yaml.safe_load(stream))
+    except yaml.YAMLError as exc:
+        pr_red("paring %s error: %s" % (yaml_conf, exc))
+        raise Exception("paring %s error: %s" % (yaml_conf, exc))
+
+    if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_PRODUCT_VERSION, '') != produc_stack:
+        to_write = True
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_PRODUCT_VERSION] = produc_stack
+        if produc_stack == ocboot.KEY_STACK_CMP:
+            yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_AS_HOST] = False
+            yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_AS_HOST_ON_VM] = False
+        else:
+            yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_AS_HOST] = True
+            yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_AS_HOST_ON_VM] = True
+    if to_write:
+        with open(yaml_conf, 'w') as f:
+            f.write(yaml.dump(yaml_data))
+
+    return yaml_conf
+
+
+def generate_config(ipv4, produc_stack):
     global conf
     import os.path
     import os
@@ -280,81 +318,84 @@ def gen_config(ipaddr, product_stack, enable_host_on_vm):
     cur_path = os.path.abspath(os.path.dirname(__file__))
     if not config_dir:
         config_dir = cur_path
+    if not match_ip4addr(ipv4):
+        pr_red(f'invalid ipv4 {ipv4}!')
+        exit(1)
+
     temp = os.path.join(config_dir, "config-allinone-current.yml")
-    tryBackupFile(temp)
     verf = os.path.join(cur_path, "VERSION")
+    brand_new = True
+    yaml_data = yaml.safe_load(conf)
+
     with open(verf, 'r') as f:
         ver = f.read().strip()
+    try:
+        if path.isfile(temp) and path.getsize(temp) > 0:
+            with open(temp, 'r') as stream:
+                yaml_data.update(yaml.safe_load(stream))
+                brand_new = False
+    except yaml.YAMLError as exc:
+        pr_red("paring %s error: %s" % (temp, exc))
+        raise Exception("paring %s error: %s" % (temp, exc))
 
-    # parameter first; then daily build; at last official build
+    if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipv4 and \
+            yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
+        update_config(temp, produc_stack)
+        pr_green(f"reuse conf: {temp}")
+        return temp
+
+    # using given image_repository if provided;
     if image_repository not in ['', None, 'none']:
-        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion', image_repository)
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['image_repository'] = image_repository
+    # else set to 'yunionio' namespace if it is daily build.
+    # default is 'yunion', for the official and public release.
     elif re.search(r'\b\d{8}\.\d$', ver):
-        conf = conf.replace('registry.cn-beijing.aliyuncs.com/yunion', 'registry.cn-beijing.aliyuncs.com/yunionio')
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['image_repository'] = 'registry.cn-beijing.aliyuncs.com/yunionio'
 
-    if os.path.exists(temp):
-        with open(temp, 'r') as stream:
-            try:
-                data = (yaml.safe_load(stream))
-                if data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipaddr and \
-                   data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
-                    print("reuse current yaml: %s" % temp)
-                    return temp
-            except yaml.YAMLError as exc:
-                raise Exception("paring %s error: %s" % (temp, exc))
-
-    mypass_clickhouse = random_password(12)
-    mypass_mariadb = random_password(12)
-    interface = get_interface_by_ip(ipaddr)
-    host_networks = f'''host_networks: "{interface}/br0/{ipaddr}"'''
+    interface = get_interface_by_ip(ipv4)
+    username = get_username()
+    db_password = random_password(12) if brand_new else yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get('db_password')
+    assert db_password
+    extra_db_dict = {
+        'db_password': db_password,
+        'user': username,
+        ocboot.KEY_HOSTNAME: ipv4,
+    }
+    enable_host = produc_stack in [ocboot.KEY_STACK_FULLSTACK, ocboot.KEY_STACK_EDGE]
+    extra_pri_dict = {
+        'controlplane_host': ipv4,
+        'db_host': ipv4,
+        'db_password': db_password,
+        'host_networks': f'{interface}/br0/{ipv4}',
+        'user': username,
+        ocboot.KEY_AS_HOST: enable_host,
+        ocboot.KEY_AS_HOST_ON_VM: enable_host,
+        ocboot.KEY_HOSTNAME: ipv4,
+        ocboot.KEY_ONECLOUD_VERSION: ver,
+        ocboot.KEY_PRODUCT_VERSION: produc_stack,
+    }
+    yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE].update(extra_pri_dict)
+    yaml_data[ocboot.GROUP_MARIADB_NODE].update(extra_db_dict)
     with open(temp, 'w') as f:
-        conf_result = conf.replace('10.127.10.158', ipaddr) \
-            .replace('your-sql-password', mypass_mariadb) \
-            .replace('your-clickhouse-password', mypass_clickhouse) \
-            .replace('ocboot_user', get_username()) \
-            .replace('v3.4.12', ver) \
-            .replace("# host_networks: '<interface>/br0/<ip>'", host_networks) \
-            .replace('product_stack', product_stack)
-        if enable_host_on_vm:
-            conf_result = conf_result.replace('# as_host_on_vm: true', 'as_host_on_vm: true')
+        f.write(yaml.dump(yaml_data))
 
-        f.write(conf_result)
     return temp
-
-
-def update_config(conf_file, product_version):
-    if not os.path.exists(conf_file):
-        raise Exception(f"Conf file {conf_file} dose not exist!")
-
-    if product_version not in ['FullStack', 'CMP', 'Edge']:
-        raise Exception(f"Product version {product_version} is not valid! Only 'FullStack', 'CMP', 'Edge' ar supported.")
-
-    with open(conf_file, 'r') as f:
-        conf = f.read().strip()
-
-    with open(conf_file, 'w') as f:
-        regex = r"^  product_version: (.*)"
-        subst = f"  product_version: '{product_version}'"
-        conf = re.sub(regex, subst, conf, 0, re.MULTILINE)
-        f.write(conf)
-        print('conf updated.')
-        return conf
 
 
 parser = None
 
+
 def get_args():
-    """show argpase snippets"""
     global parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('IP_CONF', nargs=1, type=str,
+    parser.add_argument('STACK', metavar="stack", type=str, nargs=1,
+                        help="choose product type from 'full', 'cmp' or 'virt'",
+                        choices=['full', 'cmp', 'virt'])
+    parser.add_argument('IP_CONF', metavar="ip_conf", type=str, nargs=1,
                         help="Input the target IPv4 or Config file")
     parser.add_argument('--offline-data-path', nargs='?',
                         help="offline packages location")
-    # chose product_version in ['FullStack', 'CMP', 'Edge']
-    parser.add_argument('--stack', type=str, default='fullstack',
-                        help="choose product version",
-                        choices=['fullstack', 'cmp', 'edge'])
+
     pip_mirror_help = "specify pip mirror to install python packages smoothly"
     pip_mirror_suggest = "https://mirrors.aliyun.com/pypi/simple/"
     parser.add_argument('--pip-mirror', '-m', type=str, dest='pip_mirror',
@@ -403,17 +444,15 @@ def ensure_python3_yaml(os):
 def main():
     init_local_user_path()
     args = get_args()
-    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    stack = args.STACK[0]
     ip_conf = str(args.IP_CONF[0])
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-    product_stack = ''
-    got_stack = args.stack.lower()
-    if got_stack in ['fullstack', '', None]:
-        product_stack = 'FullStack'
-    elif got_stack == 'cmp':
-        product_stack = 'CMP'
-    elif got_stack == 'edge':
-        product_stack = 'Edge'
+    stackDict = {
+        'full': ocboot.KEY_STACK_FULLSTACK,
+        'cmp': ocboot.KEY_STACK_CMP,
+        'virt': ocboot.KEY_STACK_EDGE,
+    }
 
     # 1. try to get offline data path from optional args
     # 2. if not exist, try to get from os env
@@ -429,29 +468,20 @@ def main():
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
         if os.system('test -x /usr/bin/apt') == 0:
-            if os.system('grep -wq "Ubuntu" /etc/os-release') == 0:
-                install_packages(['python3-pip', 'python3-yaml'])
-            else:
-                install_packages(['python3-pip'])
-                ensure_python3_yaml('debian')
+            install_packages(['python3-pip'])
+            ensure_python3_yaml('debian')
         elif os.system('test -x /usr/bin/yum') == 0:
             install_packages(['python3-pip', 'python2-pyyaml'])
             ensure_python3_yaml('redhat')
 
     if match_ip4addr(ip_conf):
-        check_env(ip_conf, pip_mirror=args.pip_mirror)
-        conf = gen_config(ip_conf, product_stack, args.enable_host_on_vm)
-    elif path.isfile(ip_conf):
-        sz = path.getsize(ip_conf)
-        if sz == 0:
-            prRed(f'Config file <{ip_conf}> is Empty!')
-            exit()
-        check_env(pip_mirror=args.pip_mirror)
-        update_config(ip_conf, product_stack)
-        conf = ip_conf
+        conf = generate_config(ip_conf, stackDict.get(stack))
+    elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
+        conf = update_config(ip_conf, stackDict.get(stack))
     else:
-        prRed(f'The configuration file <{ip_conf}> does not exist or is not valid!')
-        exit(1)
+        pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
+        exit()
+    check_env(pip_mirror=args.pip_mirror)
     return install.start(conf)
 
 
