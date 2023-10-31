@@ -6,7 +6,6 @@ import os
 from . import ansible
 from . import utils
 from . import consts
-from lib.utils import tryBackupFile
 
 
 GROUP_MARIADB_NODE = "mariadb_node"
@@ -22,7 +21,16 @@ KEY_HOSTNAME = 'hostname'
 KEY_ONECLOUD_VERSION = 'onecloud_version'
 KEY_OPERATOR_VERSION = 'operator_version'
 KEY_ONECLOUD_MAJOR_VERSION = 'onecloud_major_version'
+KEY_PRODUCT_VERSION = 'product_version'
+KEY_AS_HOST = 'as_host'
+KEY_AS_HOST_ON_VM = 'as_host_on_vm'
 KEY_EXTRA_PACKAGES = 'extra_packages'
+
+KEY_STACK_FULLSTACK = 'FullStack'
+KEY_STACK_EDGE = 'Edge'
+KEY_STACK_CMP = 'CMP'
+KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
+
 
 def load_config(config_file):
     import yaml
@@ -127,7 +135,6 @@ class OcbootConfig(object):
         content = self.get_ansible_inventory()
         yaml_content = utils.to_yaml(content)
         filepath = '/tmp/host_inventory.yml'
-        tryBackupFile(filepath)
         with open(filepath, 'w') as f:
             f.write(yaml_content)
         return filepath

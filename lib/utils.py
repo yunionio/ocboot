@@ -85,22 +85,14 @@ def init_local_user_path():
         os.environ['PATH'] = path
 
 
-def prRed(skk):
-    print("\033[31m{}\033[00m" .format(skk))
+def pr_red(*skk):
+    print("\033[31m{}\033[00m" .format(' '.join(skk)))
 
 
-def tryBackupFile(filename):
-    # only for no write access
-    if not os.path.exists(filename):
-        return
-    if os.access(filename, os.W_OK):
-        return
+def pr_green(skk):
+    print("\033[1m\033[92m{}\033[00m" .format(skk))
 
-    date = datetime.now().strftime('%Y%m%d')
-    new_path = f'{filename}.{date}'
-    os.system(f'sudo mv {filename} {new_path}')
 
-# simply search for regex match
 def regex_search(pattern, string, ignore_case=False):
     flags = re.IGNORECASE if ignore_case else 0
     match = re.search(pattern, string, flags)
