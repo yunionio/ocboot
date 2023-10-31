@@ -12,9 +12,9 @@ import argparse
 import subprocess
 from lib import install
 from lib import cmd
+from lib.parser import inject_add_hostagent_options
 from lib.utils import init_local_user_path
-from lib.utils import prRed
-from lib.utils import tryBackupFile
+from lib.utils import prRed, prGreen
 from lib.utils import regex_search
 from lib import ocboot
 
@@ -53,24 +53,28 @@ def check_pip3():
         return
     raise Exception("install python3-pip failed")
 
-def check_ansible():
+
+def check_ansible(pip_mirror):
     minimal_ansible_version = '2.9.27'
     cmd.init_ansible_playbook_path()
     ret = os.system("ansible-playbook --version >/dev/null 2>&1")
     if ret == 0:
-        ansible_version = os.popen("""ansible-playbook --version | head -1 | grep -oP '[0-9.]+' """).read().strip()
+        ansible_version = os.popen(
+            """ansible-playbook --version | head -1 | grep -oP '[0-9.]+' """).read().strip()
         if version_ge(ansible_version, minimal_ansible_version):
             print("current ansible version: %s. PASS" % ansible_version)
             return
         else:
-            print("Current ansible version (%s) is lower than expected(%s). upgrading ... " % (ansible_version, minimal_ansible_version))
+            print("Current ansible version (%s) is lower than expected(%s). upgrading ... " % (
+                ansible_version, minimal_ansible_version))
     else:
         print("No ansible found. Installing ... ")
     try:
-        install_ansible()
+        install_ansible(pip_mirror)
     except Exception as e:
         print("Install ansible failed, please try to install ansible manually")
         raise e
+
 
 def install_packages(pkgs):
     ignore_check = os.getenv("IGNORE_ALL_CHECKS")
@@ -97,19 +101,27 @@ def install_packages(pkgs):
     cmdline = '%s install -y %s' % (packager, ' '.join(pkgs))
     return os.system(cmdline)
 
-def install_ansible():
+
+def install_ansible(mirror):
+
+    def get_pip_install_cmd(suffix_cmd, mirror):
+        cmd = "python3 -m pip install --user --upgrade"
+        if mirror:
+            cmd = f'{cmd} -i {mirror}'
+        return f'{cmd} {suffix_cmd}'
+
     for pkg in ['python2-pyyaml', 'PyYAML']:
         install_packages([pkg])
 
-    if os.system('rpm -qa |grep -q python3-pip') != 0:
-        ret = os.system(
-            'python3 -m pip install --user --upgrade pip setuptools wheel')
+    if os.system('rpm -qa | grep -q python3-pip') != 0:
+        ret = os.system(get_pip_install_cmd('pip setuptools wheel', mirror))
         if ret != 0:
             raise Exception("Install/updrade pip3 failed. ")
-    os.system('python3 -m pip install --user --upgrade pip')
-    ret = os.system('python3 -m pip install --user --upgrade ansible')
+    os.system(get_pip_install_cmd('pip', mirror))
+    ret = os.system(get_pip_install_cmd('ansible', mirror))
     if ret != 0:
         raise Exception("Install ansible failed. ")
+
 
 def check_passless_ssh(ipaddr):
     username = get_username()
@@ -150,13 +162,13 @@ def install_passless_ssh(ipaddr):
         raise Exception("check passwordless ssh login failed")
 
 
-def check_env(ipaddr=None):
+def check_env(ipaddr=None, pip_mirror=None):
 
     ignore_check = os.getenv("IGNORE_ALL_CHECKS")
     if ignore_check == "true":
         return
     check_pip3()
-    check_ansible()
+    check_ansible(pip_mirror)
     if ipaddr:
         check_passless_ssh(ipaddr)
 
@@ -258,9 +270,40 @@ def dynamic_load():
             print("\t%s" % p)
 
 
-def gen_config(ipaddr, product_stack):
+def updateStackYaml(stack, confFile):
+    # ignore empty conf;
+    if not (os.path.isfile(confFile) and os.stat(confFile).st_size > 0):
+        return
+
+    import yaml
+    with open(confFile, 'r') as f:
+        try:
+            config = yaml.safe_load(f)
+        except yaml.YAMLError:
+            return
+
+    # only update if stack in config is not equal to given stack
+    if config.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get('product_version', '') == stack:
+        return
+
+    with open(confFile, 'r') as f:
+        fileContent = f.read()
+
+    # use regex instead of yaml, to keep original comments in conf
+    newContent = re.sub(r'  product_version:.*',
+                        f'  product_version: {stack}',
+                        fileContent,
+                        count=1,
+                        flags=re.MULTILINE)
+    with open(confFile, 'w') as f:
+        f.write(newContent)
+
+
+def gen_config(ipaddr, product_stack, enable_host_on_vm):
     global conf
     import os.path
+    import os
+    dynamic_load()
     import yaml
     from lib.get_interface_by_ip import get_interface_by_ip
 
@@ -270,8 +313,8 @@ def gen_config(ipaddr, product_stack):
     cur_path = os.path.abspath(os.path.dirname(__file__))
     if not config_dir:
         config_dir = cur_path
-    temp = os.path.join(config_dir, "config-allinone-current.yml")
-    tryBackupFile(temp)
+    temp = os.path.join(config_dir, "config-allinone-current.yml" if match_ip4addr(ipaddr) else ipaddr)
+    updateStackYaml(product_stack, temp)
     verf = os.path.join(cur_path, "VERSION")
     with open(verf, 'r') as f:
         ver = f.read().strip()
@@ -288,11 +331,14 @@ def gen_config(ipaddr, product_stack):
                 data = (yaml.safe_load(stream))
                 if data.get('primary_master_node', {}).get('hostname', '') == ipaddr and \
                    data.get('primary_master_node', {}).get('onecloud_version', '') == ver:
-                    print("reuse current yaml: %s" % temp)
+                    prGreen("reuse current yaml: %s" % temp)
                     return temp
             except yaml.YAMLError as exc:
                 raise Exception("paring %s error: %s" % (temp, exc))
 
+    # only generate conf automatically for ip:
+    if not match_ip4addr(ipaddr):
+        return temp
     mypass_clickhouse = random_password(12)
     mypass_mariadb = random_password(12)
     interface = get_interface_by_ip(ipaddr)
@@ -305,47 +351,31 @@ def gen_config(ipaddr, product_stack):
             .replace('v3.4.12', ver) \
             .replace("# host_networks: '<interface>/br0/<ip>'", host_networks) \
             .replace('product_stack', product_stack)
-        # if enable_host_on_vm:
-        #     conf_result = conf_result.replace('# as_host_on_vm: true', 'as_host_on_vm: true')
-        #
+        if enable_host_on_vm:
+            conf_result = conf_result.replace('# as_host_on_vm: true', 'as_host_on_vm: true')
+
         f.write(conf_result)
     return temp
-
-
-def update_config(conf_file, product_version):
-    if not os.path.exists(conf_file):
-        raise f"Conf file {conf_file} dose not exist!"
-        return
-
-    if product_version not in ['FullStack', 'CMP', 'Edge']:
-        raise f"Product version {product_version} is not valid! Only 'FullStack', 'CMP', 'Edge' ar supported. "
-        return
-
-    with open(conf_file, 'r') as f:
-        conf = f.read().strip()
-
-    with open(conf_file, 'w') as f:
-        regex = r"^  product_version: (.*)"
-        subst = f"  product_version: '{product_version}'"
-        conf = re.sub(regex, subst, conf, 0, re.MULTILINE)
-        f.write(conf)
-        print('conf updated.')
-        return conf
 
 
 parser = None
 
 def get_args():
-    """show argpase snippets"""
     global parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('IP_CONF', nargs=1, type=str,
+    parser.add_argument('STACK', metavar="stack", type=str, nargs=1,
+                        help="choose product type from 'full', 'cmp' or 'virt'",
+                        choices=['full', 'cmp', 'virt'])
+    parser.add_argument('IP_CONF', metavar="ip_conf", type=str, nargs=1,
                         help="Input the target IPv4 or Config file")
     parser.add_argument('--offline-data-path', nargs='?',
                         help="offline packages location")
-    parser.add_argument('--stack', type=str, default='fullstack',
-                        help="choose product version",
-                        choices=['fullstack', 'cmp', 'edge'])
+    # chose product_version in ['FullStack', 'CMP', 'Edge']
+    pip_mirror_help = "specify pip mirror to install python packages smoothly"
+    pip_mirror_suggest = "https://mirrors.aliyun.com/pypi/simple/"
+    parser.add_argument('--pip-mirror', '-m', type=str, dest='pip_mirror',
+                        help=f"{pip_mirror_help}, e.g.: {pip_mirror_suggest}")
+    inject_add_hostagent_options(parser)
     return parser.parse_args()
 
 
@@ -389,17 +419,15 @@ def ensure_python3_yaml(os):
 def main():
     init_local_user_path()
     args = get_args()
-    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    stack = args.STACK[0]
     ip_conf = str(args.IP_CONF[0])
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-    product_stack = ''
-    got_stack = args.stack.lower()
-    if got_stack in ['fullstack', '', None]:
-        product_stack = 'FullStack'
-    elif got_stack == 'cmp':
-        product_stack = 'CMP'
-    elif got_stack == 'edge':
-        product_stack = 'Edge'
+    stackDict = {
+        'full': 'FullStack',
+        'cmp': 'CMP',
+        'virt': 'Edge',
+    }
 
     # 1. try to get offline data path from optional args
     # 2. if not exist, try to get from os env
@@ -420,21 +448,20 @@ def main():
         elif os.system('test -x /usr/bin/yum') == 0:
             install_packages(['python3-pip', 'python2-pyyaml'])
             ensure_python3_yaml('redhat')
-
     if match_ip4addr(ip_conf):
-        check_env(ip_conf)
-        conf = gen_config(ip_conf, product_stack)
+        # when using 'cmp', always enable `enable_host_on_vm` option
+        conf = gen_config(ip_conf, stackDict.get(stack), args.enable_host_on_vm or stackDict.get(stack) == 'CMP')
+        check_env(ip_conf, pip_mirror=args.pip_mirror)
     elif path.isfile(ip_conf):
         sz = path.getsize(ip_conf)
         if sz == 0:
             prRed(f'Config file <{ip_conf}> is Empty!')
             exit()
-        check_env()
-        update_config(ip_conf, product_stack)
-        conf = ip_conf
+        check_env(pip_mirror=args.pip_mirror)
+        conf = gen_config(ip_conf, stackDict.get(stack), args.enable_host_on_vm or stackDict.get(stack) == 'CMP')
     else:
         prRed(f'The configuration file <{ip_conf}> does not exist or is not valid!')
-        exit()
+        exit(1)
     return install.start(conf)
 
 

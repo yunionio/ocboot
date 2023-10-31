@@ -6,7 +6,6 @@ import os
 from . import ansible
 from . import utils
 from . import consts
-from lib.utils import tryBackupFile
 
 
 GROUP_MARIADB_NODE = "mariadb_node"
@@ -116,7 +115,6 @@ class OcbootConfig(object):
         content = self.get_ansible_inventory()
         yaml_content = utils.to_yaml(content)
         filepath = '/tmp/host_inventory.yml'
-        tryBackupFile(filepath)
         with open(filepath, 'w') as f:
             f.write(yaml_content)
         return filepath
