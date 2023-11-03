@@ -133,9 +133,6 @@ def check_passless_ssh(ipaddr):
     ret = os.system(cmd)
     if ret == 0:
         return
-    else:
-        raise Exception(
-            "Passwordless ssh failed, please configure passwordless ssh to %s@%s" % (username, ipaddr))
     try:
         install_passless_ssh(ipaddr)
     except Exception as e:
@@ -172,7 +169,7 @@ def check_env(ipaddr=None, pip_mirror=None):
         return
     check_pip3()
     check_ansible(pip_mirror)
-    if ipaddr:
+    if match_ip4addr(ipaddr):
         check_passless_ssh(ipaddr)
 
 
@@ -481,7 +478,7 @@ def main():
     else:
         pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()
-    check_env(pip_mirror=args.pip_mirror)
+    check_env(ip_conf, pip_mirror=args.pip_mirror)
     return install.start(conf)
 
 
