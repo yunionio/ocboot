@@ -24,10 +24,8 @@
   loop:
   - openvswitch
 
-- name: add label onecloud.yunion.io/lbagent=enable to {{ ansible_hostname }}
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  shell: kubectl label node "{{ ansible_hostname }}" onecloud.yunion.io/lbagent=enable
+- name: add label onecloud.yunion.io/lbagent=enable to {{ k8s_controlplane_host }}
+  shell: KUBECONFIG=/etc/kubernetes/admin.conf kubectl label node "{{ ansible_hostname }}" onecloud.yunion.io/lbagent=enable
   delegate_to: "{{ k8s_controlplane_host }}"
   run_once: yes
   environment:
