@@ -47,7 +47,7 @@ services:
       start_period: 30s
     restart: on-failure
   keystone-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -87,7 +87,7 @@ services:
       start_period: 30s
     restart: on-failure
   keystone-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -106,7 +106,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   logger-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -146,7 +146,7 @@ services:
       start_period: 30s
     restart: on-failure
   logger-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -165,7 +165,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   notify-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -205,7 +205,7 @@ services:
       start_period: 30s
     restart: on-failure
   notify-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -224,7 +224,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   influxdb-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -256,7 +256,7 @@ services:
       start_period: 30s
     restart: on-failure
   influxdb-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -269,7 +269,7 @@ services:
     - --step=post-init
     restart: on-failure
   region-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -309,7 +309,7 @@ services:
       start_period: 30s
     restart: on-failure
   region-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -328,7 +328,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   scheduler-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -367,7 +367,7 @@ services:
       start_period: 30s
     restart: on-failure
   scheduler-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -386,7 +386,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   scheduledtask-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -425,7 +425,7 @@ services:
       start_period: 30s
     restart: on-failure
   scheduledtask-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -444,7 +444,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   glance-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -485,7 +485,7 @@ services:
       start_period: 30s
     restart: on-failure
   glance-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -504,7 +504,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   kubeserver-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -545,7 +545,7 @@ services:
       start_period: 30s
     restart: on-failure
   kubeserver-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -564,7 +564,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   ansibleserver-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -604,7 +604,7 @@ services:
       start_period: 30s
     restart: on-failure
   ansibleserver-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -623,7 +623,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   climc-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     environment:
@@ -654,7 +654,7 @@ services:
     - "/opt/climc-entrypoint.sh"
     restart: on-failure
   yunionconf-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -694,7 +694,7 @@ services:
       start_period: 30s
     restart: on-failure
   yunionconf-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -713,11 +713,13 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   apigateway-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
       keystone-post-init:
+        condition: service_completed_successfully
+      region-post-init:
         condition: service_completed_successfully
     command:
     - /opt/yunion/bin/compose-service-init
@@ -744,7 +746,7 @@ services:
       start_period: 30s
     restart: on-failure
   apigateway-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -757,7 +759,7 @@ services:
     - --step=post-init
     restart: on-failure
   webconsole-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -797,7 +799,7 @@ services:
       start_period: 30s
     restart: on-failure
   webconsole-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -816,7 +818,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   monitor-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -856,7 +858,7 @@ services:
       start_period: 30s
     restart: on-failure
   monitor-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -875,7 +877,7 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   cloudmon-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -906,7 +908,7 @@ services:
       start_period: 30s
     restart: on-failure
   cloudmon-post-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -918,8 +920,67 @@ services:
     - --component=cloudmon
     - --step=post-init
     restart: on-failure
+  cloudid-init:
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
+    volumes:
+    - ./data/etc/yunion/:/etc/yunion/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      region-post-init:
+        condition: service_completed_successfully
+    command:
+    - /opt/yunion/bin/compose-service-init
+    - --config-dir=/
+    - --component=cloudid
+    - --step=init
+    - --mysql-host=mysql
+    - --mysql-port=3306
+    - --mysql-user=root
+    - --mysql-password=your-sql-password
+  cloudid:
+    image: registry.cn-beijing.aliyuncs.com/yunionio/cloudid:v3.10.6
+    volumes:
+    - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
+    - ./data/etc/yunion/cloudid.conf:/etc/yunion/cloudid.conf:ro
+    depends_on:
+      cloudid-init:
+        condition: service_completed_successfully
+      mysql:
+        condition: service_started
+    command:
+    - /opt/yunion/bin/cloudid
+    - --config
+    - /etc/yunion/cloudid.conf
+    - --auto-sync-table
+    healthcheck:
+      test: netstat -tln | grep -c 30893
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: on-failure
+  cloudid-post-init:
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
+    volumes:
+    - ./data/etc/yunion/:/etc/yunion/
+    depends_on:
+      mysql:
+        condition: service_healthy
+      cloudid:
+        condition: service_healthy
+    command:
+    - /opt/yunion/bin/compose-service-init
+    - --config-dir=/
+    - --component=cloudid
+    - --step=post-init
+    - --mysql-host=mysql
+    - --mysql-port=3306
+    - --mysql-user=root
+    - --mysql-password=your-sql-password
+    restart: on-failure
   web-init:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-lzx-0331.1
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.10-20231107.0
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     - ./data/etc/nginx/conf.d/:/etc/nginx/conf.d/
