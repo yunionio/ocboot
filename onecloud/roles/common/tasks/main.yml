@@ -74,6 +74,9 @@
   become: true
   args:
     executable: /bin/bash
+  ignore_errors: yes
+  changed_when: false
+  failed_when: false
 
 - name: Config NetworkManager
   include_role:
