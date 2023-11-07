@@ -388,9 +388,9 @@ def get_args():
     global parser
     parser = argparse.ArgumentParser()
     parser.add_argument('STACK', metavar="stack", type=str, nargs=1,
-                        help="choose product type from 'full', 'cmp' or 'virt'",
+                        help="Choose the product type from ['full', 'cmp', 'virt']",
                         choices=['full', 'cmp', 'virt'])
-    parser.add_argument('IP_CONF', metavar="ip_conf", type=str, nargs=1,
+    parser.add_argument('IP_CONF', metavar="ip_conf", type=str, nargs='?',
                         help="Input the target IPv4 or Config file")
     parser.add_argument('--offline-data-path', nargs='?',
                         help="offline packages location")
@@ -440,11 +440,28 @@ def ensure_python3_yaml(os):
         subprocess.run(f"{installer} install -y {pkg}", shell=True)
 
 
+def get_default_ip(args):
+    ip_conf = args.IP_CONF
+    if ip_conf and len(ip_conf) > 0:
+        return str(ip_conf[0])
+    # find default ip address
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
+    sockname = s.getsockname()
+    local_ip_address = sockname[0]
+    s.close()
+    return local_ip_address
+
+
+
 def main():
     init_local_user_path()
     args = get_args()
     stack = args.STACK[0]
-    ip_conf = str(args.IP_CONF[0])
+    ip_conf = get_default_ip(args)
+    if match_ip4addr(ip_conf):
+        pr_green(f"choose local ip address: {ip_conf}")
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
     stackDict = {
