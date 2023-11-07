@@ -12,6 +12,10 @@
   args:
     executable: /bin/bash
   become: yes
+  ignore_errors: yes
+  changed_when: false
+  failed_when: false
   when:
   - enable_eip_man | default(false) | bool == true
   - product_version | default('fullstack') | lower in ['fullstack', 'edge']
+
