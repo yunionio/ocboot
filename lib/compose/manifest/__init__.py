@@ -1,5 +1,5 @@
 from lib.compose.object import ComposeManifest
-from lib.compose.services import ClimcService, new_scheduler_service, WebService, new_apigateway_service, \
+from lib.compose.services import ClimcService, new_cloudid_service, new_scheduler_service, WebService, new_apigateway_service, \
     new_webconsole_service, new_yunionconf_service, new_monitor_service, InfluxdbService, EtcdService, \
     new_glance_service, KubeServerService, new_scheduledtask_service, new_logger_service, new_notify_service, \
     new_cloudmon_service
@@ -31,6 +31,7 @@ def new_oc_manifest(version):
     monitor = new_monitor_service(version, mysql, region)
     cloudmon = new_cloudmon_service(version, keystone)
     notify = new_notify_service(version, mysql, keystone)
+    cloudid = new_cloudid_service(version, mysql, region)
     web = WebService(version, apigateway, webconsole)
 
     for svc in [
@@ -51,6 +52,7 @@ def new_oc_manifest(version):
         webconsole,
         monitor,
         cloudmon,
+        cloudid,
         web,
     ]:
         init_svc = svc.get_init_service()
