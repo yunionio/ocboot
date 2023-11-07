@@ -46,6 +46,9 @@ SVC_PORT_NOTIFY = 30777
 SVC_CLOUDMON = "cloudmon"
 SVC_PORT_CLOUDMON = 30931
 
+SVC_CLOUDID = "cloudid"
+SVC_PORT_CLOUDID = 30893
+
 
 def new_cloud_service(name, version, port,
                       db_svc=None,
@@ -115,6 +118,10 @@ def new_logger_service(version, db_svc, keystone_svc):
 
 def new_notify_service(version, db_svc, keystone_svc):
     return new_cloud_service(SVC_NOTIFY, version, SVC_PORT_NOTIFY, db_svc, keystone_svc)
+
+
+def new_cloudid_service(version, db_svc, region_svc):
+    return new_cloud_service(SVC_CLOUDID, version, SVC_PORT_CLOUDID, db_svc, depend_svc=region_svc)
 
 
 def new_cloudmon_service(version, keystone_svc):
