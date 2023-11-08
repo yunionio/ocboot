@@ -443,7 +443,7 @@ def ensure_python3_yaml(os):
 def get_default_ip(args):
     ip_conf = args.IP_CONF
     if ip_conf and len(ip_conf) > 0:
-        return str(ip_conf[0])
+        return str(ip_conf)
     # find default ip address
     import socket
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
