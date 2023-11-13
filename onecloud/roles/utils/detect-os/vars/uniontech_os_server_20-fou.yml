@@ -1,0 +1,54 @@
+is_debian_based: true
+
+common_packages:
+  - apt-transport-https
+  - bash-completion
+  - bridge-utils
+  - ca-certificates
+  - ceph-common
+  - chntpw
+  - conntrack
+  - conntrackd
+  - curl
+  - dkms
+  - docker-ce
+  - git
+  - glusterfs-common
+  - gnupg-agent
+  - gnupg2
+  - ipset
+  - ipvsadm
+  - jq
+  - kubectl=1.15.12-00 # 1 # 此处不要排序, 以免自动安装更高版本
+  - kubelet=1.15.12-00 # 2 # 此处不要排序, 以免自动安装更高版本
+  - kubeadm=1.15.12-00 # 3 # 此处不要排序, 以免自动安装更高版本
+  - libcapstone3
+  - libiscsi7
+  - librbd1
+  - libspice-server1
+  - libusb-1.0-0
+  - libusbredirparser1
+  - nfs-common
+  - ntp
+  - openvswitch-switch
+  - ovmf
+  - parallel
+  - python-pymysql
+  - python-selinux
+  - python-yaml
+  - python3-pip
+  - software-properties-common
+  - wget
+
+common_services:
+  - ntp
+  - yunion-executor
+
+latest_packages:
+  - ca-certificates
+  - yunion-climc
+  - yunion-climc-ee
+  - yunion-executor
+  - yunion-fetcherfs
+  - yunion-ocadm
+  - "{{ yunion_qemu_package }}"
