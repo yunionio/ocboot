@@ -278,6 +278,11 @@ def update_config(yaml_conf, produc_stack):
     yaml_data = {}
     to_write = False
 
+    offline_path = os.environ.get('OFFLINE_DATA_PATH', )
+    if offline_path:
+        pr_green('offline mode, no need to update config.')
+        return yaml_conf
+
     assert produc_stack in ocboot.KEY_STACK_LIST
     try:
         if path.isfile(yaml_conf) and path.getsize(yaml_conf) > 0:
