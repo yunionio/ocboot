@@ -290,6 +290,9 @@ def update_config(yaml_conf, produc_stack):
         pr_red("paring %s error: %s" % (yaml_conf, exc))
         raise Exception("paring %s error: %s" % (yaml_conf, exc))
 
+    if not yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}):
+        return yaml_conf
+
     if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_PRODUCT_VERSION, '') != produc_stack:
         to_write = True
         yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_PRODUCT_VERSION] = produc_stack
