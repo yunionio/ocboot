@@ -4,10 +4,8 @@
     dest: "/tmp/{{ resource_name }}.patch.yml"
 
 - name: patch {{ resource }} {{ namespace }}/{{ resource_name }} onecloud.yunion.io/controller node selector
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
-    kubectl patch {{ resource }} -n {{ namespace }} {{ resource_name }} --patch "$(cat /tmp/{{ resource_name }}.patch.yml)" --type merge && rm -f /tmp/{{ resource_name }}.patch.yml
+    KUBECONFIG=/etc/kubernetes/admin.conf kubectl patch {{ resource }} -n {{ namespace }} {{ resource_name }} --patch "$(cat /tmp/{{ resource_name }}.patch.yml)" --type merge && rm -f /tmp/{{ resource_name }}.patch.yml
   become: yes
   args:
     executable: /bin/bash
