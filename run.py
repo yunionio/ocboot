@@ -17,6 +17,7 @@ from lib.parser import inject_add_hostagent_options
 from lib.utils import init_local_user_path
 from lib.utils import pr_red, pr_green
 from lib.utils import regex_search
+from lib.utils import is_valid_dns
 from lib import ocboot
 
 
@@ -309,7 +310,7 @@ def update_config(yaml_conf, produc_stack):
     return yaml_conf
 
 
-def generate_config(ipv4, produc_stack):
+def generate_config(ipv4, produc_stack, dns_list=[]):
     global conf
     import os.path
     import os
@@ -379,6 +380,12 @@ def generate_config(ipv4, produc_stack):
         ocboot.KEY_ONECLOUD_VERSION: ver,
         ocboot.KEY_PRODUCT_VERSION: produc_stack,
     }
+
+    if len(dns_list) > 0:
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE].update({
+            ocboot.KEY_USER_DNS: dns_list
+        })
+
     yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE].update(extra_pri_dict)
     yaml_data[ocboot.GROUP_MARIADB_NODE].update(extra_db_dict)
     with open(temp, 'w') as f:
@@ -400,7 +407,7 @@ def get_args():
                         help="Input the target IPv4 or Config file")
     parser.add_argument('--offline-data-path', nargs='?',
                         help="offline packages location")
-
+    parser.add_argument('--dns', nargs='*', help='Space seperated DNS server(s), eg: --dns 1.1.1.1 8.8.8.8')
     pip_mirror_help = "specify pip mirror to install python packages smoothly"
     pip_mirror_suggest = "https://mirrors.aliyun.com/pypi/simple/"
     parser.add_argument('--pip-mirror', '-m', type=str, dest='pip_mirror',
@@ -460,10 +467,13 @@ def get_default_ip(args):
     return local_ip_address
 
 
-
 def main():
     init_local_user_path()
     args = get_args()
+    user_dns = []
+    if args.dns:
+        user_dns = [i for i in args.dns if is_valid_dns(i)]
+
     stack = args.STACK[0]
     ip_conf = get_default_ip(args)
     if match_ip4addr(ip_conf):
@@ -497,7 +507,7 @@ def main():
             ensure_python3_yaml('redhat')
 
     if match_ip4addr(ip_conf):
-        conf = generate_config(ip_conf, stackDict.get(stack))
+        conf = generate_config(ip_conf, stackDict.get(stack), user_dns)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
         conf = update_config(ip_conf, stackDict.get(stack))
     else:
