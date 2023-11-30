@@ -148,6 +148,16 @@
   when:
   - product_version is defined
 
+- name: Use customized DNS entries
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/regionDNS/proxies/0/to", "value": {{ user_dns | to_json }} }]'
+    kubectl -n onecloud delete configmap default-region-dns || :
+    kubectl -n onecloud rollout restart ds default-region-dns || :
+  become: yes
+  when: user_dns is defined and user_dns|length > 0
+
 - name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin for root"
   shell: |
     /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin
