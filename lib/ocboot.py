@@ -31,6 +31,8 @@ KEY_STACK_EDGE = 'Edge'
 KEY_STACK_CMP = 'CMP'
 KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
 
+KEY_USER_DNS = 'user_dns'
+
 
 def load_config(config_file):
     import yaml
@@ -450,6 +452,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.service_cidr = config.get('service_cidr', '10.96.0.0/12')
         self.service_dns_domain = config.get('service_dns_domain', 'cluster.local')
         self.product_version = self.get_product_version(config)
+        self.user_dns = config.get(KEY_USER_DNS, [])
 
     def get_product_version(self, config):
         pv = config.get('product_version', self.PRODUCT_VERSION_FULL_STACK)
@@ -484,6 +487,8 @@ class PrimaryMasterConfig(OnecloudConfig):
         if len(self.offline_nodes) > 0:
             vars['offline_nodes'] = ' '.join(self.offline_nodes)
         vars['product_version'] = self.product_version
+        if self.user_dns:
+            vars[KEY_USER_DNS] = self.user_dns
         return vars
 
     def get_nodes(self):
