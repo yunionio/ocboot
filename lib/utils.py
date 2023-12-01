@@ -2,6 +2,7 @@
 from datetime import datetime, tzinfo, timedelta
 import os
 import re
+import socket
 
 
 def ensure_ascii(s):
@@ -99,3 +100,10 @@ def regex_search(pattern, string, ignore_case=False):
     if match:
         return match.group(0)
     return None
+
+def is_valid_dns(dns):
+    try:
+        socket.gethostbyname(dns)
+        return True
+    except socket.gaierror:
+        return False
