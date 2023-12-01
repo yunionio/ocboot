@@ -139,7 +139,7 @@ env_check() {
         error_exit "You need sudo or root to run this script."
     fi
 
-    local supported_distros=("centos" "debian" "openeuler")
+    local supported_distros=("centos" "debian" "openeuler", "ubuntu")
     local distros=($(get_distro))
 
     local found_supported_distro=false
@@ -188,7 +188,7 @@ mk_grub(){
     local distro=${1}
     if [[ "${distro}" == "centos" ]]; then
         mk_grub2
-    elif [[ "${distro}" == "debian" ]]; then
+    elif [[ "${distro}" == "debian" ]] || [[ "${distro}" == "ubuntu" ]]; then
         mk_grub_legacy
     elif [[ "${distro}" == "openeuler" ]]; then
         mk_grub2_openeuler
