@@ -6,6 +6,12 @@
   - extra_packages is defined
   - common_packages is defined
 
+- name: Update package list for {{ansible_distribution}} {{ansible_distribution_release}}
+  set_fact:
+    common_packages: "{{common_packages | difference(['docker-ce']) + ['docker']}}"
+  when:
+  - ansible_distribution_release == 'Lance'
+
 - name: install common packages via loop
   package:
     name: "{{ package_item }}"
