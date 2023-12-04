@@ -206,6 +206,13 @@
     when:
     - is_uos_kongzi|default(false) | bool == true
 
+  - name: Config docker file for kylin lance
+    shell: |
+      perl -0777 -i -pe 's#,\s*"live-restore": true##g' /etc/docker/daemon.json
+    when:
+    - ansible_distribution_release == 'Lance'
+    become: true
+
   - name: Restart docker service
     service: name=docker state=restarted daemon_reload=yes enabled=yes
     become: true
