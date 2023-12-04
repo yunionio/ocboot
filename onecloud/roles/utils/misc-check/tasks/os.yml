@@ -1,3 +1,26 @@
+- name: set var for {{ onecloud_version }}
+  set_fact:
+    supported_kylin_code: []
+
+- name: set var for {{ onecloud_version }}
+  set_fact:
+    supported_kylin_code:
+    - Kivity
+    - Sword
+    - Lance
+  when:
+  - onecloud_version is version('v3.9', ">=")
+  - onecloud_version is version('v3.10', "<")
+
+- name: set var
+  set_fact:
+    supported_kylin_code:
+    - Kivity
+    - Sword
+  when:
+  - onecloud_version is version('v3.10', ">=")
+  - onecloud_version is version('v3.11', "<")
+
 - name: set var
   set_fact:
     supported_os:
@@ -20,7 +43,7 @@
         ansible_distribution_name: "Kylin Linux Advanced Server"
         conditions:
           - "'{{ ansible_distribution_version }}' is version('V10', '==')"
-          - "'{{ ansible_distribution_release }}' in ['Kivity', 'Sword']"
+          - "'{{ ansible_distribution_release }}' in {{ supported_kylin_code }}"
       uos:
         ansible_distribution_name: "UnionTech OS Server"
         conditions:
@@ -38,13 +61,13 @@
   assert:
     that:
       - supported_os_name | bool
-    fail_msg: "OS {{ ansible_distribution }} is not supported "
+    fail_msg: "OS {{ ansible_distribution }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"
     success_msg: "Os distribution {{ ansible_distribution }} is supported"
 
 - name: Check if OS VERSION is supported
   assert:
     that: "{{ item }}"
-    fail_msg: "OS VER {{ ansible_distribution }} {{ ansible_distribution_version }} is NOT supported"
+    fail_msg: "OS {{ ansible_distribution }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"
   with_items: "{{ supported_os[supported_os_key].conditions }}"
   when:
     - ansible_distribution.startswith(supported_os[supported_os_key].ansible_distribution_name)
