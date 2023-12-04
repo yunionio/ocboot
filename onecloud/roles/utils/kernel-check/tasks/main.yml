@@ -38,7 +38,7 @@
   failed_when: false
 
 - name: install customized kernel
-  include: "{{ ansible_distribution | lower }}-{{ ansible_architecture }}.yml"
+  include_tasks: "{{ ansible_distribution | lower }}-{{ ansible_architecture }}.yml"
   when:
   - nbd_ok|default(false)|bool == false
   - is_yunion_kernel_installed.rc != 0
