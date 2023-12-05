@@ -58,8 +58,9 @@
       ubuntu:
         ansible_distribution_name: "Ubuntu"
         conditions:
-          - "'{{ ansible_distribution_version }}' is version('22.04', '>=')"
-          - "'{{ ansible_distribution_version }}' is version('23', '<')"
+          - ubuntu_22_04_23:
+              - "'{{ ansible_distribution_version }}' is version('22.04', '>=')"
+              - "'{{ ansible_distribution_version }}' is version('23', '<')"
 
 - name: Check if the current operating system is supported
   set_fact:
