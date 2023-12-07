@@ -9,7 +9,7 @@
 - name: Import task utils/config_iptables.yml
   include_tasks: utils/config_iptables.yml
 
-- name: init apt cache for ubuntu 
+- name: init apt cache for ubuntu
   get_url:
     url: https://iso.yunion.cn/ubuntu/{{ ansible_distribution_major_version }}/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/yunion.gpg-key.asc
     dest: /tmp/yunion.gpg-key.asc
@@ -34,6 +34,8 @@
   - "{{ common_packages }}"
   when:
   - common_packages is defined
+  tags:
+  - package
 
 - name: install latest packages via loop
   package:
