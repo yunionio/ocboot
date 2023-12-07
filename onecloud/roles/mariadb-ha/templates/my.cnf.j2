@@ -19,6 +19,7 @@ expire_logs_days=30
 innodb_file_per_table=ON
 max_connections = 300
 max_allowed_packet=20M
+group_concat_max_len=20M
 default_time_zone='+00:00'
 
 {% if inventory_hostname == groups['mariadb_ha_nodes'][0] %}
@@ -39,6 +40,7 @@ replicate-ignore-db = performance_schema
 max_connections = 1000
 max_connect_errors = 0
 max_allowed_packet = 1G
+group_concat_max_len = 1G
 slave-net-timeout=10
 master-retry-count=0
 
