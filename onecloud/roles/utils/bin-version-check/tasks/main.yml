@@ -32,9 +32,9 @@
 - name: Assert yunion bin version
   assert:
     that:
-      - '"{{item}}" is version(yunion_bin_ge, ">=")'
-    fail_msg: "yunion's version must be greater than {{ yunion_bin_ge }}, got {{item}}."
-  loop: "{{yunion_bin_version_ret.stdout.split('\n') | list }}"
+      - - '"{{item}}" is version(YUNION_BIN_GT, ">")'
+    fail_msg: "Yunion's version must be greater than {{ YUNION_BIN_GT }}, got {{ item }}."
+  loop: "{{ yunion_bin_version_ret.stdout.split('\n') | list }}"
   when:
   - onecloud_version is version('v3.10', '>=')
 
@@ -62,13 +62,11 @@
     executable: /bin/bash
 
 - debug: var=kubectl_version_ret.stdout
-- debug: var=k8s_version_ge
 
 - name: Assert kubelet version
   assert:
     that:
-      - '"{{item}}" is version(k8s_version_ge, ">=")'
-      - '"{{item}}" is version(k8s_version_lt, "<")'
-    fail_msg: "k8s's version must be {{k8s_version_ge}}~{{k8s_version_lt}}, got {{item}}."
-  loop: "{{kubectl_version_ret.stdout.split('\n') | list }}"
-
+      - - '"{{item}}" is version(K8S_VERSION_GE, ">=")'
+      - - '"{{item}}" is version(K8S_VERSION_LT, "<")'
+    fail_msg: "k8s's version must be {{K8S_VERSION_GE}}~{{K8S_VERSION_LT}}, got {{item}}."
+  loop: "{{ kubectl_version_ret.stdout.split('\n') | list }}"
