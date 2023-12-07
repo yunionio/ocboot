@@ -1,0 +1,53 @@
+---
+- name: Setup repo mirrors
+  include_role:
+    name: utils/mirror
+
+- name: sync files
+  synchronize:
+    src:  "{{ item }}"
+    dest: "{{ item }}"
+    delete: yes
+    recursive: yes
+  delegate_to: "{{ primary_node_ip }}"
+  with_items:
+    - /etc/yum.repos.d/yunion.repo
+    - "{{ offline_data_path }}/repodata/"
+    - "{{ offline_data_path }}/rpms/"
+  when:
+  - primary_node_ip is defined
+  - primary_node_ip != ansible_default_ipv4.address
+
+- name: "Add cloud rpm repository {{ yunion_yum_repo }}"
+  get_url:
+    url: "{{ yunion_yum_repo }}"
+    dest: /etc/yum.repos.d/yunion.repo
+    force: yes
+    validate_certs: no
+  become: yes
+  when:
+  - is_centos_x86 is defined
+  - offline_data_path is not defined or offline_data_path | length == 0
+
+- name: "update repo"
+  shell: |
+    yum clean all
+    yum --disablerepo='*' --enablerepo='yunion*' makecache fast
+  when:
+  - is_centos_based is defined
+
+- name: Upgrade common packages
+  yum:
+    name:
+      - yunion-ocadm
+      - yunion-climc
+      - yunion-climc-ee
+      - yunion-executor
+      - yunion-qemu-4.2.0
+      - openvswitch
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+    state: latest
+  become: yes
+  when:
+  - is_centos_based is defined
