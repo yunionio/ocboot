@@ -77,6 +77,7 @@ def ensure_db_config(args):
             '''FLUSH PRIVILEGES''',
             '''set global net_buffer_length=999424 ''',
             '''set global max_allowed_packet=999999488 ''',
+            '''set global group_concat_max_len=999999488 ''',
         ]
 
         db = DB()
