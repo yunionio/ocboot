@@ -114,7 +114,7 @@ def install_ansible(mirror):
             cmd = f'{cmd} -i {mirror}'
         return f'{cmd} {suffix_cmd}'
 
-    for pkg in ['python2-pyyaml', 'PyYAML']:
+    for pkg in ['PyYAML']:
         install_packages([pkg])
 
     if os.system('rpm -qa | grep -q python3-pip') != 0:
@@ -122,7 +122,7 @@ def install_ansible(mirror):
         if ret != 0:
             raise Exception("Install/updrade pip3 failed. ")
     os.system(get_pip_install_cmd('pip', mirror))
-    ret = os.system(get_pip_install_cmd('ansible', mirror))
+    ret = os.system(get_pip_install_cmd("'ansible<=9.0.0'", mirror))
     if ret != 0:
         raise Exception("Install ansible failed. ")
 
@@ -503,7 +503,8 @@ def main():
             install_packages(['python3-pip'])
             ensure_python3_yaml('debian')
         elif os.system('test -x /usr/bin/yum') == 0:
-            install_packages(['python3-pip', 'python2-pyyaml'])
+            install_packages(['python3-pip'])
+            os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
 
     if match_ip4addr(ip_conf):
