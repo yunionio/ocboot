@@ -11,8 +11,6 @@
     - kernel-5.4.130-1.yn20230805.el7
     - kernel-devel-5.4.130-1.yn20230805.el7
     - kernel-headers-5.4.130-1.yn20230805.el7
-  vars:
-    ansible_python_interpreter: /usr/bin/python2
   become: yes
   when:
   - onecloud_version is defined
