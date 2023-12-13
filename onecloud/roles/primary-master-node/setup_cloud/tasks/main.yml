@@ -158,6 +158,16 @@
   become: yes
   when: user_dns is defined and user_dns|length > 0
 
+- name: Source climc bash completion in master's ~/.bashrc
+  lineinfile:
+    dest: ~/.bashrc
+    line: "source <(/opt/yunion/bin/climc --completion bash)"
+    state: present
+    create: yes
+    regexp: '.*climc --completion bash.*'
+  when:
+  - shell is undefined or shell == 'bash'
+
 - name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin for root"
   shell: |
     /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin
