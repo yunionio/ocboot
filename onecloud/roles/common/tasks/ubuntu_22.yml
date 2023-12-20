@@ -36,6 +36,8 @@
     label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
     loop_var: package_item
   become: yes
+  tags:
+  - package
 
 - name: install latest packages via loop
   package:

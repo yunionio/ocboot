@@ -10,6 +10,7 @@ common_packages:
   - chntpw
   - conntrack
   - conntrackd
+  - cron
   - curl
   - dkms
   - docker-ce

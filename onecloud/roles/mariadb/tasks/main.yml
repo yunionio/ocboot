@@ -16,6 +16,21 @@
         - "{{ ansible_os_family|lower }}.yml"
         - defaults.yml
 
+- name: Include Pre Install tasks if any
+  include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "pre-{{ ansible_distribution|lower | replace(' ', '_') | replace('\"_', '') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.{{ ansible_architecture }}.yml"
+        - "pre-{{ ansible_distribution|lower | replace(' ', '_') | replace('\"_', '') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "pre-{{ ansible_distribution|lower | replace(' ', '_') | replace('\"_', '') }}-{{ ansible_distribution_release|lower }}-{{ ansible_architecture }}.yml"
+        - "pre-{{ ansible_distribution|lower | replace(' ', '_') | replace('\"_', '') }}-{{ ansible_distribution_release|lower }}.yml"
+        - "pre-{{ ansible_distribution|lower | replace(' ', '_') | replace('\"_', '') }}-{{ ansible_distribution_major_version|lower|replace('/', '_') }}.yml"
+        - "pre-{{ ansible_distribution|lower | replace(' ', '_') | replace('\"_', '') }}-{{ ansible_architecture }}.yml"
+        - "pre-{{ ansible_distribution|lower | replace(' ', '_') | replace('\"_', '') }}.yml"
+        - "pre-{{ ansible_os_family|lower | replace('\"_', '') }}-{{ ansible_architecture }}.yml"
+        - "pre-{{ ansible_os_family|lower | replace('\"_', '') }}.yml"
+      skip: true
+
 - name: Install mariadb
   package:
     name: "{{ package_item }}"
