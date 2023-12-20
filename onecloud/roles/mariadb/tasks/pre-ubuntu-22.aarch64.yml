@@ -1,0 +1,11 @@
+- name: Pre install Mariadb Dependency for Ubuntu Server 2204 Arm64
+  shell: |
+    wget https://iso.yunion.cn/ubuntu/22/{{ onecloud_version_abbr }}/aarch64/libdbi-perl_1.643-3build3_arm64.deb -O /tmp/libdbi-perl.deb && \
+      dpkg -i /tmp/libdbi-perl.deb && \
+      rm -rf /tmp/libdbi-perl.deb
+  become: yes
+  args:
+    executable: /bin/bash
+  when:
+  - onecloud_version_abbr == '3.10'
+
