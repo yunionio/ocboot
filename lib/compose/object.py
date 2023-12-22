@@ -96,6 +96,7 @@ class Service(ComposeObject):
         self.command = []
         self.healthcheck = None
         self.restart = None
+        self.privileged = False
 
     def get_name(self):
         return self.name
@@ -107,6 +108,9 @@ class Service(ComposeObject):
     def add_port(self, *port):
         self.ports = self.ports + list(port)
         return self
+
+    def enable_privileged(self):
+        self.privileged = True
 
     def add_environment(self, env):
         for key in env:
@@ -171,6 +175,8 @@ class Service(ComposeObject):
         self.inject_data(data, "command", self.command)
         self.inject_data(data, "healthcheck", self.healthcheck)
         self.inject_data(data, "restart", self.restart)
+        if self.privileged:
+            self.inject_data(data, "privileged", self.privileged)
 
         return data
 

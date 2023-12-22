@@ -22,6 +22,9 @@ SVC_PORT_SCHEDULEDTASK = 30978
 SVC_GLANCE = "glance"
 SVC_PORT_GLANCE = 30292
 
+SVC_ESXI_AGENT = "esxi-agent"
+SVC_PORT_ESXI_AGENT = 30883
+
 SVC_APIGATEWAY = "apigateway"
 SVC_PORT_APIGATEWAY = 30300
 
@@ -68,7 +71,8 @@ def new_keystone_service(version, db_svc, etcd_svc):
 
 
 def new_region_service(version, db_svc, keystone_svc):
-    return new_cloud_service(SVC_REGION, version, SVC_PORT_REGION, db_svc, keystone_svc)
+    return new_cloud_service(SVC_REGION, version, SVC_PORT_REGION, db_svc,
+                             keystone_svc)
 
 
 def new_scheduler_service(version, db_svc, region_svc):
@@ -85,9 +89,18 @@ def new_scheduledtask_service(version, db_svc, region_svc):
     return svc
 
 
-def new_glance_service(version, db_svc, keystone_svc):
-    svc = new_cloud_service(SVC_GLANCE, version, SVC_PORT_GLANCE, db_svc, keystone_svc)
-    svc.add_volume(ServiceDataVolume("/opt/cloud/workspace/data/glance"))
+def new_glance_service(version, db_svc, keystone_svc, hostdeployer_svc):
+    svc = new_cloud_service(SVC_GLANCE, version, SVC_PORT_GLANCE, db_svc, keystone_svc, depend_svc=hostdeployer_svc)
+    svc.add_volume(ServiceDataVolume(svc.YUNION_GLANCE_DATA_PATH))
+    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_ONECLOUD_PATH))
+    return svc
+
+
+def new_esxi_agent_service(version, keystone_svc, region_svc):
+    svc = new_cloud_service(SVC_ESXI_AGENT, version, SVC_PORT_ESXI_AGENT, keystone_svc=keystone_svc, depend_svc=region_svc)
+    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_VMWARE_PATH))
+    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_ONECLOUD_PATH))
+    svc.add_volume(ServiceDataVolume(svc.YUNION_CLOUD_PATH))
     return svc
 
 
