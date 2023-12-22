@@ -24,7 +24,7 @@ class ComposeServiceInitService(ClusterService):
                  db_svc=None,
                  keystone_svc=None,
                  depend_svc=None,
-                 version="v3.10-20231107.0"):
+                 version="v3.10-20231222.3"):
         super().__init__(f"{component_name}-{step}", version, image_name='compose-service-init')
 
         if not step:
@@ -62,8 +62,13 @@ class ComposeServiceInitService(ClusterService):
 
 
 class ClusterCommonService(ClusterService):
+
     YUNION_BIN_PATH = "/opt/yunion/bin/"
     YUNION_ETC_PATH = "/etc/yunion/"
+    YUNION_CLOUD_PATH = "/opt/cloud"
+    YUNION_GLANCE_DATA_PATH = f'{YUNION_CLOUD_PATH}/workspace/data/glance'
+    YUNION_RUN_ONECLOUD_PATH = "/var/run/onecloud"
+    YUNION_RUN_VMWARE_PATH = "/var/run/vmware"
     YUNION_CERTS_PATH = YUNION_ETC_PATH + "pki/"
     STEP_INIT = ComposeServiceInitService.STEP_INIT
     STEP_POST_INIT = ComposeServiceInitService.STEP_POST_INIT
