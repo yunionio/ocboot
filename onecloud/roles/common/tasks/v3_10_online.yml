@@ -1,13 +1,4 @@
 ---
-- name: Add cloud rpm repository
-  get_url:
-    url: https://iso.yunion.cn/centos/7/3.10/{{ansible_architecture}}/yunion.repo
-    dest: /etc/yum.repos.d/yunion.repo
-    validate_certs: no
-  become: yes
-  when:
-  - is_centos_based is defined
-
 - name: Add cloud rpm repository for Kylin
   get_url:
     url: https://iso.yunion.cn/kylin/v10-{{ansible_distribution_release|lower}}/3.10/{{ansible_architecture}}/kylin-yunion.repo
@@ -25,6 +16,18 @@
   become: yes
   when:
   - is_openeuler_based|default(false)|bool == true
+
+- name: enable repo
+  shell: |
+    cat > /etc/yum.repos.d/misc.repo <<EOF_MISC
+    [yunion-repo-online]
+    name=Packages for Yunion Multi-Cloud Platform -
+    baseurl=http://10.168.26.229:9999/
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    EOF_MISC
 
 - name: make cache
   shell: |

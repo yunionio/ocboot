@@ -1,0 +1,86 @@
+---
+- name: append packages to common_packages
+  set_fact:
+    common_packages: "{{ common_packages + extra_packages }}"
+  when:
+  - extra_packages is defined
+  - common_packages is defined
+
+- name: Update package list for {{ansible_distribution}} {{ansible_distribution_release}}
+  set_fact:
+    common_packages: "{{common_packages | difference(['docker-ce']) + ['docker']}}"
+  when:
+  - ansible_distribution_release == 'Lance'
+
+- name: install common packages via loop
+  package:
+    name: "{{ package_item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  with_items:
+  - "{{ common_packages }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  become: yes
+  tags:
+  - package
+
+- name: install latest packages via loop
+  package:
+    name: "{{ package_item }}"
+    state: latest
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  with_items:
+  - "{{ latest_packages }}"
+  become: yes
+  retries: 6
+  delay: 10
+  register: latest_pkg_result
+  until: latest_pkg_result.rc == 0
+  ignore_errors: yes
+  when:
+  - latest_packages is defined
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ latest_packages | length }}] {{ package_item }}"
+    loop_var: package_item
+  tags:
+  - package
+
+- name: install misc obsolete packages
+  package:
+    name: "{{ package_item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: yes
+  loop_control:
+    index_var: item_index
+    loop_var: package_item
+  with_items:
+  - yunion-qemu-2.12.1
+  when:
+  - is_centos_x86 is defined
+  tags:
+  - package
+
+- name: Selinux Status
+  shell: |
+    sestatus |grep '^SELinux status:' |awk '{print $3}'
+  register: selinux_status
+  ignore_errors: yes
+
+- name: Check that if selinux config exists
+  stat:
+    path: /etc/selinux/config
+  register: selinux_conf_exists
+
+- name: Turn off selinux
+  selinux:
+    state: disabled
+  become: yes
+  when:
+    - selinux_status.stdout | default("") != "disabled"
+    - selinux_conf_exists.stat.exists

@@ -431,7 +431,7 @@ def ensure_python3_yaml(os):
         else:
             query = "sudo dpkg -l"
             installer = "sudo apt"
-        subprocess.check_output(f"{installer} update", shell=True)
+#        subprocess.check_output(f"{installer} update", shell=True)
     else:
         print("OS not supported")
         exit(1)

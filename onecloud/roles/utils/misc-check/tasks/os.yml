@@ -67,6 +67,16 @@
           - ubuntu_22_04_23:
               - "'{{ ansible_distribution_version }}' is version('22.04', '>=')"
               - "'{{ ansible_distribution_version }}' is version('23', '<')"
+      rocky:
+        ansible_distribution_name: "Rocky"
+        conditions:
+          - rocky:
+            - "'{{ ansible_distribution_release }}' == 'Green Obsidian'"
+            - "'{{ ansible_distribution_major_version}}' == '8'"
+      anolis:
+        ansible_distribution_name: "Anolis OS"
+        conditions:
+          - "'{{ ansible_distribution_version }}' is version('8.8', '==')"
 
 - name: Check if the current operating system is supported
   set_fact:
