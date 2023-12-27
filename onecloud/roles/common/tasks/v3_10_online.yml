@@ -48,9 +48,3 @@
   when:
   - is_centos_based is defined
 
-- name: install libselinux-python for arm64 centos
-  yum:
-    name: libselinux-python
-  when:
-  - is_centos_aarch64 is defined
-  become: yes

@@ -1,4 +1,3 @@
----
 - name: append packages to common_packages
   set_fact:
     common_packages: "{{ common_packages + extra_packages }}"
@@ -26,10 +25,6 @@
 - name: install common packages via loop
   package:
     name: "{{ package_item }}"
-    # disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
-    # disablerepo: "*"
-    # enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
-    # enablerepo: "yunion-*"
   with_items:
   - "{{ common_packages }}"
   loop_control:
