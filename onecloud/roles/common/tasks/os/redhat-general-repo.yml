@@ -1,0 +1,22 @@
+- name: enable repo
+  shell: |
+    cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
+    [yunion-repo-base]
+    name=Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/{{ ansible_distribution| replace(' ','') | lower }}/{{ ansible_distribution_version }}/base/{{ ansible_architecture }}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=1
+
+    [yunion-repo-updates]
+    name=Yunion Bin Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/rpm-updates/{{ansible_architecture}}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=1
+    EOF_MISC
+  become: yes

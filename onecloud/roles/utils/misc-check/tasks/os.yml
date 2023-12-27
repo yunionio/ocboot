@@ -47,8 +47,9 @@
       euler:
         ansible_distribution_name: "openEuler"
         conditions:
-          - "'{{ ansible_distribution_major_version }}' is version('22', '==')"
-          - "'{{ ansible_distribution_version }}' is version('22.03', '>=')"
+          - euler:
+            - "'{{ ansible_distribution_major_version }}' is version('22', '==')"
+            - "'{{ ansible_distribution_version }}' is version('22.03', '>=')"
 
       kylin:
         ansible_distribution_name: "Kylin Linux Advanced Server"
@@ -67,6 +68,13 @@
           - ubuntu_22_04_23:
               - "'{{ ansible_distribution_version }}' is version('22.04', '>=')"
               - "'{{ ansible_distribution_version }}' is version('23', '<')"
+
+      anolis:
+        ansible_distribution_name: "Anolis OS"
+        conditions:
+        - "'{{ ansible_distribution_version }}' is version('8.8', '==')"
+        - "onecloud_version is defined"
+        - "'{{ onecloud_version }}' is version('v3.11', '>=')"
 
 - name: Check if the current operating system is supported
   set_fact:
@@ -90,3 +98,4 @@
   with_items: "{{ supported_os[supported_os_key].conditions }}"
   when:
     - ansible_distribution.startswith(supported_os[supported_os_key].ansible_distribution_name)
+
