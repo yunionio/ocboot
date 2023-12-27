@@ -63,7 +63,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   keystone:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/keystone:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/keystone:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/keystone.conf:/etc/yunion/keystone.conf:ro
@@ -154,7 +154,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   logger:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/logger:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/logger:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/logger.conf:/etc/yunion/logger.conf:ro
@@ -213,7 +213,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   notify:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/notify:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/notify:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/notify.conf:/etc/yunion/notify.conf:ro
@@ -317,7 +317,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   region:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/region:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/region:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/region.conf:/etc/yunion/region.conf:ro
@@ -376,7 +376,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   scheduler:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/scheduler:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/scheduler:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/scheduler.conf:/etc/yunion/scheduler.conf:ro
@@ -434,7 +434,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   scheduledtask:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/scheduledtask:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/scheduledtask:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/scheduledtask.conf:/etc/yunion/scheduledtask.conf:ro
@@ -492,7 +492,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   glance:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/glance:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/glance:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/glance.conf:/etc/yunion/glance.conf:ro
@@ -553,7 +553,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   kubeserver:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/kubeserver:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/kubeserver:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/kubeserver.conf:/etc/yunion/kubeserver.conf:ro
@@ -613,7 +613,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   ansibleserver:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/ansibleserver:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/ansibleserver:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/ansibleserver.conf:/etc/yunion/ansibleserver.conf:ro
@@ -671,7 +671,7 @@ services:
     - --component=climc
     - --step=init
   climc:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/climc:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/climc:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/rcadmin:/etc/yunion/rcadmin:ro
@@ -703,7 +703,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   yunionconf:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/yunionconf:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/yunionconf:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/yunionconf.conf:/etc/yunion/yunionconf.conf:ro
@@ -758,7 +758,7 @@ services:
     - --component=apigateway
     - --step=init
   apigateway:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/apigateway:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/apigateway:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/apigateway.conf:/etc/yunion/apigateway.conf:ro
@@ -808,7 +808,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   webconsole:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/webconsole:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/webconsole:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/webconsole.conf:/etc/yunion/webconsole.conf:ro
@@ -867,7 +867,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   monitor:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/monitor:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/monitor:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/monitor.conf:/etc/yunion/monitor.conf:ro
@@ -920,7 +920,7 @@ services:
     - --component=cloudmon
     - --step=init
   cloudmon:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/cloudmon:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/cloudmon:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/cloudmon.conf:/etc/yunion/cloudmon.conf:ro
@@ -970,7 +970,7 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
   cloudid:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/cloudid:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/cloudid:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/cloudid.conf:/etc/yunion/cloudid.conf:ro
@@ -1025,7 +1025,7 @@ services:
     - --component=esxi-agent
     - --step=init
   esxi-agent:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/esxi-agent:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/esxi-agent:v3.10.10
     volumes:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/esxi-agent.conf:/etc/yunion/esxi-agent.conf:ro
@@ -1070,7 +1070,7 @@ services:
     - --component=web
     - --step=init
   web:
-    image: registry.cn-beijing.aliyuncs.com/yunionio/web:v3.10.9
+    image: registry.cn-beijing.aliyuncs.com/yunionio/web:v3.10.10
     ports:
     - 443:443
     volumes:
