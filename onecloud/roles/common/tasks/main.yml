@@ -25,7 +25,7 @@
     - "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}.yml"
     - "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
     paths:
-    - ../tasks
+    - os
 
 - name: Binary version check
   include_role:
