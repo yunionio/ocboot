@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -e
+
+IMG=$1
+NAME=$2
+
+if [[ -z "$IMG" ]]; then
+    echo "Usage: $0 <dockerimgurl> [output_file]"
+	echo ""
+	echo " Export docker multi-arch images specified by <dockerimageurl> to a local tar file"
+	echo ""
+    exit 1
+fi
+
+if [[ -z "$NAME" ]]; then
+	NAME=$(echo -n $IMG |  cut -d / -f 3)
+	NAME="${NAME/:/-}"
+fi
+
+echo "Export docker iamge to $NAME"
+
+if [[ -d $NAME ]]; then
+	echo "directory $NAME already exists!"
+	exit 1
+fi
+
+mkdir $NAME
+
+IMGCNT=0
+for arch in $(docker manifest inspect $IMG | grep -w "\"architecture\"" | awk '{print $2}' | cut -f 2 -d \")
+do
+	echo "export to linux/$arch"
+	docker pull --platform "linux/$arch" $IMG
+	docker tag $IMG "$IMG-$arch"
+	docker save "$IMG-$arch" | gzip > $NAME/img-$arch.tgz
+	docker image rm $IMG "$IMG-$arch"
+	IMGCNT=$((IMGCNT+1))
+done
+
+if [ "$IMGCNT" -eq "0" ]; then
+	echo "This is an ordinary image"
+	docker pull $IMG
+	docker save $IMG | gzip > $NAME/img.tgz
+	docker image rm $IMG
+fi
+
+tar cvf $NAME.tar $NAME
