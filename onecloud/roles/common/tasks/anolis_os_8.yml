@@ -12,6 +12,16 @@
   when:
   - ansible_distribution_release == 'Lance'
 
+- name: Ensure Modules
+  shell: |
+    dnf module enable -y {{item}}
+  with_items:
+    - container-tools:an8
+  # - perl:5.26
+  # - perl-libwww-perl:6.34
+  # - perl-IO-Socket-SSL:2.066
+  become: true
+
 - name: install common packages via loop
   package:
     name: "{{ package_item }}"

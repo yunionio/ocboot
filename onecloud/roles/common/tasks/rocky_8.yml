@@ -11,7 +11,7 @@
     dnf config-manager --set-enabled -y powertools
   become: yes
 
-- name: Ensure Rocky Modules
+- name: Enable Rocky Modules
   shell: |
     dnf module enable -y {{item}}
   with_items:
@@ -19,15 +19,16 @@
   - perl:5.26
   - perl-libwww-perl:6.34
   - perl-IO-Socket-SSL:2.066
+  - virt:rhel
   become: true
 
 - name: install common packages via loop
   package:
     name: "{{ package_item }}"
     # disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
-    disablerepo: "*"
+    # disablerepo: "*"
     # enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
-    enablerepo: "yunion-*"
+    # enablerepo: "yunion-*"
   with_items:
   - "{{ common_packages }}"
   loop_control:
