@@ -36,25 +36,31 @@
         conditions:
           - "'{{ ansible_distribution_version }}' is version('7.6', '>=')"
           - "'{{ ansible_distribution_version }}' is version('7.9', '<=')"
+
       debian:
         ansible_distribution_name: "Debian"
         conditions:
-          - "'{{ ansible_distribution_version }}' is version('10', '>=')"
-          - "'{{ ansible_distribution_version }}' is version('12', '<')"
+          - debian_distribution_condition:
+              - "'{{ ansible_distribution_version }}' is version('10', '>=')"
+              - "'{{ ansible_distribution_version }}' is version('12', '<')"
+
       euler:
         ansible_distribution_name: "openEuler"
         conditions:
           - "'{{ ansible_distribution_major_version }}' is version('22', '==')"
           - "'{{ ansible_distribution_version }}' is version('22.03', '>=')"
+
       kylin:
         ansible_distribution_name: "Kylin Linux Advanced Server"
         conditions:
           - "'{{ ansible_distribution_version }}' is version('V10', '==')"
           - "'{{ ansible_distribution_release }}' in {{ supported_kylin_code }}"
+
       uos:
         ansible_distribution_name: "UnionTech OS Server"
         conditions:
           - "'{{ ansible_distribution_version }}' is version('20', '==')"
+
       ubuntu:
         ansible_distribution_name: "Ubuntu"
         conditions:
