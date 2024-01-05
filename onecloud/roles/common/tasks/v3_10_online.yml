@@ -22,11 +22,12 @@
     cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
     [yunion-repo-base]
     name=Packages for Yunion Multi-Cloud Platform -
-    baseurl=https://iso.yunion.cn/{{ansible_distribution|lower}}/{{ansible_distribution_version}}/base/{{ansible_architecture}}
+    baseurl=https://iso.yunion.cn/{{ ansible_distribution| replace(' ','') | lower }}/{{ ansible_distribution_version }}/base/{{ ansible_architecture }}
     sslverify=0
     failovermethod=priority
     enabled=1
     gpgcheck=0
+
     [yunion-repo-updates]
     name=Yunion Bin Packages for Yunion Multi-Cloud Platform -
     baseurl=https://iso.yunion.cn/rpm-updates/{{ansible_architecture}}
@@ -37,9 +38,7 @@
     EOF_MISC
   become: yes
   when:
-  - ansible_distribution == 'Rocky'
-
-
+  - ansible_distribution in ['Anolis OS', 'Rocky']
 
 - name: make cache
   shell: |

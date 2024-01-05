@@ -13,8 +13,6 @@ common_packages:
     - celt051
     - ceph-common
     - conntrack-tools
-    - container-selinux
-    - cri-tools
     - curl
     - docker-ce
     - fuse
@@ -29,9 +27,6 @@ common_packages:
     - kmod
     - kmod-openvswitch
     - kubeadm-1.15.12-0
-    - kubectl-1.15.12-0
-    - kubelet-1.15.12-0
-    - kubernetes-cni
     - libaio
     - libbasicobjects
     - libcollection
@@ -55,33 +50,27 @@ common_packages:
     - net-tools
     - nfs-utils
     - nmap-ncat
-    - ntp
-    - ntpdate
     - oniguruma
-  #    - openvswitch
+    - openvswitch2.15
     - parallel
     - pciutils
     - pixman
-    - python3-pip
     - quota
     - quota-nls
     - rpcbind
     - rsync
     - socat
-    # - spice
     - spice-protocol
     - sysstat
     - tcp_wrappers
     - tcpdump
     - unbound
-    - unbound-libs
     - usbredir
     - usbutils
     - wget
-  #  - "{{ yunion_qemu_package }}"
+    - yunion-qemu-4.2.0
 
 common_services:
-    - ntpd
     - yunion-executor
 
 latest_packages:
