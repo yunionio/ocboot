@@ -1,42 +1,47 @@
 ---
-- name: ensure gpu init dir exists
-  file:
-    path: "{{ item }}"
-    state: directory
-  become: yes
-  loop:
-    - /usr/local/gpu-init
-    - /usr/share/hwdata
+- block:
+  - name: ensure gpu init dir exists
+    file:
+      path: "{{ item }}"
+      state: directory
+    become: yes
+    loop:
+      - /usr/local/gpu-init
+      - /usr/share/hwdata
 
-- name: Update pciids
-  become: yes
-  copy:
-    src: pci.ids
-    dest: /usr/share/hwdata/pci.ids
-    owner: root
-    group: root
-    mode: 0644
+  - name: Update pciids
+    become: yes
+    copy:
+      src: pci.ids
+      dest: /usr/share/hwdata/pci.ids
+      owner: root
+      group: root
+      mode: 0644
 
-- name: cp gpu related files
-  become: yes
-  copy:
-    src: "{{ item }}"
-    dest: /usr/local/gpu-init/
-    owner: root
-    group: root
-    mode: preserve
-  loop:
-    - functions
-    - gpu_setup.sh
+  - name: cp gpu related files
+    become: yes
+    copy:
+      src: "{{ item }}"
+      dest: /usr/local/gpu-init/
+      owner: root
+      group: root
+      mode: preserve
+    loop:
+      - functions
+      - gpu_setup.sh
 
-- name: init gpus
-  shell: bash /usr/local/gpu-init/gpu_setup.sh >/dev/null 2>&1
-  args:
-    executable: /bin/bash
-    chdir: /usr/local/gpu-init/
-  become: yes
-  ignore_errors: yes
-  no_log: True
-  failed_when: false
+  - name: init gpus
+    shell: bash /usr/local/gpu-init/gpu_setup.sh >/dev/null 2>&1
+    args:
+      executable: /bin/bash
+      chdir: /usr/local/gpu-init/
+    become: yes
+    ignore_errors: yes
+    no_log: True
+    failed_when: false
+    when:
+    - is_centos_based is defined
+
   when:
-  - is_centos_based is defined
+  - upgrade_without_gpu is not defined or upgrade_without_gpu == false
+
