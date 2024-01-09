@@ -81,3 +81,8 @@ latest_packages:
     - yunion-fetcherfs
     - yunion-ocadm
     - yunion-ovmfrpm
+
+dnf_modules:
+    - container-tools:an8
+    - virt:an
+

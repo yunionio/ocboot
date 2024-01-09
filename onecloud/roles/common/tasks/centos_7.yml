@@ -1,0 +1,27 @@
+- name: Add cloud rpm repository
+  get_url:
+    url: https://iso.yunion.cn/centos/7/3.10/{{ansible_architecture}}/yunion.repo
+    dest: /etc/yum.repos.d/yunion.repo
+    validate_certs: no
+  become: yes
+  when:
+  - online_status == "online"
+
+- name: install misc obsolete packages
+  package:
+    name: "{{ package_item }}"
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  become: yes
+  loop_control:
+    index_var: item_index
+    loop_var: package_item
+  with_items:
+  - yunion-qemu-2.12.1
+  when:
+  - is_centos_x86 is defined
+  tags:
+  - package
+
+- name: Include RedHat Family Common Tasks
+  include_tasks: redhat.yml

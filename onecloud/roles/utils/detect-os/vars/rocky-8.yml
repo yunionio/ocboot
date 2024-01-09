@@ -82,3 +82,10 @@ latest_packages:
     - yunion-fetcherfs
     - yunion-ocadm
     - yunion-ovmfrpm
+
+dnf_modules:
+    - container-tools
+    - perl:5.26
+    - perl-libwww-perl:6.34
+    - perl-IO-Socket-SSL:2.066
+    - virt:rhel

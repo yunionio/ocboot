@@ -1,0 +1,8 @@
+- name: Update package list for {{ansible_distribution}} {{ansible_distribution_release}}
+  set_fact:
+    common_packages: "{{common_packages | difference(['docker-ce']) + ['docker']}}"
+  when:
+  - ansible_distribution_release == 'Lance'
+
+  - name: Include RedHat Family Common Tasks
+  include_tasks: redhat.yml
