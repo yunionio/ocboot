@@ -80,6 +80,12 @@ def add_command(subparsers):
                         dest="primary_node_ip",
                         default="",
                         help="offline rpm repo path for upgrade mode")
+
+    parser.add_argument("--gpu-init", "-G",
+                        dest="gpu_init",
+                        action="store_true",
+                        default=False,
+                        help="re-init gpu druing upgrading. default: false.")
     parser.set_defaults(func=do_upgrade)
 
 
@@ -116,6 +122,12 @@ def do_upgrade(args):
     # for sync files. no ha ip.
     if args.primary_node_ip:
         vars['primary_node_ip'] = args.primary_node_ip
+
+    # when using -G: include gpu_init task;
+    # when not using -G: ignore gpu_init task;
+    # installation with run.py: include gpu_init task. (remains the same)
+    if not args.gpu_init:
+        vars['upgrade_without_gpu'] = True
 
     return_code = run_ansible_playbook(
         inventory_f,
