@@ -1,6 +1,6 @@
-- name: Do common setup
-  include_role:
-    name: common
+#- name: Do common setup
+#  include_role:
+#    name: common
 
 - name: pre-install-common
   include_role:
