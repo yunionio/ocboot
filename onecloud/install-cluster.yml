@@ -28,22 +28,22 @@
 
 - hosts: primary_master_node
   roles:
-    - primary-master-node/setup_k8s
+    - primary-master-node/setup_k3s
     - restore/add-sync-user
   tags:
-    - k8s
+    - k3s
 
 - hosts: master_nodes
   roles:
     - master-node
   tags:
-    - k8s
+    - k3s
 
 - hosts: worker_nodes
   roles:
     - worker-node
   tags:
-    - k8s
+    - k3s
 
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:

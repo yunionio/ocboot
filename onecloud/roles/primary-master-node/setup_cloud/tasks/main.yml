@@ -1,4 +1,6 @@
 - set_fact: default_interface=false
+- set_fact: disable_resource_management=false
+- set_fact: use_hyper_image=false
 
 - name: Get default gateway
   shell: "ip route get 1 | head -n 1 | awk '{print $3}'"
@@ -54,33 +56,6 @@
   set_fact:
     default_masklen: "{{ default_masklen_ret.stdout }}"
 
-- name: Wait onecloud CRD created
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  shell: 'kubectl get crd | grep onecloudcluster'
-  become: yes
-  retries: 30
-  delay: 10
-  register: result
-  until: result.rc == 0
-
-- name: Check onecloud cluster exists
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  shell: "kubectl get onecloudcluster -n onecloud | grep default | wc -l"
-  register: OC_CLUSTER_COUNT
-
-- name: Init construct create cluster args
-  set_fact:
-    init_cluster_args: ""
-
-- name: construct create cluster args use-ee
-  set_fact:
-    init_cluster_args: "{{ init_cluster_args }} --use-ee"
-  when:
-  - use_ee is defined
-  - use_ee|default(false)|bool == true
-
 - block:
 
   - name: test if version file contains cloudpods-ee image
@@ -93,7 +68,7 @@
 
   - name: construct create cluster use hyper image
     set_fact:
-      init_cluster_args: "{{ init_cluster_args }} --use-hyper-image"
+      use_hyper_image: true
     when:
     - has_cloudpack_image.rc == 0
 
@@ -104,57 +79,48 @@
 
 - name: construct create cluster args disable-resource-management
   set_fact:
-    init_cluster_args: "{{ init_cluster_args }} --disable-resource-management"
+    disable_resource_management: true
   when:
   - is_kylin_based is defined
   - is_kylin_based |default(alse)|bool == true
 
-- name: show create cluster args
-  debug:
-    msg: "create cluster cmdline: `/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait`"
+- name: Copy onecloud kubernetes manifests
+  ansible.builtin.template:
+    src: "onecloud-manifests.yaml.j2"
+    dest: "/tmp/onecloud-manifests.yaml"
+  vars:
+    namespace: onecloud
+    edition: ce
+    region: region0
+    zone: zone0
 
-- name: add sync-user option
-  include_role:
-    name: utils/sync-user/on
-
-- name: "Create essential services, wait for a few minutes. You can open another terminal and execute `kubectl get pods -n onecloud -w` to watch the process."
-  shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait"
-  retries: 6
-  delay: 10
+- name: Create onecloud cluster CRD
+  shell: 'k3s kubectl apply -f /tmp/onecloud-manifests.yaml'
   register: result
   until: result.rc == 0
-  ignore_errors: yes
-  become: yes
-  when:
-  - OC_CLUSTER_COUNT.stdout|int == 0
+  retries: 6
+  delay: 10
 
-- name: Enable minio S3 object storage for services
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  shell: |
-    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/minio/enable", "value": true}]'
-    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/glance/switchToS3", "value": true}]'
-  become: yes
-  when:
-  - enable_minio is defined
-  - enable_minio|default(false)|bool == true
+- name: Copy fetch-rcadmin.sh to /opt/yunion/bin/
+  copy:
+    src: fetch-rcadmin.sh
+    dest: "/opt/yunion/bin/fetch-rcadmin.sh"
+    mode: '0755'
 
-- name: "Use product version {{ product_version }}"
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  shell: |
-    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/productVersion", "value": "{{ product_version }}"}]'
-  become: yes
-  when:
-  - product_version is defined
+- name: Copy wait-onecloud-services.sh
+  template:
+    src: "wait-onecloud-services.sh.j2"
+    dest: "/opt/yunion/bin/wait-onecloud-services.sh"
+    mode: '0755'
+
+- name: "Execute `/opt/yunion/bin/wait-onecloud-services.sh` to wait essential services to be running. You can open another terminal and execute `kubectl get pods -n onecloud -w` to watch the process."
+  shell: "bash /opt/yunion/bin/wait-onecloud-services.sh"
 
 - name: Use customized DNS entries
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
   shell: |
-    kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/regionDNS/proxies/0/to", "value": {{ user_dns | to_json }} }]'
-    kubectl -n onecloud delete configmap default-region-dns || :
-    kubectl -n onecloud rollout restart ds default-region-dns || :
+    k3s kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/regionDNS/proxies/0/to", "value": {{ user_dns | to_json }} }]'
+    k3s kubectl -n onecloud delete configmap default-region-dns || :
+    k3s kubectl -n onecloud rollout restart ds default-region-dns || :
   become: yes
   when: user_dns is defined and user_dns|length > 0
 
@@ -170,8 +136,8 @@
 
 - name: "Write cluster rcadmin in master's ~/.onecloud_rcadmin for root"
   shell: |
-    /opt/yunion/bin/ocadm cluster rcadmin > ~/.onecloud_rcadmin
-    /opt/yunion/bin/ocadm cluster rcadmin > /tmp/.onecloud_rcadmin
+    /opt/yunion/bin/fetch-rcadmin.sh > ~/.onecloud_rcadmin
+    /opt/yunion/bin/fetch-rcadmin.sh cluster rcadmin > /tmp/.onecloud_rcadmin
   become: yes
   retries: 6
   delay: 10
@@ -216,7 +182,7 @@
 
 - name: "Check onecloud user {{ onecloud_user }} exists"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-list | grep -w {{ onecloud_user }} | wc -l
   register: OC_USER_COUNT
   become: yes
@@ -226,7 +192,7 @@
 
 - name: "Create onecloud web login user {{ onecloud_user }}"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
   ignore_errors: yes
   become: yes
@@ -241,7 +207,7 @@
 
 - name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
   retries: 3
   register: update_user_ret

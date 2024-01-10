@@ -34,87 +34,33 @@
     ansible_port: '{{ k8s_controlplane_ssh_port | default(22) }}'
     ansible_ssh_port: '{{ k8s_controlplane_ssh_port | default(22) }}'
 
-- name: Get join token
-  shell: kubeadm token create --description "ocadm-playbook-node-joining-token" --ttl 15m --print-join-command | awk '{print $5}{print $7}'
-  register: K8S_JOIN_TOKEN
-  delegate_to: "{{ k8s_controlplane_host }}"
-  run_once: yes
-  environment:
-    http_proxy: ''
-    https_proxy: ''
-  when:
-    k8s_join_token is not defined or k8s_join_token|length == 0
-  changed_when: false
-
-- name: Check node is join
-  shell: test -f /etc/kubernetes/kubelet.conf
+- name: Check agent node is join
+  shell: test -f /etc/systemd/system/k3s-agent.service
   register: kubelet_result
   ignore_errors: yes
   changed_when: false
   failed_when: false
 
 - block:
-  - name: fetch join token
-    set_fact:
-      k8s_join_token: "{{ K8S_JOIN_TOKEN.stdout_lines[0] }}"
-    when:
-      k8s_join_token is not defined or k8s_join_token|length == 0
 
-  - name: construct controlplane endpoint
-    set_fact:
-      controlplane_endpoint: "{{k8s_controlplane_host}}:{{ k8s_controlplane_port | default(6443) }}"
+  - name: Include role k3s/prereq
+    include_role:
+      name: k3s/prereq
 
-  - name: construct join args
-    set_fact:
-      join_args: "join {{ controlplane_endpoint }} --token {{ k8s_join_token }} --discovery-token-unsafe-skip-ca-verification"
-
-  - name: join node as onecloud controller
-    set_fact:
-      join_args: "{{ join_args }} --as-onecloud-controller"
-    when:
-    - k8s_node_as_oc_controller|default(false)|bool == true
-
-  - name: join node as onecloud host agent
-    set_fact:
-      join_args: "{{ join_args }} --enable-host-agent"
+  - name: Configure host service
+    include_role:
+      name: utils/host-service
     when:
     - join_as_host | default(false)|bool == true
 
-  - name: join node for node-ip
-    set_fact:
-      join_args: "{{ join_args }} --node-ip {{ node_ip }}"
-    when:
-      node_ip is defined
+  - name: Include role k3s/airgap
+    include_role:
+      name: k3s/airgap
 
-  - name: construct host network args
-    set_fact:
-      join_args: "{{ join_args }} --host-networks {{ host_networks }} "
-    when:
-      host_networks is defined
+  - name: Include role k3s/k3s_agent with extra_agent_args {{ extra_agent_args }}
+    include_role:
+      name: k3s/k3s_agent
 
-  - name: construct hugepage args
-    set_fact:
-      join_args: "{{ join_args }} --enable-hugepage "
-    when:
-    - enable_hugepage is defined
-    - onecloud_version is defined
-    - onecloud_version is version('v3.10', '>=')
-
-  - name: Wait for port {{ k8s_controlplane_host }}:{{ k8s_controlplane_port | default(6443)}} to be ready
-    wait_for:
-      host: "{{ k8s_controlplane_host }}"
-      port: "{{ k8s_controlplane_port | default(6443)}}"
-      delay: 5
-      timeout: 60
-    become: yes
-    retries: 3
-    run_once: yes
-
-  - name: "Use 'ocadm {{ join_args }}'"
-    command: "/opt/yunion/bin/ocadm {{ join_args }}"
-    environment:
-      http_proxy: ''
-      https_proxy: ''
   when:
     kubelet_result.rc != 0
 
@@ -123,7 +69,3 @@
     name: worker-node/lbagent
   when:
     enable_lbagent
-
-- name: Include utils/k8s/kubelet/extra-args tasks
-  include_role:
-    name: utils/k8s/kubelet/extra-args

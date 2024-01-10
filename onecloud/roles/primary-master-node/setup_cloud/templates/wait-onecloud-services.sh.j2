@@ -1,0 +1,47 @@
+#!/bin/bash
+
+services="
+onecloud-operator
+keystone
+default-region-
+scheduler
+glance
+apigateway
+kubeserver
+default-web-
+cloudmon
+webconsole
+climc
+"
+
+check_svc() {
+    local svc="$1"
+    local status=$(kubectl get pods -n onecloud | grep "$svc" | head -n 1 | awk '{print $3}')
+    if [[ "$status" == "Running" ]]; then
+        echo "true"
+    else
+        echo "service pod $svc status is $status"
+        echo "false"
+    fi
+}
+
+wait_svc() {
+    local svc="$1"
+    local is_running=$(check_svc "$svc")
+
+    while true; do
+        if [[ $is_running == "true" ]]; then
+            echo "service pod $svc is running"
+            return
+        else
+            echo "continue waiting service pod $svc, sleep 30s"
+            is_running=$(check_svc "$svc")
+            sleep 30
+        fi
+    done
+}
+
+for svc in $services; do
+    echo "waiting service pod $svc to be running"
+    wait_svc "$svc"
+done

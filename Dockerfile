@@ -31,5 +31,11 @@ RUN sed -i 's!https://dl-cdn.alpinelinux.org/!https://mirrors.ustc.edu.cn/!g' /e
     rm -rf /root/.cache/pip && \
     rm -rf /root/.cargo
 
+RUN mkdir -p /opt/ocboot/airgap_assets && \
+	curl -L https://github.com/k3s-io/k3s/releases/download/v1.28.5%2Bk3s1/k3s -o /opt/ocboot/airgap_assets/k3s && \
+	curl -L https://github.com/k3s-io/k3s/releases/download/v1.28.5%2Bk3s1/k3s-arm64 -o /opt/ocboot/airgap_assets/k3s-arm64 && \
+	curl -L https://github.com/k3s-io/k3s/releases/download/v1.28.5%2Bk3s1/k3s-airgap-images-amd64.tar.zst -o /opt/ocboot/airgap_assets/k3s-airgap-images-amd64.tar.zst && \
+	curl -L https://github.com/k3s-io/k3s/releases/download/v1.28.5%2Bk3s1/k3s-airgap-images-arm64.tar.zst -o /opt/ocboot/airgap_assets/k3s-airgap-images-arm64.tar.zst
+
 ENV PATH $PATH:/ocboot
 WORKDIR /ocboot

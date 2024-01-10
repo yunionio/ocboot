@@ -41,7 +41,7 @@ class OnecloudCluster(object):
 
         self.ssh_client = ssh_client
         ret = ssh_client.exec_command(
-            f'{sudo_exec} kubectl -n onecloud get onecloudclusters default -o json')
+            f'{sudo_exec} k3s kubectl -n onecloud get onecloudclusters default -o json')
         try:
             cluster = json.loads(ret)
         except ValueError:
@@ -99,7 +99,7 @@ class OnecloudCluster(object):
         if user != 'root':
             sudo_exec = 'sudo'
 
-        k8s_nodes = json.loads(self.ssh_client.exec_command(f'{sudo_exec} kubectl get nodes -o json')).get('items')
+        k8s_nodes = json.loads(self.ssh_client.exec_command(f'{sudo_exec} k3s kubectl get nodes -o json')).get('items')
         self.k8s_nodes = [k8s.Node(obj) for obj in k8s_nodes]
         self.master_nodes = [node for node in self.k8s_nodes if node.is_master()]
         self.worker_nodes = [node for node in self.k8s_nodes if not node.is_master()]
@@ -142,7 +142,7 @@ class OnecloudCluster(object):
         if user != 'root':
             sudo_exec = 'sudo'
 
-        cmd = f'{sudo_exec} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
+        cmd = f'{sudo_exec} k3s kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
         self.ssh_client.exec_command(cmd)
 
 

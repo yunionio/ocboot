@@ -1,0 +1,9 @@
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://registry.cn-beijing.aliyuncs.com"
+    rewrite:
+      "^rancher/mirrored-library-traefik:(.*)": "yunionio/traefik:$1"
+      "^rancher/mirrored-coredns-coredns:(.*)": "yunionio/coredns:$1"
+# set insecure_registries
+# configs:

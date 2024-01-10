@@ -1,0 +1,34 @@
+- name: Make config directory
+  ansible.builtin.file:
+    path: "/etc/rancher/k3s"
+    mode: 0755
+    state: directory
+
+- name: Setup /etc/rancher/k3s/config.yaml
+  template:
+    src: config.yaml.j2
+    dest: "/etc/rancher/k3s/config.yaml"
+    mode: 0644
+
+- name: Make manifests directory
+  ansible.builtin.file:
+    path: "/var/lib/rancher/k3s/agent/pod-manifests/"
+    mode: 0700
+    state: directory
+
+- block:
+  - name: Set node_interface_name
+    include_role:
+      name: utils/fetch-node-interface
+
+  - name: Copy keepalived to static pod manifests
+    when: high_availability_vip is defined
+    ansible.builtin.template:
+      src: "keepalived.yaml.j2"
+      dest: "/var/lib/rancher/k3s/agent/pod-manifests/keepalived.yaml"
+      mode: 0600
+
+# - name: Setup /etc/rancher/k3s/registries.yaml
+#   template:
+#     src: registries.yaml.j2
+#     dest: "/etc/rancher/k3s/registries.yaml"
