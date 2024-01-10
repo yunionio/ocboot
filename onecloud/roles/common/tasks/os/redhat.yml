@@ -1,4 +1,12 @@
 ---
+- name: make cache
+  shell: |
+    yum clean all
+    yum -y --disablerepo='*' --enablerepo='yunion*' makecache
+  become: yes
+  when:
+  - is_centos_based is defined
+
 - name: append packages to common_packages
   set_fact:
     common_packages: "{{ common_packages + extra_packages }}"
@@ -10,12 +18,14 @@
   package:
     name: "{{ package_item }}"
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
-    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"    
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+  retries: 3
+  delay: 3
   with_items:
   - "{{ common_packages }}"
   loop_control:
     index_var: item_index
-    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
+    label: "[{{ '%02d'|format(item_index + 1) }}/{{ common_packages|length }}] {{ package_item }}"
     loop_var: package_item
   become: yes
   tags:

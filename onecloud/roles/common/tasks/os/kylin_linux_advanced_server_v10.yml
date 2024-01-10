@@ -1,0 +1,17 @@
+- name: Add cloud rpm repository for Kylin
+  get_url:
+    url: https://iso.yunion.cn/kylin/v10-{{ansible_distribution_release|lower}}/3.10/{{ansible_architecture}}/kylin-yunion.repo
+    dest: /etc/yum.repos.d/kylin-yunion.repo
+    validate_certs: no
+  become: yes
+  when:
+  - is_kylin_based|default(false)|bool == true
+
+- name: Update package list for {{ansible_distribution}} {{ansible_distribution_release}}
+  set_fact:
+    common_packages: "{{common_packages | difference(['docker-ce']) + ['docker']}}"
+  when:
+  - ansible_distribution_release == 'Lance'
+
+- name: Include RedHat Family Common Tasks
+  include_tasks: redhat.yml

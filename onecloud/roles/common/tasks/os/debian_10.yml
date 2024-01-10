@@ -1,11 +1,3 @@
----
-- name: Check distribution and version
-  set_fact:
-    is_debian_11_or_later: true
-  when:
-    - ansible_distribution == 'Debian'
-    - ansible_distribution_major_version | int >= 11
-
 - name: Import task utils/unified_cgroup_hierarchy.yml
   include_tasks: utils/unified_cgroup_hierarchy.yml
   when:
@@ -32,6 +24,10 @@
   - k8s_version_tag is defined
   - k8s_version_tag.rc == 0
 
+- name: set var
+  set_fact:
+    onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
+
 - name: Import task utils/config_iptables.yml
   include_tasks: utils/config_iptables.yml
 
@@ -53,52 +49,5 @@
   args:
     executable: /bin/bash
 
-- name: update common packages for debian 11
-  set_fact:
-    common_packages: "{{ ['libcapstone4'] + common_packages }}"
-  when:
-  - is_debian_11_or_later| default(false)|bool == true
-
-- name: install common packages via loop
-  package:
-    name: "{{ package_item }}"
-  become: true
-  with_items:
-  - "{{ common_packages }}"
-  loop_control:
-    index_var: item_index
-    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
-    loop_var: package_item
-  tags:
-  - package
-
-- name: install latest packages via loop
-  package:
-    name: "{{ package_item }}"
-    state: latest
-  become: true
-  with_items:
-  - "{{ latest_packages }}"
-  when:
-  - latest_packages is defined
-  loop_control:
-    index_var: item_index
-    label: "[{{ item_index + 1 }}/{{ latest_packages|length }}] {{ package_item }}"
-    loop_var: package_item
-  tags:
-  - package
-
-- name: Check that if selinux config exists
-  stat:
-    path: /etc/selinux/config
-  register: selinux_conf_exists
-
-- name: Turn off selinux
-  selinux:
-    state: disabled
-  become: true
-  when:
-    - selinux_conf_exists.stat.exists
-
-- name: Import task utils/fix_ovmf_path
-  include_tasks: utils/fix_ovmf_path.yml
+- name: Include Debian Family Common Tasks
+  include_tasks: debian_family.yml

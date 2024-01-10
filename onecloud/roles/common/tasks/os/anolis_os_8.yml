@@ -2,7 +2,7 @@
 
 - name: Enable powertool
   shell: |
-    dnf config-manager --set-enabled -y powertools
+    dnf config-manager --set-enabled -y PowerTools
   become: yes
 
 - name: Include RedHat Family Common Tasks
