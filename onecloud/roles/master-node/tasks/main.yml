@@ -1,3 +1,4 @@
+# 这里 `master-node` 跑 role：common 我感觉没有必要 
 #- name: Do common setup
 #  include_role:
 #    name: common
