@@ -54,7 +54,7 @@ ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以�
 #### 快速开始
 
 
-- [All in One 安装](https://www.cloudpods.org/zh/docs/quickstart/allinone/)：在 CentOS 7 或 Debian 10 等发行版里搭建全功能 Cloudpods 服务，可以快速体验**内置私有云**和**多云管理**的功能。
+- [All in One 安装](https://www.cloudpods.org/docs/getting-started/full/quickstart-full)：在 CentOS 7 或 Debian 10 等发行版里搭建全功能 Cloudpods 服务，可以快速体验**内置私有云**和**多云管理**的功能。
 - [多节点高可用安装](https://www.cloudpods.org/zh/docs/setup/ha-ce/)：在生产环境中使用高可用的方式部署 Cloudpods 服务，包括**内置私有云**和**多云管理**的功能。
 
 
@@ -93,7 +93,7 @@ $ ./ocboot.py add-lbagent $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
 $ ./ocboot.py add-lbagent --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
 ```
 
-具体操作可参考文档：[部署Lbagent](https://www.cloudpods.org/zh/docs/function_principle/onpremise/lb/lbagent/#310%E5%90%AB%E4%B9%8B%E5%90%8E%E7%89%88%E6%9C%AC%E9%83%A8%E7%BD%B2lbagent)。
+具体操作可参考文档：[部署Lbagent](https://www.cloudpods.org/docs/getting-started/onpremise/lbagent)。
 
 ### 升级节点
 
