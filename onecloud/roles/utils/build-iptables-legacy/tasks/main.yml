@@ -61,6 +61,8 @@
       - kernel-devel
     loop_control:
       loop_var: package_item
+    tags:
+    - iptables
 
   - name: Build Iptables
     shell: |
@@ -74,6 +76,8 @@
     become: true
     args:
       executable: /bin/bash
+    tags:
+    - iptables
 
   - debug: var=iptables_legacy_version.stdout
 

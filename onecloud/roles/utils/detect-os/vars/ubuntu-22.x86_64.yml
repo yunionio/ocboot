@@ -13,7 +13,6 @@ common_packages:
   - cron
   - curl
   - dkms
-  - docker-ce
   - git
   - glusterfs-common
   - gnupg-agent
@@ -21,9 +20,6 @@ common_packages:
   - ipset
   - ipvsadm
   - jq
-  - kubeadm=1.15.12-00
-  - kubectl=1.15.12-00
-  - kubelet=1.15.12-00
   - libusb-1.0-0
   - libusbredirparser1
   - librbd1
@@ -46,9 +42,15 @@ common_services:
     - yunion-executor
 
 latest_packages:
-    - ca-certificates
+    - "yunion-ocadm={{ onecloud_version_abbr }}*"
     - "yunion-climc={{ onecloud_version_abbr }}*"
     - "yunion-climc-ee={{ onecloud_version_abbr }}*"
+    - ca-certificates
     - yunion-executor
     - yunion-fetcherfs
-    - "yunion-ocadm={{ onecloud_version_abbr }}*"
+
+k8s_packages:
+    - docker-ce
+    - kubeadm=1.15.12-00
+    - kubectl=1.15.12-00
+    - kubelet=1.15.12-00

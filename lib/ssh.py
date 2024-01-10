@@ -79,7 +79,7 @@ class SSHClient(object):
     #     return c
 
     def exec_command(self, command):
-        command = '%s %s' % ('[ -s /etc/kubernetes/admin.conf ] && export KUBECONFIG=/etc/kubernetes/admin.conf || :;', command)
+        # command = '%s %s' % ('[ -s /etc/kubernetes/admin.conf ] && export KUBECONFIG=/etc/kubernetes/admin.conf || :;', command)
         logger.info("exec_command: %s" % command)
         # _, stdout, stderr = self.client.exec_command(command)
         out, err = self.client(command)

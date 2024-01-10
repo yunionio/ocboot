@@ -16,7 +16,6 @@ common_packages:
   - ceph-common
   - conntrack-tools
   - curl
-  - docker-ce
   - fuse
   - fuse-devel
   - fuse-libs
@@ -27,10 +26,6 @@ common_packages:
   - keyutils
   - kmod
   - kmod-openvswitch
-  - kubeadm
-  - kubectl
-  - kubelet
-  - kubernetes-cni
   - libbasicobjects
   - libcollection
   - libini_config
@@ -70,3 +65,12 @@ common_packages:
 common_services:
   #  - ntpd # openeuler seems using different ntp
   - yunion-executor
+
+k8s_packages:
+    - containerd.io
+    - cri-tools
+    - docker-ce
+    - kubeadm-1.15.12-0
+    - kubectl-1.15.12-0
+    - kubelet-1.15.12-0
+    - kubernetes-cni

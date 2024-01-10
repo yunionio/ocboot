@@ -12,7 +12,6 @@ common_packages:
   - cron
   - curl
   - dkms
-  - docker-ce
   - git
   - glusterfs-common
   - gnupg-agent
@@ -20,9 +19,6 @@ common_packages:
   - ipset
   - ipvsadm
   - jq
-  - kubeadm=1.15.12-00
-  - kubectl=1.15.12-00
-  - kubelet=1.15.12-00
   - libusb-1.0-0
   - libusbredirparser1
   - librbd1
@@ -49,3 +45,9 @@ common_services:
 
 latest_packages:
     - ca-certificates
+
+k8s_packages:
+    - docker-ce
+    - kubeadm=1.15.12-00
+    - kubectl=1.15.12-00
+    - kubelet=1.15.12-00

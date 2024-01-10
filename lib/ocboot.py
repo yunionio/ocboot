@@ -2,11 +2,15 @@
 from __future__ import unicode_literals
 
 import os
+import base64
+
+from lib import k3s
 
 from . import ansible
 from . import utils
 from . import consts
-
+from .color import RB as Red
+from .k3s import is_using_k3s
 
 GROUP_MARIADB_NODE = "mariadb_node"
 GROUP_MARIADB_HA_NODES = "mariadb_ha_nodes"
@@ -26,13 +30,22 @@ KEY_AS_HOST = 'as_host'
 KEY_AS_HOST_ON_VM = 'as_host_on_vm'
 KEY_EXTRA_PACKAGES = 'extra_packages'
 
+KEY_K8S_OR_K3S = 'k8s_or_k3s'
+KEY_K3S_API_ENDPOINT = "api_endpoint"
+KEY_K3S_API_PORT = "api_port"
+KEY_K3S_AIRGAP_DIR = "airgap_dir"
+KEY_K3S_VERSION = "k3s_version"
+VAL_K3S_VERSION = k3s.VERSION_V1_28_5_K3S_1
+KEY_K3S_TOKEN = "token"
+VAL_K3S_TOKEN = "mytoken@yunionio"
+
 KEY_STACK_FULLSTACK = 'FullStack'
 KEY_STACK_EDGE = 'Edge'
 KEY_STACK_CMP = 'CMP'
 KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
 
 KEY_USER_DNS = 'user_dns'
-
+K3S_CMDLINE_PREFIX = 'K3S_CMDLINE_PREFIX'
 
 def load_config(config_file):
     import yaml
@@ -42,11 +55,17 @@ def load_config(config_file):
 
 
 def get_ansible_global_vars(version):
+    _is_using_k3s = is_using_k3s()
     major_version = utils.get_major_version(version)
     vars = {
         KEY_ONECLOUD_VERSION: version,
         KEY_ONECLOUD_MAJOR_VERSION: major_version,
         KEY_EXTRA_PACKAGES: [],
+        KEY_K3S_VERSION: VAL_K3S_VERSION,
+        KEY_K3S_AIRGAP_DIR: k3s.GET_AIRGAP_DIR(),
+        KEY_K3S_TOKEN: VAL_K3S_TOKEN,
+        KEY_K8S_OR_K3S: 'k3s' if _is_using_k3s else 'k8s',      # for path, eg: utils/k8s/kubelet or utils/k3s/kubelet,
+        K3S_CMDLINE_PREFIX: 'k3s' if _is_using_k3s else '',     # for commandline prefix, eg: k3s kubexxx
     }
 
     # set yunion_qemu_package for pre released version
@@ -73,6 +92,8 @@ class OcbootConfig(object):
         self.registry_config = self._fetch_conf(RegistryConfig)
         self.primary_master_config = self._fetch_conf(PrimaryMasterConfig)
         self.master_config = self._fetch_conf(MasterConfig)
+        if self.master_config:
+            self.master_config.set_primary_master_config(self.primary_master_config)
         self.worker_config = self._fetch_conf(WorkerConfig)
         if self.mariadb_config and self.mariadb_ha_config:
             raise Exception("mariadb_node and mariadb_ha_nodes can't coexist in config")
@@ -374,10 +395,13 @@ class OnecloudConfig(object):
         self.high_availability = config.get('high_availability', False)
         self.high_availability_vip = None
         self.keepalived_version_tag = None
+        self.keepalived_password = None
+        default_keepalived_version_tag = 'v2.0.28' if is_using_k3s() else 'v2.0.25'
         if self.high_availability:
             self.high_availability_vip = self.controlplane_host
-            self.keepalived_version_tag = config.get('keepalived_version_tag', 'v2.0.25')
-
+            self.keepalived_password = base64.b64encode(self.high_availability_vip.encode('ascii'))[0:8].decode()
+            self.keepalived_router_id = int(self.high_availability_vip.replace('.', '')) % 255
+            self.keepalived_version_tag = config.get('keepalived_version_tag', default_keepalived_version_tag)
         self.iso_install_mode = config.get('iso_install_mode', False)
         self.enable_eip_man = config.get('enable_eip_man', False)
         self.offline_deploy = config.get('offline_deploy', False) or os.environ.get('OFFLINE_DEPLOY') == 'true'
@@ -388,7 +412,9 @@ class OnecloudConfig(object):
             'docker_registry_mirrors': self.registry_mirrors,
             'docker_insecure_registries': self.insecure_registries,
             'k8s_controlplane_host': self.controlplane_host,
+            KEY_K3S_API_ENDPOINT: self.controlplane_host,
             'k8s_controlplane_port': self.controlplane_port,
+            KEY_K3S_API_PORT: self.controlplane_port,
             'k8s_node_as_oc_host': self.as_host,
             'k8s_node_as_oc_host_on_vm': self.as_host_on_vm,
             'enable_eip_man': self.enable_eip_man,
@@ -398,6 +424,8 @@ class OnecloudConfig(object):
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip
             vars['keepalived_version_tag'] = self.keepalived_version_tag
+            vars['keepalived_password'] = self.keepalived_password
+            vars['keepalived_router_id'] = self.keepalived_router_id
         if self.onecloud_version:
             vars[KEY_ONECLOUD_VERSION] = self.onecloud_version
         if self.node_ip:
@@ -477,6 +505,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['onecloud_user_password'] = self.onecloud_user_password
         vars['use_ee'] = self.use_ee
         vars['apiserver_advertise_address'] = self.node.node_ip
+        vars[KEY_K3S_API_ENDPOINT] = self.node.node_ip
         vars['ip_autodetection_method'] = self.ip_autodetection_method
         vars['image_repository'] = self.image_repository
         vars['enable_minio'] = self.enable_minio
@@ -537,6 +566,19 @@ class MasterConfig(OnecloudJointConfig):
         if self.as_controller is None:
             self.as_controller = True
         self.nodes = get_nodes(config, bastion_host)
+        self.primary_master_config = None
+
+    def set_primary_master_config(self, primary_master_config):
+        self.primary_master_config = primary_master_config
+
+    def ansible_vars(self):
+        vars = super(MasterConfig, self).ansible_vars()
+        pc = self.primary_master_config
+        vars['pod_network_cidr'] = pc.pod_network_cidr
+        vars['service_cidr'] = pc.service_cidr
+        vars['service_dns_domain'] = pc.service_dns_domain
+        vars['image_repository'] = pc.image_repository
+        return vars
 
     @classmethod
     def get_group(cls):

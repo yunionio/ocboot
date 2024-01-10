@@ -1,11 +1,22 @@
-- name: Add cloud rpm repository for {{ ansible_distribution }} {{ ansible_distribution_version }}
-  get_url:
-    url: https://iso.yunion.cn/centos/7/3.10/{{ansible_architecture}}/yunion.repo
+- name: "Add cloud rpm repository {{ yunion_yum_repo }}"
+  copy:
+    content: |
+      [yunion-repo-offline]
+      name=Packages for Yunion Multi-Cloud Platform -
+      baseurl=https://iso.yunion.cn/centos/$releasever/{{onecloud_version_abbr}}/$basearch
+      sslverify=0
+      failovermethod=priority
+      enabled=1
+      gpgcheck=0
     dest: /etc/yum.repos.d/yunion.repo
-    validate_certs: no
   become: yes
+  retries: 3
+  delay: 30
   when:
-  - online_status == "online"
+  - offline_data_path is not defined or offline_data_path | length == 0
+
+- name: Include RedHat Family Common Tasks
+  include_tasks: redhat.yml
 
 - name: install misc obsolete packages
   package:
@@ -22,6 +33,9 @@
   - is_centos_x86 is defined
   tags:
   - package
+  register: obsolete_packages
+  until: obsolete_packages.rc == 0
+  retries: 3
+  delay: 30
 
-- name: Include RedHat Family Common Tasks
-  include_tasks: redhat.yml
+

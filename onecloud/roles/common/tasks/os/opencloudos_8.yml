@@ -19,4 +19,6 @@
 - name: Ensure iptables for {{ ansible_distribution }}
   include_role:
     name: utils/build-iptables-legacy
+  tags:
+  - iptables
 

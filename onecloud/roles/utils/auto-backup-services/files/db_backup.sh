@@ -22,6 +22,12 @@ export LIGHT_BKUP=${LIGHT_BKUP:-true}
 export VERBOSE=${VERBOSE:-false}
 export PV_ARGS='pv --wait --timer --rate --eta --size '
 export MAX_DISK_PERCENTAGE=${MAX_DISK_PERCENTAGE:-75}
+export K3S_CMDLINE_PREFIX=
+
+if hash k3s &>/dev/null; then
+    export KUBECONFIG=~/.kube/config
+    export K3S_CMDLINE_PREFIX=k3s
+fi
 
 dbs=()
 
@@ -77,6 +83,10 @@ check_backup_disk() {
     if [ "$disk_usage" -gt $MAX_DISK_PERCENTAGE ]; then
         __info "$BKUP_PATH is on disk $disk, usage:$disk_usage%, too high to continue backup."
         __info "Allowed maximum disk usage: $MAX_DISK_PERCENTAGE."
+        # only delete backup path when it is empty and ends with timestamp like 20240506-163855
+        if [ -z "$(ls -A $BKUP_PATH)" ] && [[ "$BKUP_PATH" =~ [0-9]{8}-[0-9]{6}$ ]]; then
+            rm -rf "$BKUP_PATH"
+        fi
         exit 1
     fi
     __info "Backup Disk: $disk; Used: $disk_usage%"
@@ -86,7 +96,7 @@ init_db() {
     local
     title "Init"
     check_backup_disk
-    local content="$(kubectl get onecloudcluster -n onecloud default -o yaml | grep -A 5 -w mysql)"
+    local content="$($K3S_CMDLINE_PREFIX kubectl get onecloudcluster -n onecloud default -o yaml | grep -A 5 -w mysql)"
     export DB_HOST=$(echo "$content" | grep -w host: | awk '{print $(NF)}')
     export DB_USER=$(echo "$content" | grep -w username: | awk '{print $(NF)}')
     export DB_PSWD=$(echo "$content" | grep -w password: | awk '{print $(NF)}')
@@ -259,8 +269,8 @@ backup_etcd() {
 
 backup_k8s() {
     title "Backup K8s"
-    kubectl -n onecloud -o yaml get deployment onecloud-operator >$BKUP_PATH/onecloud-operator.$BKUP_DATE.yml
-    kubectl -n onecloud -o yaml get oc >$BKUP_PATH/oc.$BKUP_DATE.yml
+    $K3S_CMDLINE_PREFIX kubectl -n onecloud -o yaml get deployment onecloud-operator >$BKUP_PATH/onecloud-operator.$BKUP_DATE.yml
+    $K3S_CMDLINE_PREFIX kubectl -n onecloud -o yaml get oc >$BKUP_PATH/oc.$BKUP_DATE.yml
     sed -i -e '/^ *creationTimestamp:/d' -e '/^ *resourceVersion:/d' -e '/^ *selfLink:/d' -e '/^ *uid:/d' $BKUP_PATH/onecloud-operator.$BKUP_DATE.yml
     sed -i -e '/^ *creationTimestamp:/d' -e '/^ *resourceVersion:/d' -e '/^ *selfLink:/d' -e '/^ *uid:/d' $BKUP_PATH/oc.$BKUP_DATE.yml
     __info "K8s backup files:"

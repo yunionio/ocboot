@@ -1,0 +1,46 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    # we create traefik daemonset manually cause of:
+    # - we use hostNetwork for traefik and only listen on 80 and 443 port
+    # - helm config can't disable livenessProbe and readinessProbe of podtemplate
+    deployment:
+      enabled: false
+      kind: "DaemonSet"
+    # ports:
+    #   traefik: {}
+    #   metrics: {}
+    #   web:
+    #     port: 80
+    #   websecure:
+    #    port: 443
+    # affinity:
+    #   nodeAffinity:
+    #     requiredDuringSchedulingIgnoredDuringExecution:
+    #       nodeSelectorTerms:
+    #       - matchExpressions:
+    #         - key: onecloud.yunion.io/controller
+    #           operator: In
+    #           values:
+    #           - enable
+    # updateStrategy:
+    #   rollingUpdate:
+    #     maxUnavailable: 1
+    #     maxSurge: 0
+    # service:
+    #   enabled: false
+    # hostNetwork: true
+    # securityContext:
+    #   capabilities:
+    #     drop: [ALL]
+    #     add: [NET_BIND_SERVICE]
+    #   readOnlyRootFilesystem: true
+    #   runAsNonRoot: false
+    #   runAsGroup: 0
+    #   runAsUser: 0
+    # additionalArguments:
+    #   - "--serverstransport.insecureskipverify=true"

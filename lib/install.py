@@ -6,6 +6,8 @@ import platform
 import os
 import time
 
+from lib import k3s
+
 from . import ocboot
 from . import cmd
 from . import logger
@@ -85,6 +87,8 @@ def try_reboot_primary(ip):
 
 def start(config_file):
     config = ocboot.load_config(config_file)
+
+    k3s.init_airgap_assets(k3s.GET_AIRGAP_DIR(), k3s.VERSION_V1_28_5_K3S_1)
 
     inventory_f = config.generate_inventory_file()
     ip = None

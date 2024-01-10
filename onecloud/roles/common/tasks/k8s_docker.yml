@@ -1,0 +1,48 @@
+- name: Make /etc/docker dir
+  file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+  become: true
+
+- name: Config docker file
+  template: src=daemon.json.j2 dest=/etc/docker/daemon.json
+  become: true
+  when:
+  - is_uos_kongzi|default(false) | bool == false
+
+- name: Config docker file
+  shell: |
+    cat > /etc/docker/daemon.json <<EOF
+    {
+      "bridge": "none",
+      "experimental": true,
+      "iptables": false,
+      "data-root": "/opt/docker"
+    }
+    EOF
+  become: true
+  args:
+    executable: /bin/bash
+  when:
+  - is_uos_kongzi|default(false) | bool == true
+
+- name: Config docker file for kylin lance
+  shell: |
+    perl -0777 -i -pe 's#,\s*"live-restore": true##g' /etc/docker/daemon.json
+  when:
+  - ansible_distribution_release == 'Lance'
+  become: true
+
+- name: Restart docker service
+  service: name=docker state=restarted daemon_reload=yes enabled=yes
+  become: true
+  when:
+  - skip_docker_config is not defined or skip_docker_config|default(false)|bool == false
+
+# k8s packages
+- name: Enable kubelet
+  service: name=kubelet enabled=yes
+  become: true
+  tags: k8s

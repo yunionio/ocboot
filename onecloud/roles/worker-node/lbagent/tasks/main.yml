@@ -16,6 +16,7 @@
     src: lbagent.conf.j2
     mode: '0755'
 
+# this service can not be enabled on ubunt/debian
 - name: enable openvswitch
   service:
     name: "{{ item }}"
@@ -23,9 +24,11 @@
     state: started
   loop:
   - openvswitch
+  when:
+  - ansible_os_family != 'Debian'
 
 - name: add label onecloud.yunion.io/lbagent=enable to {{ k8s_controlplane_host }}
-  shell: KUBECONFIG=/etc/kubernetes/admin.conf kubectl label node "{{ ansible_hostname }}" onecloud.yunion.io/lbagent=enable
+  shell: {{ K3S_CMDLINE_PREFIX }} kubectl label node "{{ ansible_hostname }}" onecloud.yunion.io/lbagent=enable
   delegate_to: "{{ k8s_controlplane_host }}"
   run_once: yes
   environment:

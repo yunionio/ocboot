@@ -1,0 +1,36 @@
+- block:
+
+  - name: Set node_interface_name
+    include_role:
+      name: utils/fetch-node-interface
+
+  - name: Set host_networks to {{ node_interface_name }}/br0/{{ node_ip }}
+    set_fact:
+      host_networks: '{{ node_interface_name }}/br0/{{ node_ip }}'
+
+  when: host_networks is undefined or host_networks == ''
+
+- name: Set host_enable_hugepage to true
+  set_fact:
+    host_enable_hugepage: true
+  when:
+  - enable_hugepage is defined
+  - onecloud_version is defined
+  - onecloud_version is version('v3.10', '>=')
+  - ansible_architecture == 'x86_64'
+  - ansible_memtotal_mb >= 30*1024 # if total memory size greater then 30g
+
+- name: Make /etc/yunion directory
+  ansible.builtin.file:
+    path: "/etc/yunion"
+    mode: 0755
+    state: directory
+
+- name: Copy host.conf to /etc/yunion/host.conf with hugepage option {{ host_enable_hugepage }}
+  template:
+    src: "host.conf.j2"
+    dest: "/etc/yunion/host.conf"
+    owner: root
+    group: root
+    mode: 0644
+    force: false

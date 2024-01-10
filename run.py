@@ -174,9 +174,9 @@ def check_env(ipaddr=None, pip_mirror=None):
 
     ignore_check = os.getenv("IGNORE_ALL_CHECKS")
     if ignore_check == "true":
-        return
+       return
     check_pip3()
-    check_ansible(pip_mirror)
+    # check_ansible(pip_mirror)
     if match_ip4addr(ipaddr):
         check_passless_ssh(ipaddr)
 
@@ -425,6 +425,8 @@ def get_args():
     pip_mirror_suggest = "https://mirrors.aliyun.com/pypi/simple/"
     parser.add_argument('--pip-mirror', '-m', type=str, dest='pip_mirror',
                         help=f"{pip_mirror_help}, e.g.: {pip_mirror_suggest}")
+    parser.add_argument('--k3s', action='store_true', default=False,
+                        help="Using k3s rather than k8s to manage the cluster. Default: False (using k8s)")
     inject_add_hostagent_options(parser)
     return parser.parse_args()
 
@@ -498,6 +500,9 @@ def main():
         'cmp': ocboot.KEY_STACK_CMP,
         'virt': ocboot.KEY_STACK_EDGE,
     }
+
+    if args.k3s:
+        os.environ['K3S'] = 'TRUE'
 
     # 1. try to get offline data path from optional args
     # 2. if not exist, try to get from os env
