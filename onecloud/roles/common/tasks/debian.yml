@@ -6,11 +6,6 @@
     - ansible_distribution == 'Debian'
     - ansible_distribution_major_version | int >= 11
 
-- name: Import task utils/unified_cgroup_hierarchy.yml
-  include_tasks: utils/unified_cgroup_hierarchy.yml
-  when:
-  - is_debian_11_or_later| default(false)|bool == true
-
 - name: get version tag
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
