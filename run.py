@@ -61,7 +61,7 @@ def check_pip3():
 
 
 def check_ansible(pip_mirror):
-    minimal_ansible_version = '2.9.27'
+    minimal_ansible_version = '2.11.12'
     cmd.init_ansible_playbook_path()
     ret = os.system("ansible-playbook --version >/dev/null 2>&1")
     if ret == 0:
