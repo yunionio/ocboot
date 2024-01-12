@@ -1,3 +1,22 @@
+- name: init apt cache for {{ansible_distribution}}
+  get_url:
+    url: https://iso.yunion.cn/{{ansible_distribution | lower}}/{{ ansible_distribution_major_version }}/base/{{ ansible_architecture }}/yunion.gpg-key.asc
+    dest: /tmp/yunion.gpg-key.asc
+    validate_certs: no
+  become: true
+
+# https://iso.yunion.cn/debian/10/3.9/x86_64/
+- name: apply {{ansible_distribution}} sig key
+  shell: |
+    echo "deb [trusted=yes] https://iso.yunion.cn/{{ansible_distribution | lower}}/{{ ansible_distribution_major_version }}/base/{{ ansible_architecture }}/ ./" > /etc/apt/sources.list.d/yunion.list
+    echo "deb [trusted=yes] https://iso.yunion.cn/deb-updates/{{ ansible_architecture }} ./" >> /etc/apt/sources.list.d/yunion.list
+    apt-key add /tmp/yunion.gpg-key.asc;
+    apt-get update -y;
+    rm -f /tmp/yunion.gpg-key.asc
+  become: true
+  args:
+    executable: /bin/bash
+
 - name: install common packages via loop
   package:
     name: "{{ package_item }}"

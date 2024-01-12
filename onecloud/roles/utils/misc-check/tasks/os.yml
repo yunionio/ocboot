@@ -47,8 +47,9 @@
       euler:
         ansible_distribution_name: "openEuler"
         conditions:
-          - "'{{ ansible_distribution_major_version }}' is version('22', '==')"
-          - "'{{ ansible_distribution_version }}' is version('22.03', '>=')"
+          - euler:
+            - "'{{ ansible_distribution_major_version }}' is version('22', '==')"
+            - "'{{ ansible_distribution_version }}' is version('22.03', '>=')"
 
       kylin:
         ansible_distribution_name: "Kylin Linux Advanced Server"

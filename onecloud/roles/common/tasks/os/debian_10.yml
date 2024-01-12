@@ -31,23 +31,5 @@
 - name: Import task utils/config_iptables.yml
   include_tasks: utils/config_iptables.yml
 
-- name: init apt cache for debian
-  get_url:
-    url: https://iso.yunion.cn/debian/{{ ansible_distribution_major_version }}/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/yunion.gpg-key.asc
-    dest: /tmp/yunion.gpg-key.asc
-    validate_certs: no
-  become: true
-
-# https://iso.yunion.cn/debian/10/3.9/x86_64/
-- name: apply debian sig key
-  shell: |
-    echo "deb [trusted=yes] https://iso.yunion.cn/debian/{{ ansible_distribution_major_version }}/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/ ./" > /etc/apt/sources.list.d/yunion.list;
-    apt-key add /tmp/yunion.gpg-key.asc;
-    apt-get update -y;
-    rm -f /tmp/yunion.gpg-key.asc
-  become: true
-  args:
-    executable: /bin/bash
-
 - name: Include Debian Family Common Tasks
   include_tasks: debian_family.yml

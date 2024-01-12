@@ -431,7 +431,8 @@ def ensure_python3_yaml(os):
         else:
             query = "sudo dpkg -l"
             installer = "sudo apt"
-        subprocess.check_output(f"{installer} update", shell=True)
+        # print(f"cmd: [{installer} update -y]") # rex delete ok 20240111.1850
+        # subprocess.check_output(f"{installer} update -y", shell=True)
     else:
         print("OS not supported")
         exit(1)

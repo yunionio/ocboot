@@ -9,26 +9,10 @@
 - name: Import task utils/config_iptables.yml
   include_tasks: utils/config_iptables.yml
 
-- name: init apt cache for ubuntu
-  get_url:
-    url: https://iso.yunion.cn/ubuntu/{{ ansible_distribution_major_version }}/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/yunion.gpg-key.asc
-    dest: /tmp/yunion.gpg-key.asc
-    validate_certs: no
-  become: true
-
-- name: apply ubuntu sig key
-  shell: |
-    echo "deb [trusted=yes] https://iso.yunion.cn/ubuntu/{{ ansible_distribution_major_version }}/{{ onecloud_version_abbr }}/{{ ansible_architecture }}/ ./" > /etc/apt/sources.list.d/yunion.list;
-    apt-key add /tmp/yunion.gpg-key.asc;
-    apt-get update -y;
-    rm -f /tmp/yunion.gpg-key.asc
-  become: true
-  args:
-    executable: /bin/bash
-
-- name: Import task utils/fix_ovmf_path
-  include_tasks: utils/fix_ovmf_path.yml
-
+# TODO rex uncommont following 2 lines # 20240111.1903
+# - name: Import task utils/fix_ovmf_path
+#   include_tasks: utils/fix_ovmf_path.yml
+#
 # use legacy DNS resolve way
 - block:
   - name: Write /etc/systemd/resolved.conf

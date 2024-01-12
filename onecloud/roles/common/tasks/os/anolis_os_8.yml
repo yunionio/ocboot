@@ -1,5 +1,20 @@
 ---
 
+- name: config iptables to legacy way
+  shell: |
+    if sudo iptables -V |grep -wq nf_tables; then
+      sudo update-alternatives --install /usr/sbin/iptables iptables /usr/sbin/iptables-legacy 10
+      sudo update-alternatives --install /usr/sbin/ip6tables ip6tables /usr/sbin/ip6tables-legacy 10
+      sudo update-alternatives --install /usr/sbin/arptables arptables /usr/sbin/arptables-legacy 10
+      sudo update-alternatives --install /usr/sbin/ebtables ebtables /usr/sbin/ebtables-legacy 10
+      if [ -x /usr/sbin/nft ]; then
+          sudo nft flush ruleset
+      fi
+    fi
+  become: true
+  args:
+    executable: /bin/bash
+
 - name: Enable powertool
   shell: |
     dnf config-manager --set-enabled -y PowerTools
