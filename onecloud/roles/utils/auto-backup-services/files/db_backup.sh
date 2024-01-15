@@ -67,7 +67,7 @@ check_backup_disk() {
         mkdir -p "$BKUP_PATH"
     fi
 
-    disk=$(df --output=source "$BKUP_PATH" | grep -v '^Filesystem' | head -1)
+    disk=$(df --output=source "$BKUP_PATH" | grep -v '^Filesystem' | grep -v '文件系统' | head -1)
     if [ -z "$disk" ]; then
         "get disk error!"
         exit 1
