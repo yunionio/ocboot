@@ -9,7 +9,7 @@
 - name: apply {{ansible_distribution}} sig key
   shell: |
     echo "deb [trusted=yes] https://iso.yunion.cn/{{ansible_distribution | lower}}/{{ ansible_distribution_major_version }}/base/{{ ansible_architecture }}/ ./" > /etc/apt/sources.list.d/yunion.list
-    echo "deb [trusted=yes] https://iso.yunion.cn/deb-updates/{{ ansible_architecture }} ./" >> /etc/apt/sources.list.d/yunion.list
+    echo "deb [trusted=yes] https://iso.yunion.cn/deb-updates/{{ ansible_architecture }}/ ./" >> /etc/apt/sources.list.d/yunion.list
     apt-key add /tmp/yunion.gpg-key.asc;
     apt-get update -y;
     rm -f /tmp/yunion.gpg-key.asc

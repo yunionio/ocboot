@@ -8,6 +8,7 @@
     failovermethod=priority
     enabled=1
     gpgcheck=0
+    priority=1
 
     [yunion-repo-updates]
     name=Yunion Bin Packages for Yunion Multi-Cloud Platform -
@@ -16,5 +17,6 @@
     failovermethod=priority
     enabled=1
     gpgcheck=0
+    priority=1
     EOF_MISC
   become: yes

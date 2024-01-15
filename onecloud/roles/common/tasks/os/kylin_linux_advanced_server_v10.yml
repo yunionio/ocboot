@@ -1,11 +1,23 @@
-- name: Add cloud rpm repository for Kylin
-  get_url:
-    url: https://iso.yunion.cn/kylin/v10-{{ansible_distribution_release|lower}}/3.10/{{ansible_architecture}}/kylin-yunion.repo
-    dest: /etc/yum.repos.d/kylin-yunion.repo
-    validate_certs: no
+- name: enable repo
+  shell: |
+    cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
+    [yunion-repo-base]
+    name=Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/kylin/{{ ansible_distribution_version |lower }}-{{ ansible_distribution_release | lower }}/base/{{ ansible_architecture }}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+
+    [yunion-repo-updates]
+    name=Yunion Bin Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/rpm-updates/{{ansible_architecture}}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    EOF_MISC
   become: yes
-  when:
-  - is_kylin_based|default(false)|bool == true
 
 - name: Update package list for {{ansible_distribution}} {{ansible_distribution_release}}
   set_fact:
