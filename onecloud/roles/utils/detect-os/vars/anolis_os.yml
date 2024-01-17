@@ -1,0 +1,87 @@
+---
+is_redhat_based: true
+
+common_packages:
+    - autogen-libopts
+    - bash-completion
+    - boost-iostreams
+    - boost-random
+    - boost-system
+    - boost-thread
+    - bridge-utils
+    - celt051
+    - ceph-common
+    - conntrack-tools
+    - curl
+    - docker-ce
+    - fuse
+    - fuse-devel
+    - fuse-libs
+    - gssproxy
+    - htop
+    - ipset
+    - ipvsadm
+    - jq
+    - keyutils
+    - kmod
+    - kmod-openvswitch
+    - kubeadm-1.15.12-0
+    - libaio
+    - libbasicobjects
+    - libcollection
+    - libini_config
+    - libjpeg-turbo
+    - libnfsidmap
+    - libogg
+    - libpath_utils
+    - libpcap
+    - librados2
+    - librbd1
+    - libref_array
+    - libselinux-python3
+    - libtirpc
+    - libusb
+    - libusbx
+    - libverto-libevent
+    - lm_sensors-libs
+    - lvm2
+    - nc
+    - net-tools
+    - nfs-utils
+    - nmap-ncat
+    - oniguruma
+    - openvswitch2.15
+    - parallel
+    - pciutils
+    - pixman
+    - quota
+    - quota-nls
+    - rpcbind
+    - rsync
+    - socat
+    - spice-protocol
+    - sysstat
+    - tcp_wrappers
+    - tcpdump
+    - unbound
+    - usbredir
+    - usbutils
+    - wget
+    - yunion-qemu-4.2.0
+
+common_services:
+    - yunion-executor
+
+latest_packages:
+    - ca-certificates
+    - "yunion-climc-{{ onecloud_version_abbr }}[.-]*"
+    - "yunion-climc-ee-{{ onecloud_version_abbr }}[.-]*"
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
+    - yunion-ovmfrpm
+
+dnf_modules:
+    - container-tools:an8
+    - virt:an
+
