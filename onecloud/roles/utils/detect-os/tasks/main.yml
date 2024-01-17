@@ -21,6 +21,12 @@
   tags:
     - facts
 
+- name: set var
+  set_fact:
+    onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
+  when:
+  - onecloud_version is defined
+
 - name: Lookup offline data path
   ansible.builtin.set_fact:
     offline_data_path: "{{ lookup('env', 'OFFLINE_DATA_PATH') }}"

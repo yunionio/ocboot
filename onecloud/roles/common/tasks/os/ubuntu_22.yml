@@ -1,0 +1,40 @@
+---
+- name: set var
+  set_fact:
+    onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
+
+- name: Import task utils/unified_cgroup_hierarchy.yml
+  include_tasks: utils/unified_cgroup_hierarchy.yml
+
+- name: Import task utils/config_iptables.yml
+  include_tasks: utils/config_iptables.yml
+
+- name: Import task utils/fix_ovmf_path
+  include_tasks: utils/fix_ovmf_path.yml
+
+# use legacy DNS resolve way
+- block:
+  - name: Write /etc/systemd/resolved.conf
+    become: true
+    template:
+      src: etc_systemd_resolved.conf.j2
+      dest: /etc/systemd/resolved.conf
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Restart systemd-resolved
+    become: true
+    service:
+      name: systemd-resolved
+      state: restarted
+
+  - name: Link /etc/resolv.conf to /run/systemd/resolve/resolve.conf
+    become: true
+    shell: |
+      ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+    args:
+      executable: /bin/bash
+
+- name: Include Debian Family Common Tasks
+  include_tasks: debian_family.yml

@@ -360,6 +360,12 @@ def generate_config(ipv4, produc_stack, dns_list=[]):
     elif re.search(r'\b\d{8}\.\d$', ver):
         yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['image_repository'] = 'registry.cn-beijing.aliyuncs.com/yunionio'
 
+    if image_repository and '5000' in image_repository:
+        r = image_repository
+        if '/' in r:
+            r = r.split('/')[0]
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['insecure_registries'] = [r]
+
     interface = get_interface_by_ip(ipv4)
     username = get_username()
     db_password = random_password(12) if brand_new else yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get('db_password')
@@ -431,7 +437,8 @@ def ensure_python3_yaml(os):
         else:
             query = "sudo dpkg -l"
             installer = "sudo apt"
-        subprocess.check_output(f"{installer} update", shell=True)
+        # print(f"cmd: [{installer} update -y]") # rex delete ok 20240111.1850
+        # subprocess.check_output(f"{installer} update -y", shell=True)
     else:
         print("OS not supported")
         exit(1)

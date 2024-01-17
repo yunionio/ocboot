@@ -1,0 +1,35 @@
+- name: Import task utils/unified_cgroup_hierarchy.yml
+  include_tasks: utils/unified_cgroup_hierarchy.yml
+  when:
+  - is_debian_11_or_later| default(false)|bool == true
+
+- name: get version tag
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    /usr/bin/kubectl get OnecloudCluster -n onecloud -o jsonpath='{.items[0].spec.version}'
+  args:
+      executable: /bin/bash
+  delegate_to: "{{ k8s_controlplane_host }}"
+  register: k8s_version_tag
+  ignore_errors: true
+  failed_when: false
+  when: k8s_controlplane_host is defined
+
+- name: set onecloud_version if not provided
+  set_fact:
+    onecloud_version: "{{ k8s_version_tag.stdout }}"
+  when:
+  - onecloud_version is not defined
+  - k8s_version_tag is defined
+  - k8s_version_tag.rc == 0
+
+- name: set var
+  set_fact:
+    onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
+
+- name: Import task utils/config_iptables.yml
+  include_tasks: utils/config_iptables.yml
+
+- name: Include Debian Family Common Tasks
+  include_tasks: debian_family.yml

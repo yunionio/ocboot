@@ -1,0 +1,62 @@
+- name: init apt cache for {{ansible_distribution}}
+  get_url:
+    url: https://iso.yunion.cn/{{ansible_distribution | lower}}/{{ ansible_distribution_major_version }}/base/{{ ansible_architecture }}/yunion.gpg-key.asc
+    dest: /tmp/yunion.gpg-key.asc
+    validate_certs: no
+  become: true
+
+# https://iso.yunion.cn/debian/10/3.9/x86_64/
+- name: apply {{ansible_distribution}} sig key
+  shell: |
+    echo "deb [trusted=yes] https://iso.yunion.cn/{{ansible_distribution | lower}}/{{ ansible_distribution_major_version }}/base/{{ ansible_architecture }}/ ./" > /etc/apt/sources.list.d/yunion.list
+    echo "deb [trusted=yes] https://iso.yunion.cn/deb-updates/{{ ansible_architecture }}/ ./" >> /etc/apt/sources.list.d/yunion.list
+    apt-key add /tmp/yunion.gpg-key.asc;
+    apt-get update -y;
+    rm -f /tmp/yunion.gpg-key.asc
+  become: true
+  args:
+    executable: /bin/bash
+
+- name: install common packages via loop
+  package:
+    name: "{{ package_item }}"
+  become: true
+  with_items:
+  - "{{ common_packages }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ common_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  tags:
+  - package
+
+- name: install latest packages via loop
+  package:
+    name: "{{ package_item }}"
+    state: latest
+  become: true
+  with_items:
+  - "{{ latest_packages }}"
+  when:
+  - latest_packages is defined
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ latest_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  tags:
+  - package
+
+- name: Check that if selinux config exists
+  stat:
+    path: /etc/selinux/config
+  register: selinux_conf_exists
+
+- name: Turn off selinux
+  selinux:
+    state: disabled
+  become: true
+  when:
+    - selinux_conf_exists.stat.exists
+
+- name: Import task utils/fix_ovmf_path
+  include_tasks: utils/fix_ovmf_path.yml
