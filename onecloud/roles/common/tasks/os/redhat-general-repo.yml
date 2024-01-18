@@ -1,4 +1,4 @@
-- name: enable repo
+- name: Online repo
   shell: |
     cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
     [yunion-repo-base]
@@ -20,3 +20,15 @@
     priority=1
     EOF_MISC
   become: yes
+  when:
+  - online_status is defined
+  - online_status == 'online'
+
+- name: Add cloud rpm repository {{ online_status }} {{ ansible_architecture }}
+  template:
+    src: yunion.repo.j2
+    dest: /etc/yum.repos.d/yunion.repo
+  when:
+  - online_status is defined
+  - online_status == 'offline'
+
