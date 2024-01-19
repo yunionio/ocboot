@@ -1,7 +1,3 @@
-#- name: Do common setup
-#  include_role:
-#    name: common
-
 - name: pre-install-common
   include_role:
     name: pre-install-common
