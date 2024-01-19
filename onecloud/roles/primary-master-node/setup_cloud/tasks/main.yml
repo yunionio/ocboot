@@ -18,7 +18,6 @@
   when:
   - node_ip is defined
   - node_ip == default_ip
-#  - node_ip is ansible.utils.ipv4
   - node_ip is match('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')
 
 - name: Set default Gateway
