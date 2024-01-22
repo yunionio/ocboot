@@ -174,9 +174,9 @@ def check_env(ipaddr=None, pip_mirror=None):
 
     ignore_check = os.getenv("IGNORE_ALL_CHECKS")
     if ignore_check == "true":
-        return
+       return
     check_pip3()
-    check_ansible(pip_mirror)
+    # check_ansible(pip_mirror)
     if match_ip4addr(ipaddr):
         check_passless_ssh(ipaddr)
 

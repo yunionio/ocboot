@@ -51,4 +51,3 @@
 
 - name: check if os/ver is supported
   include_tasks: os.yml
-

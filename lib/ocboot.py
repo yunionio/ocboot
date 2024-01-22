@@ -59,7 +59,7 @@ def get_ansible_global_vars(version):
         KEY_ONECLOUD_MAJOR_VERSION: major_version,
         KEY_EXTRA_PACKAGES: [],
         KEY_K3S_VERSION: VAL_K3S_VERSION,
-        KEY_K3S_AIRGAP_DIR: os.path.join(os.getcwd(), k3s.DEFAULT_AIRGAP_DIR),
+        KEY_K3S_AIRGAP_DIR: k3s.GET_AIRGAP_DIR(),
         KEY_K3S_TOKEN: VAL_K3S_TOKEN,
     }
 

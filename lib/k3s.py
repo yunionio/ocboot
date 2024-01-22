@@ -4,7 +4,12 @@ import hashlib
 from lib.cmd import run_cmd
 
 
-DEFAULT_AIRGAP_DIR = "airgap_assets"
+def GET_AIRGAP_DIR():
+    default_dir = os.path.join(os.getcwd(), "airgap_assets")
+    if os.environ.get('K3S_AIRGAP_DIR', None):
+        return os.environ.get('K3S_AIRGAP_DIR')
+    return default_dir
+
 
 VERSION_V1_28_5_K3S_1 = "v1.28.5+k3s1"
 
