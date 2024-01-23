@@ -66,4 +66,3 @@
   ignore_errors: yes
   changed_when: false
   failed_when: false
-
