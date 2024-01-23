@@ -65,14 +65,19 @@ def check_ansible(pip_mirror):
     cmd.init_ansible_playbook_path()
     ret = os.system("ansible-playbook --version >/dev/null 2>&1")
     if ret == 0:
-        ansible_version = os.popen(
-            """ansible-playbook --version | head -1 | grep -oP '[0-9.]+' """).read().strip()
-        if version_ge(ansible_version, minimal_ansible_version):
-            print("current ansible version: %s. PASS" % ansible_version)
-            return
+        ver_out = os.popen("""ansible-playbook --version | head -1""").read().strip()
+        ver_re = re.compile(r'ansible-playbook \[core\s(.*)]')
+        match = ver_re.match(ver_out)
+        if match:
+            ansible_version = match.group(1)
+            if version_ge(ansible_version, minimal_ansible_version):
+                print("current ansible version: %s. PASS" % ansible_version)
+                return
+            else:
+                print("Current ansible version (%s) is lower than expected(%s). upgrading ... " % (
+                    ansible_version, minimal_ansible_version))
         else:
-            print("Current ansible version (%s) is lower than expected(%s). upgrading ... " % (
-                ansible_version, minimal_ansible_version))
+            raise Exception(f"Invalid ansible-playbook --version output: {ver_out}")
     else:
         print("No ansible found. Installing ... ")
     try:
