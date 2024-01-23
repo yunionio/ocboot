@@ -46,6 +46,8 @@
 - name: pips for mysql/mariadb online
   pip:
     name: "{{ pip_item }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   when:
   - online_status == "online"
   become: true
@@ -103,6 +105,8 @@
     host: "{{ item }}"
     check_implicit_admin: true
   become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   loop:
     - "localhost"
     - "{{ db_host }}"
