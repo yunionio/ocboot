@@ -32,3 +32,4 @@ RUN sed -i 's!https://dl-cdn.alpinelinux.org/!https://mirrors.ustc.edu.cn/!g' /e
     rm -rf /root/.cargo
 
 ENV PATH $PATH:/ocboot
+WORKDIR /ocboot

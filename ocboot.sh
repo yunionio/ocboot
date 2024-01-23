@@ -3,7 +3,7 @@
 set -e
 
 REGISTRY=${REGISTRY:-registry.cn-beijing.aliyuncs.com/yunionio}
-VERSION=${VERSION:-v3.11-buildah}
+VERSION=${VERSION:-v3.11-buildah.1}
 OCBOOT_IMAGE="$REGISTRY/ocboot:$VERSION"
 
 CUR_DIR="$(pwd)"
