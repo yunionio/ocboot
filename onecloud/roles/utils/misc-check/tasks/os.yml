@@ -93,7 +93,7 @@
 
 - name: Check if OS VERSION is supported
   assert:
-    that: "{{ item }}"
+    that: "item"
     fail_msg: "OS {{ ansible_distribution }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"
   with_items: "{{ supported_os[supported_os_key].conditions }}"
   when:
