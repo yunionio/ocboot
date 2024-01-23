@@ -15,46 +15,24 @@ ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使�
 
 ### 安装 ansible
 
-ocboot 使用 ansible 来部署服务，所以请先在自己的系统上安装 ansible ，可以使用发型版自带的包管理工具安装，或者直接使用 pip 安装。
+ocboot 使用 [buildash](https://github.com/containers/buildah) 运行容器来部署服务，容器镜像里面包含了 python3 和 ansible 等运行环境。
 
-```bash
-# centos install ansible
-$ yum install -y epel-release git python3-pip
-$ python3 -m pip install --upgrade pip setuptools wheel
-$ python3 -m pip install --upgrade ansible
-
-# kylin install ansible
-$ yum install -y git python3-pip
-$ python3 -m pip install --upgrade pip setuptools wheel
-$ python3 -m pip install --upgrade ansible
-
-# archlinux install ansible
-$ pacman -S python3-pip
-$ python3 -m pip install --upgrade pip setuptools wheel
-$ python3 -m pip install --upgrade ansible
-
-# others
-$ python3 -m pip install --upgrade pip setuptools wheel
-$ python3 -m pip install --upgrade ansible
-```
+所以请先在自己的系统上安装 buildah ，请先参考 [buildah installation instructions](https://github.com/containers/buildah/blob/main/install.md) 安装 buildah。
 
 ### clone 代码
 
 ```bash
 $ git clone https://github.com/yunionio/ocboot.git
-$ cd ./ocboot & pip install -r ./requirements.txt
+$ cd ./ocboot
 ```
 
 ### 部署服务
 
-ocboot 的运行方式很简单，只需要按自己机器的规划写好 yaml 配置文件，然后执行 `./ocboot.py install` 脚本，便会调用 ansible-playbook 在对应的机器上部署服务。
-
-ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以同时在多台机器上部署大规模集群，以下举例说明使用方法和配置文件的编写。
+ocboot 的运行方式很简单，只需要按自己机器的规划写好 yaml 配置文件，然后执行 `./ocboot.sh run.py full` 脚本，便会使用 buildah 启动容器，然后在容器里面运行 ansible-playbook 在对应的机器上部署服务。
 
 #### 快速开始
 
-
-- [All in One 安装](https://www.cloudpods.org/docs/getting-started/full/quickstart-full)：在 CentOS 7 或 Debian 10 等发行版里搭建全功能 Cloudpods 服务，可以快速体验**内置私有云**和**多云管理**的功能。
+- [All in One 安装](https://www.cloudpods.org/zh/docs/quickstart/allinone/)：在 CentOS 7 或 Debian 10 等发行版里搭建全功能 Cloudpods 服务，可以快速体验**内置私有云**和**多云管理**的功能。
 - [多节点高可用安装](https://www.cloudpods.org/zh/docs/setup/ha-ce/)：在生产环境中使用高可用的方式部署 Cloudpods 服务，包括**内置私有云**和**多云管理**的功能。
 
 
@@ -64,16 +42,16 @@ ocboot 可以很简单的在一台机器上部署 all in one 环境，也可以�
 
 ```bash
 # 比如把节点 192.168.121.61 加入到已有集群 192.168.121.21
-$ ./ocboot.py add-node 192.168.121.21 192.168.121.61
+$ ./ocboot.sh add-node 192.168.121.21 192.168.121.61
 
 # 可以一次添加多个节点，格式如下
-$ ./ocboot.py add-node $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
+$ ./ocboot.sh add-node $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
 
 # 把 $node_ip ssh 端口 2222 的节点加入到 $PRIMARY_IP ssh 端口 4567 的集群
-$ ./ocboot.py add-node --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
+$ ./ocboot.sh add-node --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
 
 # 查看 add-node 命令帮助信息
-$ ./ocboot.py add-node --help
+$ ./ocboot.sh add-node --help
 ```
 
 具体操作可参考文档：[添加节点](https://www.cloudpods.org/zh/docs/setup/host/)。
@@ -84,13 +62,13 @@ $ ./ocboot.py add-node --help
 
 ```bash
 # 比如把节点 192.168.121.62 加入到已有集群 192.168.121.21
-$ ./ocboot.py add-lbagent 192.168.121.21 192.168.121.62
+$ ./ocboot.sh add-lbagent 192.168.121.21 192.168.121.62
 
 # 可以一次添加多个节点，格式如下
-$ ./ocboot.py add-lbagent $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
+$ ./ocboot.sh add-lbagent $PRIMARY_IP $node1_ip $node2_ip ... $nodeN_ip
 
 # 把 $node_ip ssh 端口 2222 的节点加入到 $PRIMARY_IP ssh 端口 4567 的集群
-$ ./ocboot.py add-lbagent --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
+$ ./ocboot.sh add-lbagent --port 4567 --node-port 2222 $PRIMARY_IP $node_ip
 ```
 
 具体操作可参考文档：[部署Lbagent](https://www.cloudpods.org/docs/getting-started/onpremise/lbagent)。
@@ -235,33 +213,3 @@ optional arguments:
 - `--master-node-as-host`安装`master`节点时，将其作为`host` 节点。
 
 - `--worker-node-ips`、`--worker-node-as-host`，作用同上，如其名。
-
-### 使用docker部署
-
-为了避免因为环境依赖产生的问题，我们也提供了使用容器来部署，由于部署过程中有重启容器引擎的操作，故**使用容器时只能以远程的方式部署(即部署的目标机器和运行 ocboot 容器的机器不能是同一台)**。使用容器时，只需要配置好 ssh 免密登录，按需创建配置文件，以及安装好 docker 即可开始部署。
-
-<details>
-
-<summary>
-查看命令
-</summary>
-
-```bash
-# Allinone install
-$ ./run-in-docker.sh <IP>
-$ ./run-in-docker.sh install config-allinone.yml
-
-# Multiple nodes install
-$ ./run-in-docker.sh install config-nodes.yml
-
-# High availability install
-$ ./run-in-docker.sh install config-k8s-ha.yml
-
-# Add node
-$ ./run-in-docker.sh add-node <PRIMARY_HOST> <NODE_IP1> <NODE_IP2> ... <NODE_IPN>
-
-# Upgrade node
-$ ./run-in-docker.sh upgrade <PRIMARY_HOST> v3.8.13
-```
-
-</details>
