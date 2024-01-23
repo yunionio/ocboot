@@ -4,6 +4,7 @@
 
 - hosts: worker_nodes
   roles:
+    - common
     - worker-node
     - { role: utils/gpu-init, when: "join_as_host|default(false)" }
     - utils/kernel-check
