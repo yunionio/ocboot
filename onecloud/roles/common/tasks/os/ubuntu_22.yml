@@ -6,12 +6,6 @@
 - name: Import task utils/unified_cgroup_hierarchy.yml
   include_tasks: utils/unified_cgroup_hierarchy.yml
 
-- name: Import task utils/config_iptables.yml
-  include_tasks: utils/config_iptables.yml
-
-- name: Import task utils/fix_ovmf_path
-  include_tasks: utils/fix_ovmf_path.yml
-
 # use legacy DNS resolve way
 - block:
   - name: Write /etc/systemd/resolved.conf
