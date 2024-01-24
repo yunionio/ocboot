@@ -60,3 +60,10 @@
 
 - name: Import task utils/fix_ovmf_path
   include_tasks: utils/fix_ovmf_path.yml
+
+- name: Import task utils/config_iptables.yml
+  include_tasks: utils/config_iptables.yml
+
+- name: Import task utils/fix_ovmf_path
+  include_tasks: utils/fix_ovmf_path.yml
+
