@@ -1,0 +1,40 @@
+---
+
+# using as this as template.
+
+- name: set var for {{ onecloud_version }}
+  set_fact:
+    is_supported: false
+    supported_kylin_code:
+    - Kivity
+    - Sword
+    - Lance
+
+- name: Set distribution version facts
+  set_fact:
+    ansible_distribution_version: "{{ ansible_distribution_version }}"
+    ansible_distribution_release: "{{ ansible_distribution_release }}"
+
+- debug: var=ansible_distribution_release
+
+- debug: var=supported_kylin_code
+
+- name: Assert {{ ansible_distribution }} {{ ansible_distribution_version }} conditions
+  set_fact:
+    is_supported: true
+  when:
+    - ansible_distribution_version == 'V10'
+    - ansible_distribution_release in supported_kylin_code
+    - onecloud_version is defined
+    - onecloud_version is version('v3.9', '>=')
+    - onecloud_version is version('v3.11', '<=')
+    - ansible_architecture == 'x86_64'
+
+- debug: var=is_supported
+
+- name: Evaluate {{ ansible_distribution }} {{ ansible_distribution_version }} conditions
+  fail:
+    msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"
+  when:
+  - is_supported | default(true) | bool == false
+
