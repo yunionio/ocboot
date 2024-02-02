@@ -1,0 +1,5 @@
+- name: Assert {{ ansible_distribution }} {{ ansible_distribution_version }} conditions
+  assert:
+    that:
+    - "'{{ ansible_distribution_version }}' is version('7.9', '>=')"  # from  centos 7.9 2009
+    - "'{{ ansible_distribution_version }}' is version('8', '<=')"    # to    centos stream 8
