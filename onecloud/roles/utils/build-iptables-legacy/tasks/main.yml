@@ -1,0 +1,81 @@
+- name: Get Iptables Version
+  shell: iptables --version
+  ignore_errors: true
+  register: iptables_version
+
+- block:
+  - name: Show Iptables Version Info
+    debug:
+      msg: "Current iptables version info: {{ iptables_version.stdout }}. Building iptables to enable legacy mode. "
+
+  - name: Check if local file exists
+    stat:
+      path: "{{ iptables_local_path }}"
+    register: file_stat
+
+  - name: Check Md5 Checksum Of Local File
+    block:
+      - name: Get MD5 checksum of local file
+        command: "md5sum {{ iptables_local_path }}"
+        register: md5sum_output
+      - debug: var=md5sum_output
+      - debug: msg="Compare MD5 checksum with expected value"
+        when: md5sum_output.stdout.split()[0] != iptables_md5sum
+        ignore_errors: true
+        failed_when: false
+    when: file_stat.stat.exists
+
+  - name: Download File From Url If Local File Doesn't Exist Or Has Incorrect Checksum
+    get_url:
+      url: "{{ iptables_download_url }}"
+      dest: "{{ iptables_local_path }}"
+    when: not file_stat.stat.exists or md5sum_output.stdout.split()[0] != iptables_md5sum
+
+  - name: Online Repo Iptables
+    shell: |
+      if grep yunion-repo-iptables /etc/yum.repos.d/yunion.repo; then
+        exit 0
+      fi
+      cat >> /etc/yum.repos.d/yunion.repo <<EOF_MISC
+      [yunion-repo-iptables]
+      name=Packages for Yunion Multi-Cloud Platform Iptables-
+      baseurl=https://iso.yunion.cn/{{ ansible_distribution| replace(' ','') | lower }}/{{ ansible_distribution_version }}/iptables/{{ ansible_architecture }}/
+      sslverify=0
+      failovermethod=priority
+      enabled=1
+      gpgcheck=0
+      priority=2
+      EOF_MISC
+      dnf --disablerepo='*' --enablerepo='yunion*'  makecache
+    become: yes
+    args:
+      executable: /bin/bash
+
+  - name: Install packages
+    package:
+      name: "{{ package_item }}"
+      state: present
+    with_items:
+      - gcc
+      - make
+      - kernel-devel
+    loop_control:
+      loop_var: package_item
+
+  - name: Build Iptables
+    shell: |
+      cd /tmp
+      tar xf iptables-1.8.9.tar.xz
+      cd iptables-1.8.9
+      ./configure --disable-nftables --prefix=/usr &>/dev/null && make -j &>/dev/null && make install &>/dev/null
+      iptables --version | grep -qi legacy && rm -rf /tmp/iptables*
+      iptables --version
+    register: iptables_legacy_version
+    become: true
+    args:
+      executable: /bin/bash
+
+  - debug: var=iptables_legacy_version.stdout
+
+  when:
+  - not (iptables_version.stdout | default('') | regex_search('legacy', ignorecase=True))

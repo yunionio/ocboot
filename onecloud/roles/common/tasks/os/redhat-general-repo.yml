@@ -17,9 +17,11 @@
     failovermethod=priority
     enabled=1
     gpgcheck=0
-    priority=1
+    priority=2
     EOF_MISC
   become: yes
+  args:
+    executable: /bin/bash
   when:
   - online_status is defined
   - online_status == 'online'
@@ -31,4 +33,3 @@
   when:
   - online_status is defined
   - online_status == 'offline'
-
