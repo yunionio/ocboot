@@ -56,6 +56,7 @@ common_packages:
     - openvswitch2.15
     - parallel
     - pciutils
+    - python36
     - quota
     - quota-nls
     - rpcbind
