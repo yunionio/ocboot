@@ -57,6 +57,7 @@ common_packages:
     - openvswitch2.15
     - parallel
     - pciutils
+    - python36
     - quota
     - quota-nls
     - rpcbind
@@ -89,4 +90,5 @@ dnf_modules:
     - perl-libwww-perl:6.34
     - perl-IO-Socket-SSL:2.066
     - virt:rhel
+    - python36:3.6
 
