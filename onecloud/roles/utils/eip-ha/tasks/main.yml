@@ -15,7 +15,7 @@
 
     - name: get vars
       shell: |
-        /opt/yunion/bin/ocadm cluster rcadmin | sed \
+        /opt/yunion/bin/fetch-rcadmin.sh | sed \
         -e 's#export ##' \
         -e 's#OS_REGION_NAME#oc_region#' \
         -e 's#OS_AUTH_URL#oc_auth_url#' \

@@ -1,0 +1,23 @@
+---
+- name: Setup optional config file
+  include_role:
+    name: k3s/config
+  vars:
+    is_k3s_server: False
+
+# If airgapped, all K3s artifacts are already on the node.
+- name: Copy K3s service file
+  register: k3s_agent_service
+  ansible.builtin.template:
+    src: "k3s-agent.service.j2"
+    dest: "{{ systemd_dir }}/k3s-agent.service"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+
+- name: Enable and check K3s service
+  ansible.builtin.systemd:
+    name: k3s-agent
+    daemon_reload: "{{ true if k3s_agent_service.changed else false }}"
+    state: "{{ 'restarted' if k3s_agent_service.changed else 'started' }}"
+    enabled: true

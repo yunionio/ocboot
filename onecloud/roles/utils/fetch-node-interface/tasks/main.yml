@@ -1,0 +1,19 @@
+- name: Run `ip -4 -brief address show`
+  shell: |
+    ip -4 -brief address show | grep {{ node_ip }}/ | awk '{print $1}'
+  register: NODE_INTERFACE
+
+- name: Set node_interface_name to {{ NODE_INTERFACE.stdout }}
+  set_fact:
+    node_interface_name: "{{ NODE_INTERFACE.stdout_lines[0] }}"
+
+- block:
+  - name: Find the physical interface on br0
+    shell: |
+      ovs-vsctl list-ifaces br0 | head -n 1
+    register: BR0_PHY_NIC
+
+  - name: Update node_interface_name when br0 is existing
+    set_fact:
+      node_interface_name: "{{ BR0_PHY_NIC.stdout_lines[0] }}"
+  when: node_interface_name == 'br0'

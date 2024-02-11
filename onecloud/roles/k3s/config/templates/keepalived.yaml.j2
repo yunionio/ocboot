@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    component: keepalived
+    tier: control-plane
+  name: keepalived
+  namespace: kube-system
+spec:
+  containers:
+  - command:
+    - /container/tool/run
+    env:
+    - name: KEEPALIVED_PRIORITY
+{% if is_keepalived_master %}
+      value: "100"
+{% else %}
+      value: "90"
+{% endif %}
+    - name: KEEPALIVED_VIRTUAL_IPS
+      value: "#PYTHON2BASH:['{{ high_availability_vip }}']"
+    - name: KEEPALIVED_STATE
+{% if is_keepalived_master %}
+      value: MASTER
+{% else %}
+      value: BACKUP
+{% endif %}
+    - name: KEEPALIVED_PASSWORD
+      value: "{{ keepalived_password }}"
+    - name: KEEPALIVED_ROUTER_ID
+      value: "{{ keepalived_router_id }}"
+    - name: KEEPALIVED_NODE_IP
+      value: "{{ node_ip }}"
+    - name: KEEPALIVED_INTERFACE
+      value: "{{ node_interface_name }}"
+    - name: CHECK_KUBE_CMD
+      value: "curl -k -XGET https://{{ node_ip }}:6443/healthz --cert /var/lib/rancher/k3s/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/k3s/server/tls/client-kube-apiserver.key --cacert /var/lib/rancher/k3s/server/tls/client-ca.crt"
+    image: {{ image_repository }}/keepalived:{{ keepalived_version_tag }}
+    imagePullPolicy: IfNotPresent
+    name: keepalived
+    resources: {}
+    volumeMounts:
+    - mountPath: /var/lib/rancher
+      name: rancher
+      readOnly: true
+    securityContext:
+      capabilities:
+        add:
+        - SYS_NICE
+        - NET_ADMIN
+        - NET_BROADCAST
+        - NET_RAW
+      privileged: true
+  hostNetwork: true
+  priorityClassName: system-cluster-critical
+  volumes:
+  - name: rancher
+    hostPath:
+      path: /var/lib/rancher
+      type: Directory

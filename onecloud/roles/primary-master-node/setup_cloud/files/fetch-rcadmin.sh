@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+get_cluster_cmd='k3s kubectl get oc -n onecloud default'
+
+endpoint=$($get_cluster_cmd -o jsonpath='{.spec.loadBalancerEndpoint}')
+keystone_port=$($get_cluster_cmd -o jsonpath='{.spec.keystone.adminService.nodePort}')
+admin_password=$($get_cluster_cmd -o jsonpath='{.spec.keystone.bootstrapPassword}')
+region=$($get_cluster_cmd -o jsonpath='{.spec.region}')
+
+auth_url="https://$endpoint:$keystone_port/v3"
+
+echo "export OS_AUTH_URL=$auth_url
+export OS_USERNAME=sysadmin
+export OS_PASSWORD=$admin_password
+export OS_PROJECT_DOMAIN=default
+export OS_PROJECT_NAME=system
+export YUNION_INSECURE=true
+export OS_REGION_NAME=$region
+export OS_ENDPOINT_TYPE=publicURL"

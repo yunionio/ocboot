@@ -1,0 +1,161 @@
+---
+# OnecloudCluster CRD
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    helm.sh/hook: pre-install
+  creationTimestamp: null
+  name: onecloudclusters.onecloud.yunion.io
+spec:
+  conversion:
+    strategy: None
+  group: onecloud.yunion.io
+  names:
+    kind: OnecloudCluster
+    listKind: OnecloudClusterList
+    plural: onecloudclusters
+    shortNames:
+    - onecloud
+    - oc
+    singular: onecloudcluster
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: The image for keystone service
+      jsonPath: .spec.keystone.image
+      name: keystone
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            x-kubernetes-preserve-unknown-fields: true
+          status:
+            x-kubernetes-preserve-unknown-fields: true
+        type: object
+    served: true
+    storage: true
+---
+# onecloud cluster
+apiVersion: "onecloud.yunion.io/v1alpha1"
+kind: OnecloudCluster
+metadata:
+  name: default
+  namespace: {{ namespace }}
+  annotations:
+    onecloud.yunion.io/edition: "{{ edition }}"
+spec:
+  mysql:
+    host: {{ db_host }}
+    port: {{ db_port }}
+    username: {{ db_user }}
+    password: {{ db_password }}
+  region: {{ region }}
+  zone: {{ zone }}
+  imageRepository: "{{ image_repository }}"
+  version: "{{ onecloud_version }}"
+{% if use_hyper_image %}
+  useHyperImage: true
+{% endif %}
+  loadBalancerEndpoint: "{{ apiserver_advertise_address }}"
+{% if disable_resource_management %}
+  disableResourceManagement: true
+{% else %}
+  disableResourceManagement: false
+{% endif %}
+  productVersion: {{ product_version }}
+{% if enable_minio %}
+  minio:
+    enable: true
+  glance:
+    switchToS3: true
+{% endif %}
+  onecloudServiceOperator:
+    disable: true
+---
+# operator related resources
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ namespace }}
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: onecloud-operator
+subjects:
+- kind: ServiceAccount
+  name: onecloud-operator
+  namespace: {{ namespace }}
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: onecloud-operator
+  namespace: {{ namespace }}
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: onecloud-operator-critical
+value: 1000000000
+globalDefault: false
+description: "This priority class should be used for onecloud operator service pods only."
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: onecloud-operator
+  namespace: {{ namespace }}
+  annotations:
+    scheduler.alpha.kubernetes.io/critical-pod: ''
+  labels:
+    k8s-app: onecloud-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: onecloud-operator
+  template:
+    metadata:
+      labels:
+        k8s-app: onecloud-operator
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 50
+            preference:
+              matchExpressions:
+              - key: onecloud.yunion.io/controller
+                operator: In
+                values:
+                - enable
+      serviceAccount: onecloud-operator
+      priorityClassName: onecloud-operator-critical
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/controlplane
+        effect: NoSchedule
+      containers:
+      - name: onecloud-operator
+        # image: {{ image_repository }}/onecloud-operator:{{ onecloud_version }}
+        image: registry.cn-beijing.aliyuncs.com/yunionio/onecloud-operator:k3s-0118.0
+        imagePullPolicy: IfNotPresent
+        command:
+        - "/bin/onecloud-controller-manager"
+        - "-disable-init-crd"
+        - "-sync-user"
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+---

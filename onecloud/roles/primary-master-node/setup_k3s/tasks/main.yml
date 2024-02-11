@@ -1,0 +1,38 @@
+- name: TCP Configuration
+  include_role:
+    name: tcp
+
+- name: Include role k3s/prereq
+  include_role:
+    name: k3s/prereq
+
+- name: Configure host service
+  include_role:
+    name: utils/host-service
+  when:
+  - join_as_host | default(false)|bool == true
+
+- name: Include role k3s/airgap
+  include_role:
+    name: k3s/airgap
+
+- name: Include role k3s/k3s_server
+  include_role:
+    name: k3s/k3s_server
+  vars:
+    is_keepalived_master: true
+
+- name: Copy calico.yaml to /tmp/calico.yaml
+  template:
+    src: calico.yaml.j2
+    dest: /var/lib/rancher/k3s/server/manifests/calico.yaml
+
+- name: Update traefik component configuration
+  copy:
+    src: traefik-config.yaml
+    dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+
+- name: Copy traefik daemonset yaml to /var/lib/rancher/k3s/server/manifests/traefik-ds.yaml
+  copy:
+    src: traefik-ds.yaml
+    dest: /var/lib/rancher/k3s/server/manifests/traefik-ds.yaml

@@ -1,0 +1,2 @@
+---
+host_enable_hugepage: false

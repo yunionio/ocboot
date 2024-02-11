@@ -17,6 +17,41 @@ def get_ansible_config_path():
     return os.path.join(os.getcwd(), 'onecloud/ansible.cfg')
 
 
+def run_cmd(cmds, env=None, no_strip=False, realtime_output=False):
+    shell_cmd = cmds
+    if isinstance(cmds, list):
+        shell_cmd = ' '.join(cmds)
+    # logging.debug('run cmd `%s` with env %s' % (shell_cmd, env))
+    print('run cmd: `%s`' % shell_cmd)
+    if env is None:
+        env = os.environ.copy()
+    proc = subprocess.Popen(
+        shell_cmd,
+        shell=True,
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=env,
+    )
+    output = ''
+    while True:
+        line = proc.stdout.readline()
+        if not line:
+            break
+        if not no_strip:
+            line = line.rstrip()
+        if realtime_output:
+            print(line, end='')
+        else:
+            print(line)
+        output += line
+    proc.wait()
+    if proc.returncode != 0:
+        print(output)
+        raise Exception('cmd `%s` return %s' % (shell_cmd, proc.returncode))
+    return output
+
+
 def _run_cmd(cmds):
     shell_cmd = ' '.join(cmds)
     print(shell_cmd)

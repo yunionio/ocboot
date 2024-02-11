@@ -1,11 +1,11 @@
 ---
-- name: Ensure a job that runs every minute
+- name: Ensure a job that runs daily
   cron:
-    name: "Remove unused dangling docker images"
+    name: "Remove unused dangling k3s container images"
     special_time: daily
     user: root
-    job: "/usr/bin/docker image prune -f"
-    cron_file: yunion_docker_image_prune
+    job: "k3s crictl rmi --prune"
+    cron_file: yunion_k3s_image_prune
   become: true
 
 - name: ensure /opt/yunion/scripts path exists
