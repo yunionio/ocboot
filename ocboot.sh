@@ -1,5 +1,14 @@
 #!/bin/bash
 
+buildah --version || {
+    echo "buildah is not installed, or not in PATH, please make sure buildah executable"
+    echo "Try:"
+    echo "  yum install -y buildah"
+	echo "or:"
+	echo "  apt-get install -y buildah"
+    exit -1
+}
+
 set -e
 
 REGISTRY=${REGISTRY:-registry.cn-beijing.aliyuncs.com/yunionio}
@@ -22,21 +31,7 @@ buildah_from_image "$OCBOOT_IMAGE"
 
 mkdir -p "$HOME/.ssh"
 
-CMD=""
-
-is_ocboot_subcmd() {
-    local subcmds="install upgrade add-node add-lbagent backup restore"
-    for subcmd in $subcmds; do
-        if [[ "$1" == "$subcmd" ]]; then
-            return 0
-        fi
-    done
-    return 1
-}
-
-if is_ocboot_subcmd $1; then
-    CMD="ocboot.py"
-fi
+CMD="ocboot.py"
 
 buildah run -t \
     -v "$HOME/.ssh:/root/.ssh" \
