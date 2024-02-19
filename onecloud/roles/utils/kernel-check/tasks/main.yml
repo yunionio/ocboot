@@ -43,6 +43,12 @@
   - nbd_ok|default(false)|bool == false
   - is_yunion_kernel_installed.rc != 0
 
+# unified cgroup hierarchy
+- name: Unified Cgroup Hierarchy
+  include_tasks: "unified_cgroup_hierarchy.yml"
+  when:
+    - is_debian_11_or_later|default(false)|bool == true or ansible_distribution == 'Ubuntu'
+
 # setup hugetlb
 - name: ensure hugetlb init dir exists
   file:
@@ -99,11 +105,8 @@
     test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
   become: yes
   when:
-  - is_yunion_kernel_running.rc != 0
   - ansible_connection == "ssh"
   - k8s_node_as_oc_host|default(false)|bool == true or enable_lbagent|default(false)|bool == true
-  - is_centos_based is defined
-  - nbd_ok|default(false)|bool == false
 
 # to "ignore Running reboot with local connection would reboot the control node"
 # warning
@@ -112,7 +115,4 @@
   become: yes
   when:
   - must_reboot |default(false)|bool == true
-  - is_yunion_kernel_running.rc != 0
   - k8s_node_as_oc_host|default(false)|bool == true
-  - is_centos_based is defined
-  - nbd_ok|default(false)|bool == false
