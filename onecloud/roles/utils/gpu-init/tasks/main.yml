@@ -39,8 +39,6 @@
     ignore_errors: yes
     no_log: True
     failed_when: false
-    when:
-    - is_centos_based is defined
 
   when:
   - upgrade_without_gpu is not defined or upgrade_without_gpu == false
