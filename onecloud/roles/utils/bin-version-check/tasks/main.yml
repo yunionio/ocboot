@@ -6,22 +6,26 @@
     get_kubelet_version() {
       local version_string="$1"
       local version_regex="v[0-9]+\.[0-9]+(\.[0-9]+)?"
-
+      if [[ ${version_string:0:1} != "v" ]]; then
+          version_string=v"$version_string"
+      fi
       if [[ $version_string =~ $version_regex ]]; then
-        echo "${BASH_REMATCH[0]}"
+          echo "${BASH_REMATCH[0]}"
       else
-        echo "Invalid version string: $version_string"
-        return 1
+          echo "Invalid version string: $version_string"
+          return 1
       fi
     }
-    climc_version=$(/opt/yunion/bin/climc --version |xargs)
+    climc_version=$(/opt/yunion/bin/climc --version|grep gitVersion |awk '{print $2}' |sed -e 's#[",]*##g')
     get_kubelet_version "$climc_version"
     # only for 3.10+
-    climc_ee_version=$(/opt/yunion/bin/climc-ee --version |xargs)
+    climc_ee_version=$(/opt/yunion/bin/climc-ee --version|grep gitVersion |awk '{print $2}' |sed -e 's#[",]*##g')
     get_kubelet_version "$climc_ee_version"
 
-    ocadm_output=$(/opt/yunion/bin/ocadm version)
+    ocadm_output=$(/opt/yunion/bin/ocadm version |grep -Po 'GitVersion[^,]+' |grep -oP '".*"' |xargs)
+
     get_kubelet_version "$ocadm_output"
+
   register: yunion_bin_version_ret
   become: yes
   args:
@@ -32,11 +36,9 @@
 - name: Assert yunion bin version
   assert:
     that:
-      - - '"{{item}}" is version(YUNION_BIN_GT, ">")'
+      - '"{{item}}" is version(YUNION_BIN_GT, ">")'
     fail_msg: "Yunion's version must be greater than {{ YUNION_BIN_GT }}, got {{ item }}."
   loop: "{{ yunion_bin_version_ret.stdout.split('\n') | list }}"
-  when:
-  - onecloud_version is version('v3.10', '>=')
 
 - name: Get Kubectl Bin version
   shell: |
