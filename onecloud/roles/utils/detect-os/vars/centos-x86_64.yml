@@ -65,6 +65,7 @@ common_packages:
     - pciutils
     - pixman
     - python3-pip
+    - python36
     - quota
     - quota-nls
     - rpcbind
@@ -94,3 +95,13 @@ latest_packages:
     - yunion-fetcherfs
     - yunion-ocadm
     - yunion-ovmfrpm
+
+dnf_modules:
+  - container-tools:rhel8
+  - mariadb:10.3
+  - perl:5.26
+  - perl-DBD-MySQL:4.046
+  - perl-DBI:1.641
+  - python36:3.6
+
+
