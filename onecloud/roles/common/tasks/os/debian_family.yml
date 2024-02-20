@@ -30,7 +30,7 @@
   tags:
   - package
 
-- name: install latest packages via loop
+- name: Install latest packages via loop for debian-based system
   package:
     name: "{{ package_item }}"
     state: latest
