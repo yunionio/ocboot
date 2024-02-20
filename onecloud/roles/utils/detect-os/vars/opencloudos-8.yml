@@ -57,6 +57,7 @@ common_packages:
     - openvswitch2.15
     - parallel
     - pciutils
+    - python36
     - quota
     - quota-nls
     - rpcbind
@@ -89,4 +90,6 @@ dnf_modules:
   - perl:5.26
   - perl-DBD-MySQL:4.046
   - perl-DBI:1.641
+  - python36:3.6
+
 
