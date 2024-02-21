@@ -10,6 +10,17 @@
   include_role:
     name: utils/k8s/kubelet/extra-args
 
+- name: Mkdir for offline upgrade
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ offline_data_path }}/repodata/"
+    - "{{ offline_data_path }}/rpms/"
+  when:
+  - offline_data_path is defined
+  - offline_data_path | length > 0
+
 - name: common upgrade | Import major version upgrade task
   include_tasks: "{{ major_upgrade_task_file }}"
   when:
