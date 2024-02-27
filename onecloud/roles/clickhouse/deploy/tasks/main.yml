@@ -36,7 +36,41 @@
     shell: |
       rm -f /tmp/clickhouse.spec.yaml
 
+  - name: Check Clickhouse Autoupdate DB
+    shell: |
+      ch_password="{{ ch_password }}"
+      /usr/bin/clickhouse-client -mn -h 127.0.0.1 --password "$ch_password" --query 'show databases;' |grep autoupdate || :
+    become: yes
+    args:
+      executable: /bin/bash
+    register: autoupdate_db_name
+
+  - name: ReInit Clickhouse Autoupdate DB
+    environment:
+      KUBECONFIG: /etc/kubernetes/admin.conf
+    shell: |
+      ch_password="{{ ch_password }}"
+      autoupdate_pswd=$(kubectl get cm -n onecloud default-autoupdate -o yaml | grep -P '\bclickhouse:' |head -1 |grep -oP 'username=autoupdate&password=[^=&]+' |awk -F= '{ print $NF}')
+      if [[ -z "$autoupdate_pswd" ]]; then
+        echo "error to get autoupdate DB pswd from clickhouse! "
+        exit 1
+      fi
+      /usr/bin/clickhouse-client -mn -h 127.0.0.1 --password "$ch_password" --query "
+        create database autoupdate;
+        create user autoupdate IDENTIFIED by '$autoupdate_pswd';
+        grant all on autoupdate.* to autoupdate;
+      "
+      /usr/bin/clickhouse-client -mn -h 127.0.0.1 --password "$ch_password" --query 'show databases;' |grep autoupdate
+      kubectl delete configmap -n onecloud default-autoupdate
+      kubectl rollout restart deployment -n onecloud default-autoupdate
+    become: yes
+    when:
+    - autoupdate_db_name.stdout | length == 0
+    args:
+      executable: /bin/bash
+
   when:
   - offline_data_path is defined
   - offline_data_path | length > 0
-  - is_centos_x86 | default(false) | bool == true
+  - (is_centos_x86 | default(false) | bool == true) or (is_openeuler_x86 | default(false) | bool == true)
+  - ch_password | default('') | length > 0
