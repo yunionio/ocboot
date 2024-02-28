@@ -1,0 +1,8 @@
+- name: Enable Volcano engine
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    source <(/opt/yunion/bin/ocadm cluster rcadmin)
+    /opt/yunion/bin/climc feature-config-volcengine --switch on
+  args:
+    executable: /bin/bash
