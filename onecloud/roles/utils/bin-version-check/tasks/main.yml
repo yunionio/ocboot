@@ -31,12 +31,14 @@
   args:
     executable: /bin/bash
 
-- debug: var=yunion_bin_version_ret.stdout
+- name: set facts
+  set_fact:
+    YUNION_BIN_GT: "v{{onecloud_version_abbr}}"
 
 - name: Assert yunion bin version
   assert:
     that:
-      - '"{{item}}" is version(YUNION_BIN_GT, ">")'
+      - 'item is version(YUNION_BIN_GT, ">=")'
     fail_msg: "Yunion's version must be greater than {{ YUNION_BIN_GT }}, got {{ item }}."
   loop: "{{ yunion_bin_version_ret.stdout.split('\n') | list }}"
 
@@ -68,7 +70,8 @@
 - name: Assert kubelet version
   assert:
     that:
-      - - '"{{item}}" is version(K8S_VERSION_GE, ">=")'
-      - - '"{{item}}" is version(K8S_VERSION_LT, "<")'
+      - 'item is version(K8S_VERSION_GE, ">=")'
+      - 'item is version(K8S_VERSION_LT, "<")'
     fail_msg: "k8s's version must be {{K8S_VERSION_GE}}~{{K8S_VERSION_LT}}, got {{item}}."
   loop: "{{ kubectl_version_ret.stdout.split('\n') | list }}"
+
