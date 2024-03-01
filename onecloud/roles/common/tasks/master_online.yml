@@ -17,15 +17,15 @@
   when:
   - is_kylin_based|default(false)|bool == true
 
-- name: Add cloud rpm repository for OpenEuler
-  get_url:
-    url: https://iso.yunion.cn/openeuler/{{ansible_distribution_major_version |lower}}/3.10/{{ansible_architecture}}/yunion.repo
-    dest: /etc/yum.repos.d/yunion-openeuler.repo
-    validate_certs: no
-  become: yes
-  when:
-  - is_openeuler_based|default(false)|bool == true
-
+# - name: Add cloud rpm repository for OpenEuler
+#   get_url:
+#     url: https://iso.yunion.cn/openeuler/{{ansible_distribution_major_version |lower}}/3.10/{{ansible_architecture}}/yunion.repo
+#     dest: /etc/yum.repos.d/yunion-openeuler.repo
+#     validate_certs: no
+#   become: yes
+#   when:
+#   - is_openeuler_based|default(false)|bool == true
+#
 - name: make cache
   shell: |
     yum clean all

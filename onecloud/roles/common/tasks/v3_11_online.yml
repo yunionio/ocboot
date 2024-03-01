@@ -6,7 +6,7 @@
     validate_certs: no
   become: yes
   when:
-  - is_centos_based is defined
+  - is_centos_x86 | default(false) | bool == true or is_centos_aarch64 | default(false) | bool == true
 
 - name: Add cloud rpm repository for Kylin
   get_url:
@@ -17,20 +17,24 @@
   when:
   - is_kylin_based|default(false)|bool == true
 
-- name: Add cloud rpm repository for OpenEuler
-  get_url:
-    url: https://iso.yunion.cn/openeuler/{{ansible_distribution_major_version |lower}}/3.11/{{ansible_architecture}}/yunion.repo
-    dest: /etc/yum.repos.d/yunion-openeuler.repo
-    validate_certs: no
-  become: yes
-  when:
-  - is_openeuler_based|default(false)|bool == true
-
+# - name: Add cloud rpm repository for OpenEuler
+#   get_url:
+#     url: https://iso.yunion.cn/openeuler/{{ansible_distribution_major_version |lower}}/3.11/{{ansible_architecture}}/yunion.repo
+#     dest: /etc/yum.repos.d/yunion-openeuler.repo
+#     validate_certs: no
+#   become: yes
+#   when:
+#   - is_openeuler_based|default(false)|bool == true
+#
 - name: make cache
   shell: |
-    yum clean all
-    yum -y --disablerepo='*' --enablerepo='yunion*' makecache
+    if [ -f /etc/yum.repos.d/yunion.repo ] || [ -f /etc/yum.repos.d/kylin-yunion.repo ]; then
+      yum clean all
+      yum makecache
+    fi
   become: yes
+  args:
+    executable: /bin/bash
   when:
   - is_centos_based is defined
 
