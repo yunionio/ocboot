@@ -33,7 +33,9 @@
 
 - name: set facts
   set_fact:
-    YUNION_BIN_GT: "v{{onecloud_version_abbr}}"
+    YUNION_BIN_GT: "{{ onecloud_version.split('.')[:2] | join('.')}}"
+  when:
+  - onecloud_version | default('') | length > 0
 
 - name: Assert yunion bin version
   assert:
@@ -41,6 +43,8 @@
       - 'item is version(YUNION_BIN_GT, ">=")'
     fail_msg: "Yunion's version must be greater than {{ YUNION_BIN_GT }}, got {{ item }}."
   loop: "{{ yunion_bin_version_ret.stdout.split('\n') | list }}"
+  when:
+  - YUNION_BIN_GT | default('') | length > 0
 
 - name: Get Kubectl Bin version
   shell: |
