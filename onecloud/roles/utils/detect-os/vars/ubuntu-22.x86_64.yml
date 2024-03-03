@@ -47,8 +47,8 @@ common_services:
 
 latest_packages:
     - ca-certificates
-    - yunion-climc
-    - yunion-climc-ee
+    - "yunion-climc={{ onecloud_version_abbr }}*"
+    - "yunion-climc-ee={{ onecloud_version_abbr }}*"
     - yunion-executor
     - yunion-fetcherfs
-    - yunion-ocadm
+    - "yunion-ocadm={{ onecloud_version_abbr }}*"

@@ -91,5 +91,5 @@ latest_packages:
     - yunion-climc-ee
     - yunion-executor
     - yunion-fetcherfs
-    - yunion-ocadm
+    - "yunion-ocadm-{{ onecloud_version_abbr }}[.-]*"
     - yunion-ovmfrpm

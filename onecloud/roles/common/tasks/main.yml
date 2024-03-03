@@ -13,8 +13,10 @@
   - files:
       - "{{ major_version_task_file }}"
       - "{{ ansible_distribution | lower}}_offline.yml"
+      - offline.yml
     skip: false
 
+# onecloud/roles/common/tasks/
 - name: Import OS Arch tasks
   include_tasks: "{{ item }}"
   with_first_found:
@@ -24,7 +26,7 @@
     - "{{ ansible_distribution | lower |replace(' ', '_')}}_{{ ansible_distribution_major_version |lower }}.yml"
     - "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
     paths:
-    - ../tasks
+    - os
 
 - name: Binary version check
   include_role:
@@ -251,4 +253,3 @@
 - name: Include cronjobs
   include_role:
     name: utils/cronjobs
-
