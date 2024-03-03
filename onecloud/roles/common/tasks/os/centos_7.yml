@@ -1,11 +1,37 @@
-- name: Add cloud rpm repository for {{ ansible_distribution }} {{ ansible_distribution_version }}
-  get_url:
-    url: https://iso.yunion.cn/centos/7/3.10/{{ansible_architecture}}/yunion.repo
-    dest: /etc/yum.repos.d/yunion.repo
-    validate_certs: no
-  become: yes
+- name: assert onecloud_version_abbr
+  fail:
+    msg: "onecloud_version_abbr is not defined."
   when:
-  - online_status == "online"
+  -  onecloud_version_abbr |default('') | length == 0
+# TODO define onecloud_version_abbr globally
+
+- name: Online repo
+  shell: |
+    cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
+    [yunion-repo-base]
+    name=Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/centos/7/{{onecloud_version_abbr}}/{{ansible_architecture}}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=1
+
+    [yunion-repo-updates]
+    name=Yunion Bin Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/rpm-updates/{{ansible_architecture}}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=2
+    EOF_MISC
+  become: yes
+  args:
+    executable: /bin/bash
+  when:
+  - online_status is defined
+  - online_status == 'online'
 
 - name: install misc obsolete packages
   package:

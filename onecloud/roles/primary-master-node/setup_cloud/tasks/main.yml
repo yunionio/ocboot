@@ -331,8 +331,4 @@
   args:
     executable: /bin/bash
 
-- name: Enable misc clouds
-  include_role:
-    name: utils/enable-misc-clouds
-  when:
-  - product_version | default('') in ['FullStack', 'CMP']
+

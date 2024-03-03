@@ -30,6 +30,7 @@
   become: yes
   tags:
   - package
+  - common_packages
 
 - name: Install Latest Packages Via Loop {{ onecloud_version_abbr }}
   package:
