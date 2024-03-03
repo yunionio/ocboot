@@ -1,12 +1,36 @@
 ---
-- name: Add cloud rpm repository
-  get_url:
-    url: https://iso.yunion.cn/centos/7/master/{{ansible_architecture}}/yunion.repo
-    dest: /etc/yum.repos.d/yunion.repo
-    validate_certs: no
-  become: yes
+- name: assert onecloud_version_abbr
+  fail:
+    msg: "onecloud_version_abbr is not defined."
   when:
-  - is_centos_based is defined
+  -  onecloud_version_abbr |default('') | length == 0
+
+- name: Online repo
+  shell: |
+    cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
+    [yunion-repo-base]
+    name=Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/centos/7/{{onecloud_version_abbr}}/{{ansible_architecture}}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=1
+
+    [yunion-repo-updates]
+    name=Yunion Bin Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/rpm-updates/{{ansible_architecture}}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=2
+    EOF_MISC
+  become: yes
+  args:
+    executable: /bin/bash
+  when:
+  - online_status | default('') == 'online'
 
 - name: Add cloud rpm repository for Kylin
   get_url:
