@@ -19,10 +19,6 @@
   - k8s_version_tag is defined
   - k8s_version_tag.rc == 0
 
-- name: set var
-  set_fact:
-    onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
-
 - name: Import task utils/config_iptables.yml
   include_tasks: utils/config_iptables.yml
 

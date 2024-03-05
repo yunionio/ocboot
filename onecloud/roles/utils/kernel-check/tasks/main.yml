@@ -43,12 +43,6 @@
   - nbd_ok|default(false)|bool == false
   - is_yunion_kernel_installed.rc != 0
 
-# unified cgroup hierarchy
-- name: Unified Cgroup Hierarchy
-  include_tasks: "unified_cgroup_hierarchy.yml"
-  when:
-    - is_debian_11_or_later|default(false)|bool == true or ansible_distribution == 'Ubuntu'
-
 # setup hugetlb
 - name: ensure hugetlb init dir exists
   file:
