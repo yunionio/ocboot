@@ -92,3 +92,4 @@
     name: utils/disable-telegraf-service
   when:
   - join_as_host | default(false)|bool == true
+
