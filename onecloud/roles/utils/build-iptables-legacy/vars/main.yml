@@ -1,0 +1,5 @@
+
+iptables_local_path: /tmp/iptables-1.8.9.tar.xz
+iptables_md5sum: ffa00f68d63e723c21b8a091c5c0271b
+iptables_download_url: https://yunioniso.oss-cn-beijing.aliyuncs.com/download/iptables-1.8.9.tar.xz
+

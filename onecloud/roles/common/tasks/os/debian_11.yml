@@ -1,0 +1,8 @@
+---
+
+- name: update common packages for debian 11
+  set_fact:
+    common_packages: "{{ ['libcapstone4'] + common_packages }}"
+
+- name: Include Debian Family Common Tasks
+  include_tasks: debian_10.yml

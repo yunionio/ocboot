@@ -1,7 +1,6 @@
 ---
 is_redhat_based: true
 is_centos_based: true
-is_centos_x86: true
 
 common_packages:
     - autogen-libopts
@@ -13,10 +12,8 @@ common_packages:
     - bridge-utils
     - celt051
     - ceph-common
+    - chrony
     - conntrack-tools
-    - container-selinux
-    - containerd.io
-    - cri-tools
     - curl
     - docker-ce
     - fuse
@@ -38,7 +35,6 @@ common_packages:
     - libbasicobjects
     - libcollection
     - libini_config
-    - libjpeg-turbo
     - libnfsidmap
     - libogg
     - libpath_utils
@@ -48,7 +44,6 @@ common_packages:
     - libref_array
     - libselinux-python3
     - libtirpc
-    - libusb
     - libusbx
     - libverto-libevent
     - lm_sensors-libs
@@ -57,34 +52,26 @@ common_packages:
     - net-tools
     - nfs-utils
     - nmap-ncat
-    - ntp
-    - ntpdate
     - oniguruma
-    - openvswitch
+    - openvswitch2.15
     - parallel
     - pciutils
-    - pixman
-    - python3-pip
     - python36
     - quota
     - quota-nls
     - rpcbind
     - rsync
     - socat
-    - spice
-    - spice-protocol
     - sysstat
     - tcp_wrappers
     - tcpdump
     - unbound
-    - unbound-libs
-    - usbredir
     - usbutils
     - wget
-    - "{{ yunion_qemu_package }}"
+    - yunion-qemu-4.2.0
 
 common_services:
-    - ntpd
+    # - chronyd
     - yunion-executor
 
 latest_packages:
@@ -98,10 +85,7 @@ latest_packages:
 
 dnf_modules:
   - container-tools:rhel8
-  - mariadb:10.3
   - perl:5.26
-  - perl-DBD-MySQL:4.046
-  - perl-DBI:1.641
+  - perl-IO-Socket-SSL:2.066
+  - perl-libwww-perl:6.34
   - python36:3.6
-
-
