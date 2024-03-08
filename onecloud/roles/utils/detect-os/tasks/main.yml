@@ -1,5 +1,11 @@
 ---
 # This role contains common plays that will run on all nodes
+- name: set var
+  set_fact:
+    onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
+  when:
+  - onecloud_version is defined
+
 - name: gather os specific variables
   include_vars: "{{ item }}"
   with_first_found:
@@ -21,11 +27,10 @@
   tags:
     - facts
 
-- name: set var
-  set_fact:
-    onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
+- name: gather var for latest packages
+  include_vars: "../vars/latest_packages.yml"
   when:
-  - onecloud_version is defined
+  - latest_packages is not defined
 
 - name: Lookup offline data path
   ansible.builtin.set_fact:

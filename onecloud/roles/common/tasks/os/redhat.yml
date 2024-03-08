@@ -30,6 +30,7 @@
   become: yes
   tags:
   - package
+  when: false # TODO remove this comment
 
 - name: Install Latest Packages Via Loop {{ onecloud_version_abbr }}
   package:
@@ -49,7 +50,7 @@
   - latest_packages is defined
   loop_control:
     index_var: item_index
-    label: "[{{ item_index + 1 }}/{{ latest_packages | length }}] {{ package_item | regex_replace('\\[.*', '') }}"
+    label: "[{{ item_index + 1 }}/{{ latest_packages | length }}] {{ package_item | regex_replace('\\[.*|[*]', '') }}"
     loop_var: package_item
   tags:
   - package

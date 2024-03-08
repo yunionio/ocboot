@@ -74,15 +74,6 @@ common_services:
     - chronyd
     - yunion-executor
 
-latest_packages:
-    - ca-certificates
-    - "yunion-climc-{{ onecloud_version_abbr }}[.-]*"
-    - "yunion-climc-ee-{{ onecloud_version_abbr }}[.-]*"
-    - yunion-executor
-    - yunion-fetcherfs
-    - "yunion-ocadm-{{ onecloud_version_abbr }}[.-]*"
-    - yunion-ovmfrpm
-
 dnf_modules:
     - container-tools:rhel8
     - mariadb:10.3

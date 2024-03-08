@@ -455,7 +455,7 @@ def ensure_python3_yaml(os):
     if regex_search(r'python3.*pyyaml', output, ignore_case=True):
         print("PyYAML already installed")
         return
-
+    return
     output = subprocess.check_output(f"{installer} search yaml", shell=True).decode('utf-8')
 
     pkg = regex_search(r'python3\d?-(py)?yaml|PyYAML', output, ignore_case=True)
