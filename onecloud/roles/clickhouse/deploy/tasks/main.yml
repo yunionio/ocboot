@@ -10,7 +10,7 @@
       KUBECONFIG: /etc/kubernetes/admin.conf
     shell: |
       kubectl patch onecloudclusters -n onecloud default --patch "$(cat /tmp/clickhouse.spec.yaml)" --type merge
-      for i in cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
+      for i in autoupdate cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
       do
         kubectl delete configmap -n onecloud default-$i
         kubectl rollout restart deployment -n onecloud default-$i
@@ -19,7 +19,7 @@
       sleep 30
 
       # check all services that use clickhouse
-      for i in cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
+      for i in autoupdate cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
       do
         kubectl -n onecloud get configmap default-$i -o yaml | grep -qP '^\s+clickhouse: tcp'
       done
