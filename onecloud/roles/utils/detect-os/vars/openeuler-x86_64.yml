@@ -67,15 +67,4 @@ common_packages:
   - "{{ yunion_qemu_package }}"
 
 common_services:
-  #  - ntpd not for openeuler
   - yunion-executor
-
-latest_packages:
-  - ca-certificates
-  - "yunion-climc-{{ onecloud_version_abbr }}[.-]*"
-  - "yunion-climc-ee-{{ onecloud_version_abbr }}[.-]*"
-  - yunion-executor
-  - yunion-fetcherfs
-  - "yunion-ocadm-{{ onecloud_version_abbr }}[.-]*"
-  - yunion-ovmfrpm
-
