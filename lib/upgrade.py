@@ -86,6 +86,12 @@ def add_command(subparsers):
                         action="store_true",
                         default=False,
                         help="re-init gpu druing upgrading. default: false.")
+
+    parser.add_argument("--controller", "-c",
+                        dest="controller_only",
+                        action="store_true",
+                        default=False,
+                        help="upgrad controllers only. default: false.")
     parser.set_defaults(func=do_upgrade)
 
 
@@ -129,9 +135,15 @@ def do_upgrade(args):
     if not args.gpu_init:
         vars['upgrade_without_gpu'] = True
 
+    yml_file = './onecloud/upgrade-cluster.yml'
+
+    if args.controller_only:
+        vars['controller_only'] = True
+        yml_file = './onecloud/upgrade-controller.yml'
+
     return_code = run_ansible_playbook(
         inventory_f,
-        './onecloud/upgrade-cluster.yml',
+        yml_file,
         vars=vars,
     )
 
