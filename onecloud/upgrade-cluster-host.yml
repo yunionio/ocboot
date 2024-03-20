@@ -1,0 +1,10 @@
+- hosts: all
+  roles:
+    - { role: utils/detect-os }
+    - { role: upgrade/common }
+  vars:
+    force_upgrade: true
+
+- hosts: worker_nodes
+  roles:
+    - { role: upgrade/controllable/worker_nodes }

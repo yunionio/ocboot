@@ -19,14 +19,21 @@
   - primary_node_ip != ansible_default_ipv4.address
 
 - name: "Add cloud rpm repository {{ yunion_yum_repo }}"
-  get_url:
-    url: "{{ yunion_yum_repo }}"
+  copy:
+    content: |
+      [yunion-repo-offline]
+      name=Packages for Yunion Multi-Cloud Platform -
+      baseurl=https://iso.yunion.cn/$contentdir/$releasever/3.10/$basearch
+      sslverify=0
+      failovermethod=priority
+      enabled=1
+      gpgcheck=0
     dest: /etc/yum.repos.d/yunion.repo
-    force: yes
-    validate_certs: no
   become: yes
+  retries: 3
+  delay: 30
   when:
-  - is_centos_x86 is defined
+  - is_centos | default(false) | bool == true
   - offline_data_path is not defined or offline_data_path | length == 0
 
 - name: "update repo"
@@ -35,19 +42,6 @@
     yum --disablerepo='*' --enablerepo='yunion*' makecache fast
   when:
   - is_centos_based is defined
-
-- name: "uninstall old rpms"
-  shell: |
-    # TODO 3.6 => 3\.[678]
-    rpms=$(rpm -qa |grep yunion|grep -v fetcherfs |grep 3.9| xargs)
-    if [ -n "$rpms" ]; then
-      yum remove -y $rpms
-    fi
-  become: yes
-  when:
-  - is_centos_based is defined
-  args:
-    executable: /bin/bash
 
 - name: Upgrade common packages
   yum:
