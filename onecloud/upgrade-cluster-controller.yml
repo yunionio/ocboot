@@ -1,0 +1,9 @@
+- hosts: all
+  roles:
+    - { role: utils/detect-os }
+    # - { role: upgrade/common } # REX rm comment
+
+- hosts: primary_master_node:master_nodes
+  roles:
+    - { role: upgrade/controllable/primary_master_node }
+

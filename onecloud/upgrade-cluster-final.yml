@@ -1,0 +1,20 @@
+- hosts: all
+  roles:
+    - { role: utils/detect-os }
+
+- hosts: primary_master_node
+  roles:
+    - { role: upgrade/primary_master_node }
+    - { role: utils/k8s/addons }
+
+- hosts: master_nodes
+  roles:
+    - { role: upgrade/master_nodes }
+
+- hosts: worker_nodes
+  roles:
+    - { role: upgrade/worker_nodes }
+
+- hosts: primary_master_node:master_nodes:worker_nodes
+  roles:
+    - { role: utils/gpu-init }
