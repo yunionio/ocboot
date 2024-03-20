@@ -13,7 +13,7 @@
   become: true
 
 - name: execute load module scripts
-  shell: /usr/bin/yunion-ipvs-modules.sh
+  shell: bash /usr/bin/yunion-ipvs-modules.sh
   become: true
   ignore_errors: yes
 

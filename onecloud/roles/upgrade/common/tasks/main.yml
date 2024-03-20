@@ -22,9 +22,14 @@
   - offline_data_path | length > 0
 
 - name: common upgrade | Import major version upgrade task
-  include_tasks: "{{ major_upgrade_task_file }}"
+  include_tasks: "{{ item }}"
+  with_first_found:
+  - files:
+    - "{{ major_upgrade_task_file }}"
+    - "{{lookup('ansible.builtin.fileglob', '*' + upgrade_onecloud_major_version + '.yml')}}"
+    skip: true
   when:
-    - is_major_upgrade
+    - is_major_upgrade or force_upgrade | default(false) | bool == true
 
 - name: checking ports
   include_role:

@@ -3,6 +3,15 @@
   include_role:
     name: utils/controlplane
 
+- name: Get Current Version
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}'
+  args:
+    executable: /bin/bash
+  register: current_oc_version
+
 - name: Upgrade ocadm packages
   yum:
     name:
@@ -86,6 +95,11 @@
   when:
   - offline_data_path |default("") | length > 0
 
+- name: controllable upgrade
+  include_tasks: controllerble.yml
+  when:
+  - controllable_upgrade | default(false) | bool == true
+
 # use async task to upgrade, ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_async.html
 - name: primary master node | Use ocadm upgrade version "{{ current_onecloud_version }}" to "{{ upgrade_onecloud_version }}"
   environment:
@@ -137,3 +151,16 @@
   become: yes
   args:
     executable: /bin/bash
+
+- name: copy for autoupdate hack
+  copy:
+    src: patch-for-autoupdate.sh
+    dest: /tmp/patch-for-autoupdate.sh
+    mode: 0755
+
+- name: apply hack
+  shell: bash /tmp/patch-for-autoupdate.sh
+  become: yes
+  args:
+    executable: /bin/bash
+
