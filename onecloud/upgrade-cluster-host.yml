@@ -1,0 +1,8 @@
+- hosts: all
+  roles:
+    - { role: utils/detect-os }
+    - { role: upgrade/common }
+
+- hosts: worker_nodes
+  roles:
+    - { role: upgrade/controllable/worker_nodes }

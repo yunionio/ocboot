@@ -15,15 +15,15 @@ class Color:
 
 
 def red(s):
-    return Color.RED + s + Color.END
+    return Color.RED + str(s) + Color.END
 
 
 def green(s):
-    return Color.GREEN + s + Color.END
+    return Color.GREEN + str(s) + Color.END
 
 
 def bold(s):
-    return Color.BOLD + s + Color.END
+    return Color.BOLD + str(s) + Color.END
 
 
 def RB(s):

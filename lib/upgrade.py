@@ -1,7 +1,6 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
-import argparse
 import os
 
 from .ansible import AnsibleBastionHost
@@ -11,21 +10,37 @@ from .cluster import construct_cluster
 from . import consts
 from getpass import getuser
 from lib import utils
+from lib import color
 
-UPGRADE_MSG = """
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│      The system has been upgraded to the latest version.                      │
-│                                                                               │
-└───────────────────────────────────────────────────────────────────────────────┘
+UPGRADE_MODES_UPGRADE = 'upgrade'
+UPGRADE_MODES_UPGRADE_CONTROLLER = 'upgrade-controller'
+UPGRADE_MODES_UPGRADE_HOST = 'upgrade-host'
+UPGRADE_MODES_UPGRADE_FINAL = 'upgrade-final'
 
-"""
+UPGRADE_MODES_HELP_MSGS = {
+    UPGRADE_MODES_UPGRADE: 'upgrade onecloud cluster to specified version',
+    UPGRADE_MODES_UPGRADE_CONTROLLER: 'upgrade onecloud controller to specified version',
+    UPGRADE_MODES_UPGRADE_HOST: 'upgrade onecloud host(s) to specified version',
+    UPGRADE_MODES_UPGRADE_FINAL: 'upgrade onecloud cluster to specified version',
+}
 
+UPGRADE_MODES_ROLE_FILE = {
+    UPGRADE_MODES_UPGRADE: './onecloud/upgrade-cluster.yml',
+    UPGRADE_MODES_UPGRADE_CONTROLLER: './onecloud/upgrade-cluster-controller.yml',
+    UPGRADE_MODES_UPGRADE_HOST: './onecloud/upgrade-cluster-host.yml',
+    UPGRADE_MODES_UPGRADE_FINAL: './onecloud/upgrade-cluster-final.yml',
+}
 
+UPGRADE_MODES_FINISH_MSG = {
+    UPGRADE_MODES_UPGRADE: "The system has been upgraded to the latest version.",
+    UPGRADE_MODES_UPGRADE_CONTROLLER: "The Controller has been upgraded to the latest version.",
+    UPGRADE_MODES_UPGRADE_HOST: "Worker nodes have been upgraded to the latest version.",
+    UPGRADE_MODES_UPGRADE_FINAL: "The final step of the upgraded is now finished.",
+}
 
-def add_command(subparsers):
+def add_command(subparsers, command="upgrade"):
     parser = subparsers.add_parser(
-        "upgrade", help="upgrade onecloud cluster to specified version")
+        command, help=UPGRADE_MODES_HELP_MSGS.get(command, ''))
     #parser.add_argument('config', help="config file")
     # requirement options
     parser.add_argument("primary_master_host",
@@ -80,6 +95,21 @@ def add_command(subparsers):
                         dest="primary_node_ip",
                         default="",
                         help="offline rpm repo path for upgrade mode")
+
+    parser.add_argument("--gpu-init", "-G",
+                        dest="gpu_init",
+                        action="store_true",
+                        default=False,
+                        help="re-init gpu druing upgrading. default: false.")
+
+    if command == UPGRADE_MODES_UPGRADE_HOST:
+        parser.add_argument("--hosts", "-H",
+                        dest='target_node_hosts',
+                        nargs='+',
+                        default=[],
+                        metavar="TARGET_NODE_HOSTS",
+                        help="target nodes ip added into cluster")
+
     parser.set_defaults(func=do_upgrade)
 
 
@@ -89,6 +119,13 @@ def do_upgrade(args):
         args.ssh_user,
         args.ssh_private_file,
         args.ssh_port)
+    playbook_file = UPGRADE_MODES_ROLE_FILE.get(args.subcmd, '')
+    playbook_file = os.path.normpath(os.path.join(os.getcwd(), playbook_file))
+
+    if os.path.getsize(playbook_file) == 0:
+        print(color.red(f"Yaml file {playbook_file} is empty!"))
+        exit(1)
+
     cur_ver = cluster.get_current_version()
 
     config = UpgradeConfig(cur_ver, args.version)
@@ -96,6 +133,11 @@ def do_upgrade(args):
     bastion_host = None
     if args.primary_as_bastion:
         bastion_host = AnsibleBastionHost(args.primary_master_host)
+
+    if args.subcmd == UPGRADE_MODES_UPGRADE_CONTROLLER:
+        cluster.worker_nodes = []
+    elif args.subcmd == UPGRADE_MODES_UPGRADE_HOST:
+        cluster.worker_nodes = [i for i in cluster.worker_nodes if i.get_ip() in args.target_node_hosts]
 
     inventory_content = cluster.generate_playbook_inventory(bastion_host, args.ssh_port, args.ssh_node_port)
     inventory_f = '/tmp/test-hosts.ini'
@@ -107,7 +149,7 @@ def do_upgrade(args):
         if args.image_repository == consts.REGISTRY_ALI_YUNION:
             if utils.is_below_v3_9(args.version):
                 args.image_repository = consts.REGISTRY_ALI_YUNIONIO
-        vars['image_repository'] = args.image_repository
+        vars['image_repository'] = args.image_repository.rstrip('/')
 
     # start run upgrade playbook
     if args.offline_data_path:
@@ -120,14 +162,14 @@ def do_upgrade(args):
 
     return_code = run_ansible_playbook(
         inventory_f,
-        './onecloud/upgrade-cluster.yml',
+        playbook_file,
         vars=vars,
     )
 
     if return_code is not None and return_code != 0:
         return return_code
     cluster.set_current_version(args.version)
-    print(UPGRADE_MSG.encode('utf-8'))
+    utils.pr_green('\n' + UPGRADE_MODES_FINISH_MSG.get(args.subcmd) + '\n')
 
 
 class UpgradeConfig(object):

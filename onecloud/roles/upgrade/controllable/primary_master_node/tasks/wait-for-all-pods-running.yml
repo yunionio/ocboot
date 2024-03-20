@@ -1,0 +1,18 @@
+- name: copy shell script
+  copy:
+    src: wait-for-pods-running.sh
+    dest: /tmp/wait-for-pods-running.sh
+    mode: '0755'
+  become: true
+
+- name: Please wait until all pods are in a "Running" state. This process may take several minutes.
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: bash /tmp/wait-for-pods-running.sh
+  register: wait_for_running_ret
+
+- name: Assert wait value
+  fail:
+    msg: "Not all pods are running. Please re-run the upgrade procedure. "
+  when:
+  - wait_for_running_ret.rc != 0

@@ -1,0 +1,36 @@
+- name: Include vars
+  include_vars: ../vars/default.yml
+
+- name: Get Kubectl Bin version
+  shell: |
+    get_kubelet_version() {
+      local version_string="$1"
+      local version_regex="v[0-9]+\.[0-9]+(\.[0-9]+)?"
+
+      if [[ $version_string =~ $version_regex ]]; then
+        echo "${BASH_REMATCH[0]}"
+      else
+        echo "Invalid version string: $version_string"
+        return 1
+      fi
+    }
+    kubelet --version|awk '{print $2}'
+    version_output=$(kubectl version --client |grep 'Client Version')
+    get_kubelet_version "$version_output"
+    version_output=$(kubeadm version)
+    get_kubelet_version "$version_output"
+  register: kubectl_version_ret
+  become: yes
+  args:
+    executable: /bin/bash
+
+- debug: var=kubectl_version_ret.stdout
+
+- name: Assert kubelet version
+  assert:
+    that:
+      - 'item is version(K8S_VERSION_GE, ">=")'
+      - 'item is version(K8S_VERSION_LT, "<")'
+    fail_msg: "k8s's version must be {{K8S_VERSION_GE}}~{{K8S_VERSION_LT}}, got {{item}}."
+  loop: "{{ kubectl_version_ret.stdout.split('\n') | list }}"
+
