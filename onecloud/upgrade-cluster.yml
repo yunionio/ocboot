@@ -1,21 +1,30 @@
 - hosts: all
   roles:
     - { role: utils/detect-os }
-    - { role: upgrade/common }
+    # - { role: upgrade/common }
+
 
 - hosts: primary_master_node
   roles:
-    - { role: upgrade/primary_master_node }
-    - { role: utils/k8s/addons }
-
-- hosts: master_nodes
-  roles:
-    - { role: upgrade/master_nodes }
+    - { role: upgrade/controllable/primary_master_node }
 
 - hosts: worker_nodes
   roles:
-    - { role: upgrade/worker_nodes }
+    - { role: upgrade/controllable/worker_nodes }
 
-- hosts: primary_master_node:master_nodes:worker_nodes
-  roles:
-    - { role: utils/gpu-init }
+# - hosts: primary_master_node
+#   roles:
+#     - { role: upgrade/primary_master_node }
+#     - { role: utils/k8s/addons }
+
+# - hosts: master_nodes
+#   roles:
+#     - { role: upgrade/master_nodes }
+
+# - hosts: worker_nodes
+#   roles:
+#     - { role: upgrade/worker_nodes }
+
+# - hosts: primary_master_node:master_nodes:worker_nodes
+#   roles:
+#     - { role: utils/gpu-init }

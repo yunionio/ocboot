@@ -1,0 +1,7 @@
+- name: hello worker
+  debug:
+    msg: "hello worker {{ inventory_hostname }}"
+
+- name: sleep 42
+  shell: sleep 42
+  throttle: 1

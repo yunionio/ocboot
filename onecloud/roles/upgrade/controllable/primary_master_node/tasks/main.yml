@@ -1,0 +1,4 @@
+- name: controllable upgrade
+  include_tasks: primary.yml
+  when:
+  - controllable_upgrade | default(false) | bool == true

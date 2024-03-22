@@ -13,14 +13,12 @@ from getpass import getuser
 from lib import utils
 
 UPGRADE_MSG = """
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│      The system has been upgraded to the latest version.                      │
-│                                                                               │
-└───────────────────────────────────────────────────────────────────────────────┘
+
+
+The system has been upgraded to the latest version.
+
 
 """
-
 
 
 def add_command(subparsers):
@@ -146,7 +144,7 @@ def do_upgrade(args):
     if return_code is not None and return_code != 0:
         return return_code
     cluster.set_current_version(args.version)
-    print(UPGRADE_MSG.encode('utf-8'))
+    print(UPGRADE_MSG)
 
 
 class UpgradeConfig(object):
