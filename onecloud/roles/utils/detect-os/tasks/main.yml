@@ -87,8 +87,6 @@
   set_fact:
     is_running_on_vm: false
 
-- debug: var=controller_only
-
 - name: detect if running on VM
   set_fact:
     is_running_on_vm: true
