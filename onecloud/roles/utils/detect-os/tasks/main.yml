@@ -7,7 +7,7 @@
     shell: |
       kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}'
     register: k8s_oc_ver
-    delegate_to: "{{ k8s_controlplane_host }}"
+    #    delegate_to: "{{ k8s_controlplane_host }}"
 
   - name: Set K8s Version
     set_fact:
@@ -15,6 +15,7 @@
     when:
     - k8s_oc_ver.rc == 0
   when:
+    #  - k8s_controlplane_host | default('') | length > 0
   - onecloud_version is not defined
 
 - name: Assert Onecloud Version

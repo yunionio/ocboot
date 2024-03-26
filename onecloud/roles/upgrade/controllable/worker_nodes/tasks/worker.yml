@@ -1,7 +1,69 @@
-- name: hello worker
-  debug:
-    msg: "hello worker {{ inventory_hostname }}"
+- name: Set Facts For Worker
+  set_fact:
+    k8s_controlplane_host: "{{ hostvars[inventory_hostname]['groups']['primary_master_node'][0] }}"
+    worker_node_hostname: "{{ inventory_hostname }}"
 
-- name: sleep 42
-  shell: sleep 42
-  throttle: 1
+- name: Get Upgrade Command For Worker
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    OCVER="$(kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}')"
+    NEW_VER="{{upgrade_onecloud_version}}"
+    if [[ -z "$OCVER" ]] ; then
+      echo "get current oc version failed. "
+      exit 1
+    fi
+    if [[ -z "$NEW_VER" ]] ; then
+      echo "get new oc version failed. "
+      exit 1
+    fi
+    kubectl get pods --field-selector=spec.nodeName="{{worker_node_hostname}}" --all-namespaces --no-headers -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name | while read line; do
+      namespace="$(echo "$line" | awk '{print $1}')"
+      pod="$(echo "$line" | awk '{print $2}')"
+      kubectl get pod -n "$namespace" "$pod" -o=jsonpath='{range .spec.containers[*]}{.name}={.image}{"\n"}{end}' | while read subline; do
+        cmd="kubectl set image -n $namespace pod/$pod $subline"
+        if ! echo "$cmd" | grep -q ":$OCVER\b"; then
+            continue
+        fi
+        new_cmd="$(echo $cmd | sed -e "s#:$OCVER\$#:$NEW_VER#")"
+        echo "[$worker_node_hostname] $cmd => $new_cmd"
+        # $new_cmd
+      done
+    done
+  args:
+    executable: /bin/bash
+  register: xxx
+  delegate_to: "{{ k8s_controlplane_host }}"
+
+- debug: var=xxx
+
+- shell: exit 1
+
+- name: get ds
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl get pods --field-selector=spec.nodeName="$node" --all-namespaces --no-headers -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name | while read line;
+    do
+      namespace="$(echo "$line" | awk '{print $1}')"
+      pod="$(echo "$line" | awk '{print $2}')"
+      kubectl get pod -n "$namespace" "$pod" -o=jsonpath='{range .spec.containers[*]}{.name}={.image}{"\n"}{end}' | while read pig; do
+          cmd="kubectl set image -n $namespace pod/$pod $pig"
+          if ! echo "$cmd" | grep -q ":$OCVER$"; then
+              continue
+          fi
+          new_cmd="$(echo $cmd | sed -e "s#:$OCVER\$#:$NEW_VER#")"
+          echo "[$node] $cmd => $new_cmd"
+          # $new_cmd
+    done
+  register: ds_ret
+  delegate_to: "{{ k8s_controlplane_host }}"
+
+- debug: var=ds_ret
+
+- shell: exit 1
+
+# - name: sleep 17
+#   shell: sleep 17
+  # TODO remove comment
+  #   throttle: 1

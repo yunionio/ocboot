@@ -19,7 +19,7 @@
         echo -e "${names[$idx]}=${images[$idx]} \c"
       done
       echo
-    done | sort -u | sed -e '/^$/d' -e 's#^  *##' -e 's#  *$##'
+    done | sort -u | sed -e '/^$/d' -e 's#^  *##' -e 's#  *$##' -e "s#:$OCVER#:{{upgrade_onecloud_version}}#g"
     kubectl get $typ -n $namespace -o jsonpath='{range .items[*]}{@.metadata.name}{"@"}{@.spec.template.spec.initContainers[*].name}{"%"}{@.spec.template.spec.initContainers[*].image}{"\n"}{end}'} | while read line; do
       if ! echo "$line" | grep -q '@%$'; then
         dep=$(echo $line | awk -F@ '{print $1}')
@@ -31,22 +31,56 @@
         echo -e "init=$img \c"
       fi
       echo
-    done | sed -e 's# kubectl#\nkubectl#g' |sort -u | sed -e '/^$/d' -e 's#^  *##' -e 's#  *$##'
+    done | sed -e 's# kubectl#\nkubectl#g' |sort -u | sed -e '/^$/d' -e 's#^  *##' -e 's#  *$##' -e "s#:$OCVER#:{{upgrade_onecloud_version}}#g"
   args:
     executable: /bin/bash
   register: oc_deployment_images
+
+- debug: var=oc_deployment_images
 
 - name: Parse image names from lines
   set_fact:
     image_names: "{{ image_names|default([]) + [item.split('=')[-1]] }}"
   loop: "{{ oc_deployment_images.stdout_lines }}"
+  when:
+  - oc_deployment_images.stdout_lines | length > 0
 
-- name: Pull Docker images
-  command: "docker pull {{ image_item }}"
-  loop: "{{ image_names }}"
-  loop_control:
-    index_var: item_index
-    label: "[{{ '%02d'|format(item_index + 1) }}/{{ image_names|length }}] {{ image_item }}"
-    loop_var: image_item
+- debug: var=image_names
 
-- shell: exit 1
+# - name: Pull Docker images
+#   shell: |
+#     docker pull {{ image_item }}
+#   loop: "{{ image_names }}"
+#   loop_control:
+#     index_var: item_index
+#     label: "[{{ '%02d'|format(item_index + 1) }}/{{ image_names|length }}] {{ image_item }}"
+#     loop_var: image_item
+#   when:
+#   - image_names | default([]) | length > 0
+
+# - name: Apply new images for Deployments
+#   environment:
+#     KUBECONFIG: /etc/kubernetes/admin.conf
+#   shell: |
+#     {{item}}
+#   with_items:
+#   - "{{ oc_deployment_images.stdout_lines |list }}"
+#   args:
+#     executable: /bin/bash
+#   register: apply_deployment_images
+#   when:
+#   - oc_deployment_images.stdout_lines | length > 0
+
+# - debug: var=apply_deployment_images.stdout_lines
+
+# - name: Wait until all pods running
+#   include_tasks: "wait-for-all-pods-running.yml"
+
+- name: set var
+  set_fact:
+    k8s_controlplane_host: "{{ inventory_hostname }}"
+  when:
+  - k8s_controlplane_host | default('') | length == 0
+
+- debug: var=k8s_controlplane_host
+
