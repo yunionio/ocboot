@@ -1,5 +1,28 @@
 ---
 # This role contains common plays that will run on all nodes
+- block:
+  - name: Set Onecloud Version If Not Defined
+    environment:
+      KUBECONFIG: /etc/kubernetes/admin.conf
+    shell: |
+      kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}'
+    register: k8s_oc_ver
+    delegate_to: "{{ k8s_controlplane_host }}"
+
+  - name: Set K8s Version
+    set_fact:
+      onecloud_version: "{{ k8s_oc_ver.stdout }}"
+    when:
+    - k8s_oc_ver.rc == 0
+  when:
+  - onecloud_version is not defined
+
+- name: Assert Onecloud Version
+  fail:
+    msg: "onecloud_version is not defined. "
+  when:
+  - onecloud_version | default('') | length == 0
+
 - name: set var
   set_fact:
     onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
