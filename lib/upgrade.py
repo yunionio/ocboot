@@ -117,7 +117,7 @@ def do_upgrade(args):
         if args.image_repository == consts.REGISTRY_ALI_YUNION:
             if utils.is_below_v3_9(args.version):
                 args.image_repository = consts.REGISTRY_ALI_YUNIONIO
-        vars['image_repository'] = args.image_repository
+        vars['image_repository'] = args.image_repository.rstrip('/')
 
     if args.offline_data_path:
         vars['offline_data_path'] = args.offline_data_path
@@ -144,7 +144,7 @@ def do_upgrade(args):
     if return_code is not None and return_code != 0:
         return return_code
     cluster.set_current_version(args.version)
-    print(UPGRADE_MSG)
+    utils.pr_green(UPGRADE_MSG)
 
 
 class UpgradeConfig(object):

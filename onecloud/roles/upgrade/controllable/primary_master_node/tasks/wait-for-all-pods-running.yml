@@ -9,7 +9,7 @@
       while [[ "$idx" -lt 120 ]]; do
         idx=$((idx+1))
         sleep 15
-        running="$(kubectl get pods -A --no-headers | grep -cviP 'Running|telegraf|meter|etcd|extdb')"
+        running="$(kubectl get pods -A --no-headers | grep -cviP 'Running|telegraf|meter|etcd|extdb|-host-')"
         if [[ "$running" -eq 0 ]]; then
             exit 0
         else
@@ -23,8 +23,6 @@
   args:
     executable: /bin/bash
   register: wait_for_running_ret
-
-- debug: var=wait_for_running_ret
 
 - name: Assert wait value
   fail:

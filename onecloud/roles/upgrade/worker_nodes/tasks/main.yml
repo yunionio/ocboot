@@ -1,9 +1,2 @@
 ---
 # do nothing now
-- name: Hello from host
-  debug:
-    msg: "hello worker! "
-
-- name: sleep 42
-  shell: sleep 42
-  # throttle: 1
