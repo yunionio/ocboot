@@ -9,7 +9,7 @@
       while [[ "$idx" -lt 120 ]]; do
         idx=$((idx+1))
         sleep 15
-        running="$(kubectl get pods -A --no-headers | grep -cviP 'Running|telegraf|meter|etcd|extdb|-host-')"
+        running="$(kubectl get pods -A --no-headers | grep -cviP 'Running|telegraf|meter|etcd|extdb|-host-|autoupdate|webconsole')"
         if [[ "$running" -eq 0 ]]; then
             exit 0
         else

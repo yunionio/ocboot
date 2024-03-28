@@ -22,7 +22,7 @@
         echo -e "${names[$idx]}=$img \c"
       done
       echo
-    done | sort -u | sed -e '/^$/d' -e 's#^  *##' -e 's#  *$##' | grep -v '/onecloud-operator:' || :
+    done | sort -u | sed -e 's#^  *##' -e 's#  *$##' -e 's#\s*kubectl set image#\nkubectl set image#g' | grep -v '/onecloud-operator:' | sed -e '/^$/d' || :
     kubectl get $typ -n $namespace -o jsonpath='{range .items[*]}{@.metadata.name}{"@"}{@.spec.template.spec.initContainers[*].name}{"%"}{@.spec.template.spec.initContainers[*].image}{"\n"}{end}'} | while read line; do
       if ! echo "$line" | grep -q '@%$'; then
         dep=$(echo $line | awk -F@ '{print $1}')
@@ -35,10 +35,12 @@
         echo -e "init=$img \c"
       fi
       echo
-    done | sed -e 's# kubectl#\nkubectl#g' |sort -u | sed -e '/^$/d' -e 's#^  *##' -e 's#  *$##' | grep -v '/onecloud-operator:' || :
+    done | sed -e 's# kubectl#\nkubectl#g' |sort -u | sed -e 's#^  *##' -e 's#  *$##' -e 's#\s*kubectl set image#\nkubectl set image#g' | grep -v '/onecloud-operator:' | sed -e '/^$/d' || :
   args:
       executable: /bin/bash
   register: oc_deployment_images
+
+- debug: var=oc_deployment_images.stdout_lines
 
 - name: Parse image names from lines
   set_fact:
@@ -49,7 +51,7 @@
 
 - name: Pull Docker images for Controller(s)
   shell: |
-    docker pull {{ image_item }}
+    docker pull {{ image_item | list | unique }}
   loop: "{{ image_names }}"
   loop_control:
     index_var: item_index
