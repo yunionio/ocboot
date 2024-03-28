@@ -13,14 +13,12 @@ from getpass import getuser
 from lib import utils
 
 UPGRADE_MSG = """
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│      The system has been upgraded to the latest version.                      │
-│                                                                               │
-└───────────────────────────────────────────────────────────────────────────────┘
+
+
+The system has been upgraded to the latest version.
+
 
 """
-
 
 
 def add_command(subparsers):
@@ -86,6 +84,12 @@ def add_command(subparsers):
                         action="store_true",
                         default=False,
                         help="re-init gpu druing upgrading. default: false.")
+
+    parser.add_argument("--controllable", "-c",
+                        dest="controllable_upgrade",
+                        action="store_true",
+                        default=False,
+                        help="controllable upgrade. default: false.")
     parser.set_defaults(func=do_upgrade)
 
 
@@ -113,7 +117,7 @@ def do_upgrade(args):
         if args.image_repository == consts.REGISTRY_ALI_YUNION:
             if utils.is_below_v3_9(args.version):
                 args.image_repository = consts.REGISTRY_ALI_YUNIONIO
-        vars['image_repository'] = args.image_repository
+        vars['image_repository'] = args.image_repository.rstrip('/')
 
     if args.offline_data_path:
         vars['offline_data_path'] = args.offline_data_path
@@ -129,6 +133,8 @@ def do_upgrade(args):
     if not args.gpu_init:
         vars['upgrade_without_gpu'] = True
 
+    vars['controllable_upgrade'] = args.controllable_upgrade
+
     return_code = run_ansible_playbook(
         inventory_f,
         './onecloud/upgrade-cluster.yml',
@@ -138,7 +144,7 @@ def do_upgrade(args):
     if return_code is not None and return_code != 0:
         return return_code
     cluster.set_current_version(args.version)
-    print(UPGRADE_MSG.encode('utf-8'))
+    utils.pr_green(UPGRADE_MSG)
 
 
 class UpgradeConfig(object):

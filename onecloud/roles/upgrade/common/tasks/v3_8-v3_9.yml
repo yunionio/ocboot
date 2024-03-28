@@ -61,3 +61,4 @@
     state: latest
   when:
   - is_centos_based is defined
+  - false

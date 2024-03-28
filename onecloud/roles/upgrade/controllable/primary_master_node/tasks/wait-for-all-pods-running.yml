@@ -1,0 +1,31 @@
+- name: Please wait until all pods are in a "Running" state. This process may take several minutes.
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    export KUBECONFIG=/etc/kubernetes/admin.conf
+    wait_for_running(){
+      local running=
+      local idx=0
+      while [[ "$idx" -lt 120 ]]; do
+        idx=$((idx+1))
+        sleep 15
+        running="$(kubectl get pods -A --no-headers | grep -cviP 'Running|telegraf|meter|etcd|extdb|-host-|autoupdate|webconsole')"
+        if [[ "$running" -eq 0 ]]; then
+            exit 0
+        else
+            echo "waiting for $running pods "
+        fi
+      done
+      exit 1
+    }
+    export -f wait_for_running
+    timeout 1800 bash -c "wait_for_running"
+  args:
+    executable: /bin/bash
+  register: wait_for_running_ret
+
+- name: Assert wait value
+  fail:
+    msg: "Not all pods are running. Please re-run the upgrade procedure. "
+  when:
+  - wait_for_running_ret.rc != 0
