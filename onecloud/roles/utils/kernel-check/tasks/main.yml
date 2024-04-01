@@ -99,6 +99,7 @@
     test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
   become: yes
   when:
+  - is_centos_x86 | default(false) | bool  == true
   - ansible_connection == "ssh"
   - k8s_node_as_oc_host|default(false)|bool == true or enable_lbagent|default(false)|bool == true
 
