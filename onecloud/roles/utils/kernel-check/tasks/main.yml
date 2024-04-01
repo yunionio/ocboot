@@ -58,10 +58,10 @@
     test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
   become: yes
   when:
+  - is_centos_x86 | default(false) | bool  == true
   - is_yunion_kernel_running.rc != 0
   - ansible_connection == "ssh"
   - k8s_node_as_oc_host|default(false)|bool == true
-  - is_centos_based is defined
   - nbd_ok|default(false)|bool == false
 
 # to "ignore Running reboot with local connection would reboot the control node"
