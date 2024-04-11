@@ -12,6 +12,8 @@ from . import ansible
 from .cluster import construct_cluster
 from .ocboot import WorkerConfig, Config
 from .ocboot import get_ansible_global_vars
+from .ssh import SSHClient
+from .color import RB as Red
 
 
 class BaseService(object):
@@ -141,11 +143,26 @@ class AddNodesConfig(object):
                  enable_host_on_vm=False,
                  enable_lbagent=False):
         target_nodes = list(set(target_nodes))
+        target_hostnames = [node.get_hostname() for node in cluster.k8s_nodes]
+
         for target_node in target_nodes:
+            # check IP:
             node = cluster.find_node_by_ip_or_hostname(target_node)
             if node is not None:
-                raise Exception("Node %s(%s) already exists in cluster" % (
-                    node.get_hostname(), node.get_ip()))
+                raise Exception(Red("Node %s(%s) already exists in cluster (By IP Check). " % (
+                    node.get_hostname(), node.get_ip())))
+
+            # check Hostname:
+            cli = SSHClient(
+                target_node,
+                ssh_user,
+                ssh_private_file,
+                ssh_port
+            )
+            target_hostname = cli.get_hostname()
+            if target_hostname in target_hostnames:
+                raise Exception(Red(f"Node {target_hostname}[{target_node}] already exists in cluster (By Hostname Check). "))
+
         self.current_version = cluster.get_current_version()
         controlplane_host = cluster.get_primary_master_node_ip()
         nodes_conf = [{'hostname': target_node, 'user': ssh_user,
