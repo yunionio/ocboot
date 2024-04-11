@@ -24,6 +24,9 @@ class SSHClient(object):
     def get_host(self):
         return self.host
 
+    def get_hostname(self):
+        return self.exec_command('hostname').strip()
+
     def get_user(self):
         return self.user
 
