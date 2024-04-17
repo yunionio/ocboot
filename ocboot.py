@@ -3,7 +3,8 @@
 import sys
 import argparse
 
-from lib import install, upgrade
+from lib import install
+from lib import upgrade
 from lib import backup, restore
 from lib import ansible
 from lib import add_node
@@ -23,7 +24,10 @@ def main():
     ee.add_command(subparsers)
     install.add_command(subparsers)
     restore.add_command(subparsers)
-    upgrade.add_command(subparsers)
+    upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE)
+    upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_CONTROLLER)
+    upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_HOST)
+    upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_FINAL)
     args = parser.parse_args()
     args.func(args)
 

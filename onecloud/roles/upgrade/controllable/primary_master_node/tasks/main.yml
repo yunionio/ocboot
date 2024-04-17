@@ -1,0 +1,76 @@
+- name: Prepare image list
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    OCVER=$(kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}')
+    nslist="$(kubectl get namespace | tail -n +2 | awk '{print $1}' | xargs)"
+    namespace=onecloud
+    typ=deployment
+    image_repository={{ image_repository }}
+    upgrade_onecloud_version={{upgrade_onecloud_version}}
+    kubectl get $typ -n $namespace -o jsonpath='{range .items[*]}{@.metadata.name}{"@"}{@.spec.template.spec.containers[*].name}{"%"}{@.spec.template.spec.containers[*].image}{"\n"}{end}'} | while read line; do
+      dep=$(echo $line | awk -F@ '{print $1}')
+      names=($(echo $line | sed -e 's#.*@##g' -e 's#%.*$##g'))
+      images=($(echo $line | sed -e 's#.*%##'))
+      for idx in ${!names[@]}; do
+        img="${images[$idx]}"
+        if ! echo "$img" | grep -Pq ":$OCVER\b|:$upgrade_onecloud_version\b" ; then
+          continue
+        fi
+        img="$(echo "$img" | sed -E -e "s#.*/([^/:]*):[^/:]*#$image_repository/\1:$upgrade_onecloud_version#" -e 's#//#/#g')"
+        echo -e "kubectl set image -n $namespace $typ/$dep \c"
+        echo -e "${names[$idx]}=$img \c"
+      done
+      echo
+    done | sort -u | sed -e 's#^  *##' -e 's#  *$##' -e 's#\s*kubectl set image#\nkubectl set image#g' | grep -v '/onecloud-operator:' | sed -e '/^$/d' || :
+    kubectl get $typ -n $namespace -o jsonpath='{range .items[*]}{@.metadata.name}{"@"}{@.spec.template.spec.initContainers[*].name}{"%"}{@.spec.template.spec.initContainers[*].image}{"\n"}{end}'} | while read line; do
+      if ! echo "$line" | grep -q '@%$'; then
+        dep=$(echo $line | awk -F@ '{print $1}')
+        img=$(echo "$line" | sed -e 's#.*%##')
+        echo -e "kubectl set image -n $namespace $typ/$dep \c"
+        img="$(echo "$img" | sed -E -e "s#.*/([^/:]*):[^/:]*#$image_repository/\1:$upgrade_onecloud_version#" -e 's#//#/#g')"
+        echo -e "init=$img \c"
+      fi
+      echo
+    done | sed -e 's# kubectl#\nkubectl#g' |sort -u | sed -e 's#^  *##' -e 's#  *$##' -e 's#\s*kubectl set image#\nkubectl set image#g' | grep -v '/onecloud-operator:' | sed -e '/^$/d' || :
+  args:
+      executable: /bin/bash
+  register: oc_deployment_images
+
+- name: Update OnecloudCluster Only
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    pkill -9 ocadm || :
+    /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} \
+      --version {{ upgrade_onecloud_version }} \
+      --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} \
+      --operator-only \
+      --wait
+  become: yes
+  args:
+    executable: /bin/bash
+
+- name: Apply new images and restart deployment
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    {{item}}
+    cmd="$(echo "{{item}}" | sed -e 's#set image#rollout restart deployments#' -e 's# deployment/# #' -e 's#[a-zA-Z0-9-]*=.*##g')"
+    $cmd || :
+  with_items:
+  - "{{ oc_deployment_images.stdout_lines | list }}"
+  args:
+    executable: /bin/bash
+  register: apply_deployment_images
+  when:
+  - oc_deployment_images.stdout_lines | length > 0
+
+- name: Wait until all pods running
+  include_tasks: "wait-for-all-pods-running.yml"
+
+- name: set var
+  set_fact:
+    k8s_controlplane_host: "{{ inventory_hostname }}"
+  when:
+  - k8s_controlplane_host | default('') | length == 0
