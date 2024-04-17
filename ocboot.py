@@ -3,7 +3,8 @@
 import sys
 import argparse
 
-from lib import install, upgrade
+from lib import install
+from lib import upgrade
 from lib import backup, restore
 from lib import add_node
 from lib import add_lbagent
@@ -28,7 +29,10 @@ def main():
     start.add_command(subparsers)
     start.add_command(subparsers)
     stop.add_command(subparsers)
-    upgrade.add_command(subparsers)
+    upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE)
+    upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_CONTROLLER)
+    upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_HOST)
+    upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_FINAL)
     args = parser.parse_args()
     if not args.subcmd:
         parser.print_help()

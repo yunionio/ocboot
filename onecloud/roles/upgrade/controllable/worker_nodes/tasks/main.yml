@@ -1,0 +1,81 @@
+- name: Set Facts For Worker
+  set_fact:
+    k8s_controlplane_host: "{{ hostvars[inventory_hostname]['groups']['primary_master_node'][0] }}"
+    worker_node_hostname: "{{ inventory_hostname }}"
+
+- name: Get Upgrade Command For Worker
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    OCVER="$(kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}')"
+    NEW_VER="{{upgrade_onecloud_version}}"
+    image_repository={{ image_repository }}
+    upgrade_onecloud_version={{upgrade_onecloud_version}}
+    worker_node_hostname={{worker_node_hostname}}
+    if [[ -z "$OCVER" ]] ; then
+      echo "get current oc version failed. "
+      exit 1
+    fi
+    if [[ -z "$NEW_VER" ]] ; then
+      echo "get new oc version failed. "
+      exit 1
+    fi
+    kubectl get pods --field-selector=spec.nodeName="$worker_node_hostname" --all-namespaces --no-headers -o custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name | while read line
+    do
+      namespace="$(echo "$line" | awk '{print $1}')"
+      pod="$(echo "$line" | awk '{print $2}')"
+      kubectl get pod -n "$namespace" "$pod" -o=jsonpath='{range .spec.containers[*]}{.name}={.image}{"\n"}{end}' | while read subline; do
+          cmd="kubectl set image -n $namespace pod/$pod $subline"
+          if ! echo "$subline" | grep -q ":$OCVER$" && ! echo "$subline" | grep -q ":$NEW_VER$"; then
+              continue
+          fi
+          new_cmd="$(echo $cmd | sed -e "s#:$OCVER\$#:$NEW_VER#")"
+          new_cmd="$(echo $new_cmd | sed -E -e "s#=.*/([^/:]*):[^/:]*#=$image_repository/\1:$upgrade_onecloud_version#" -e 's#//#/#g')"
+          echo "$new_cmd"
+      done
+    done | grep -v '/onecloud-operator:' | sed -e '/^$/d' || :
+  args:
+    executable: /bin/bash
+  register: host_deployment_images
+  delegate_to: "{{ k8s_controlplane_host }}"
+
+- name: Parse image names from lines
+  set_fact:
+    host_image_names: "{{ host_image_names|default([]) + [image_item.split('=')[-1]] }}"
+  loop: "{{ host_deployment_images.stdout_lines }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ (item_index + 1) }} of {{ host_deployment_images.stdout_lines | length }}]"
+    loop_var: image_item
+  when:
+  - host_deployment_images.stdout_lines | length > 0
+
+- name: Pull Docker images for worker node(s)
+  shell: |
+    docker pull {{ image_item }}
+  loop: "{{ host_image_names | list | unique }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ (item_index + 1) }} of {{ host_image_names | length }}]"
+    loop_var: image_item
+  when:
+  - host_image_names | default([]) | length > 0
+
+- name: Apply new images for Host pods
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    {{image_item}}
+  with_items:
+  - "{{ host_deployment_images.stdout_lines | list }}"
+  args:
+    executable: /bin/bash
+  register: host_apply_deployment_images
+  delegate_to: "{{ k8s_controlplane_host }}"
+  when:
+  - host_deployment_images.stdout_lines | length > 0
+  loop_control:
+    index_var: item_index
+    label: "[{{ (item_index + 1) }} of {{ host_deployment_images.stdout_lines | length }}]"
+    loop_var: image_item
+
