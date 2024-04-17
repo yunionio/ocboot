@@ -27,7 +27,7 @@
   - "{{ offline_node_list }}"
 
 - name: loading images
-  shell: /tmp/load-images.sh
+  shell: bash /tmp/load-images.sh
   delegate_to: '{{ item }}'
   with_items:
   - "{{ offline_node_list }}"
