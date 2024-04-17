@@ -1,0 +1,16 @@
+- name: copy shell script
+  copy:
+    src: wait-for-pods-running.sh
+    dest: /tmp/wait-for-pods-running.sh
+    mode: '0755'
+  become: true
+  delegate_to: "{{ k8s_controlplane_host }}"
+  run_once: true
+
+- name: Please wait until all pods are in a "Running" state. This process may take several minutes.
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: bash /tmp/wait-for-pods-running.sh
+  register: wait_for_running_ret
+  delegate_to: "{{ k8s_controlplane_host }}"
+  run_once: true

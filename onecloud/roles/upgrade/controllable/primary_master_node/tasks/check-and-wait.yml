@@ -1,0 +1,57 @@
+- name: Update OnecloudCluster Only
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    pkill -9 ocadm || :
+    /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} \
+      --version {{ upgrade_onecloud_version }} \
+      --image-repository {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} \
+      --operator-only \
+      --wait
+  become: yes
+  args:
+    executable: /bin/bash
+  retries: 3
+  delay: 30
+  delegate_to: "{{ k8s_controlplane_host }}"
+  run_once: true
+
+- name: Apply new images and restart deployment
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    {{image_item}}
+    cmd="$(echo "{{image_item}}" | sed -e 's#set image#rollout restart deployments#' -e 's# deployment/# #' -e 's#[a-zA-Z0-9-]*=.*##g')"
+    $cmd || :
+  with_items:
+  - "{{ oc_deployment_images.stdout_lines | list }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ (item_index + 1) }} of {{ oc_deployment_images.stdout_lines | length }}]"
+    loop_var: image_item
+  args:
+    executable: /bin/bash
+  register: apply_deployment_images
+  when:
+  - oc_deployment_images.stdout_lines | length > 0
+  delegate_to: "{{ k8s_controlplane_host }}"
+  run_once: true
+
+- name: Wait until all pods running
+  include_tasks: "wait-for-all-pods-running.yml"
+
+- name: Check remaining images for at {{ current_oc_version.stdout }}
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: |
+    kubectl describe pods -n onecloud |grep -i image: |grep '{{ current_oc_version.stdout }}' | grep -Pv 'host|region-dns|sdnagent' |sort -u |wc -l
+  delegate_to: "{{ k8s_controlplane_host }}"
+  run_once: true
+  register: remaining_images
+
+- name: Set remaining
+  set_fact:
+    remaining_imgs_count: "{{ remaining_images.stdout }}"
+
+- debug: var=remaining_imgs_count
+  run_once: true
