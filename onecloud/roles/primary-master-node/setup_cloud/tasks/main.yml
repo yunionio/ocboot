@@ -123,7 +123,6 @@
   delay: 10
   register: result
   until: result.rc == 0
-  ignore_errors: yes
   become: yes
   when:
   - OC_CLUSTER_COUNT.stdout|int == 0
@@ -175,8 +174,8 @@
   become: yes
   retries: 6
   delay: 10
-  ignore_errors: yes
   register: onecloud_rcadmin
+  until: onecloud_rcadmin.rc == 0
 
 - name: Print message if ansible version is greater than 2.7.0
   shell: |
@@ -198,7 +197,6 @@
     create: yes
     regexp: '^source ~/.onecloud_rcadmin'
   become: yes
-  ignore_errors: yes
   when:
   - shell is undefined or shell == 'bash'
 
@@ -209,14 +207,13 @@
     state: present
     create: yes
     regexp: '^source ~/.onecloud_rcadmin'
-  ignore_errors: yes
   when:
   - shell is undefined or shell == 'bash'
   - ansible_user_id != 'root'
 
 - name: "Check onecloud user {{ onecloud_user }} exists"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-list | grep -w {{ onecloud_user }} | wc -l
   register: OC_USER_COUNT
   become: yes
@@ -226,7 +223,7 @@
 
 - name: "Create onecloud web login user {{ onecloud_user }}"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-create --password {{ onecloud_user_password }} --enabled {{ onecloud_user }}
   ignore_errors: yes
   become: yes
@@ -241,7 +238,7 @@
 
 - name: "Update onecloud user {{ onecloud_user }} password to {{ onecloud_user_password }}"
   shell: |
-    eval $(/opt/yunion/bin/ocadm cluster rcadmin)
+    source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc user-update --password {{ onecloud_user_password }} --enabled --allow-web-console {{ onecloud_user }}
   retries: 3
   register: update_user_ret
@@ -305,10 +302,20 @@
   shell: |
     source ~/.onecloud_rcadmin
     {{ adm0_cmd }}
-    /opt/yunion/bin/climc network-private adm0 || :
   when: network_admin_exist.rc != 0 and admin_network_count|int == 0
   become: yes
-  ignore_errors: yes
+  args:
+    executable: /bin/bash
+  register: run_create_adm0
+  until: run_create_adm0.rc == 0
+  retries: 3
+  delay: 15
+
+- name: Make network adm0 private
+  shell: |
+    source ~/.onecloud_rcadmin
+    /opt/yunion/bin/climc network-private adm0
+  become: yes
   args:
     executable: /bin/bash
 
