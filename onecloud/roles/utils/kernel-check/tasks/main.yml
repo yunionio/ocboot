@@ -43,53 +43,41 @@
   - nbd_ok|default(false)|bool == false
   - is_yunion_kernel_installed.rc != 0
 
-# setup hugetlb
-- name: ensure hugetlb init dir exists
-  file:
-    path: /usr/local/hugetlb-init
-    state: directory
-  become: yes
+- name: Check /proc/cmdline for huge pages configuration
+  command: "grep -w 'hugepagesz=1G' /proc/cmdline"
+  register: hugepagesz
+  changed_when: false
+  check_mode: true
 
-- name: cp hugetlb setup script
-  become: yes
-  copy:
-    src: hugetlb_setup.sh
-    dest: /usr/local/hugetlb-init/hugetlb_setup.sh
-    owner: root
-    group: root
-    mode: preserve
+- name: Check /proc/cmdline for huge pages configuration
+  command: "grep -w 'default_hugepagesz=1G' /proc/cmdline"
+  register: default_hugepagesz
+  changed_when: false
+  check_mode: true
 
-- name: hugetlb service
-  become: yes
-  copy:
-    src: oc-hugetlb-gigantic-pages.service
-    dest: /usr/lib/systemd/system/oc-hugetlb-gigantic-pages.service
-    owner: root
-    group: root
-    mode: 0644
-
-- name: hugetlb script
-  become: yes
-  copy:
-    src: oc-hugetlb-reserve-pages.sh
-    dest: /usr/lib/systemd/oc-hugetlb-reserve-pages.sh
-    owner: root
-    group: root
-    mode: 0755
-
-- name: init hugetlb
-  shell: bash /usr/local/hugetlb-init/hugetlb_setup.sh
-  args:
-    executable: /bin/bash
-    chdir: /usr/local/hugetlb-init
+- name: Check if oc-hugetlb-gigantic-pages.service is active
+  shell:
+    cmd: systemctl is-active oc-hugetlb-gigantic-pages
+  register: hugepage_service_status
   failed_when: false
 
-  # TODO split for all arch, distribution, online/offline status
+- name: set default fact to_init_hugetlb
+  set_fact:
+    hugetlb_is_ready: false
 
-  # TODO
-- name: generate grub
-  shell: |
-    echo TODO
+- name: Set hugetlb fact if conditions are met
+  set_fact:
+    hugetlb_is_ready: true
+  when:
+  - hugepagesz.rc == 0
+  - default_hugepagesz.rc == 0
+  - hugepage_service_status.rc == 0
+
+# setup hugetlb
+- name: Setup hugepage
+  include_tasks: 'hugetlb.yml'
+  when:
+  - hugetlb_is_ready == false
 
 - name: Reboot system if not cloud kernel, it should take a few minutes...
   reboot:
@@ -101,13 +89,14 @@
   when:
   - is_centos_x86 | default(false) | bool  == true
   - ansible_connection == "ssh"
-  - k8s_node_as_oc_host|default(false)|bool == true or enable_lbagent|default(false)|bool == true
+  - is_yunion_kernel_running.rc != 0 or hugetlb_is_ready == false
 
-# to "ignore Running reboot with local connection would reboot the control node"
-# warning
-- name: force reboot the primary node if applicable
-  shell: reboot
+- name: Reboot system if hugetlb conf is updated
+  reboot:
+    reboot_timeout:  900 # 15 mins
+    connect_timeout: 900 # 15 mins
+    msg: "rebooting host to enable cloud hugetlb ... please wait... "
   become: yes
   when:
-  - must_reboot |default(false)|bool == true
-  - k8s_node_as_oc_host|default(false)|bool == true
+  - ansible_connection == "ssh"
+  - hugetlb_is_ready == false
