@@ -77,6 +77,10 @@ check_backup_disk() {
     if [ "$disk_usage" -gt $MAX_DISK_PERCENTAGE ]; then
         __info "$BKUP_PATH is on disk $disk, usage:$disk_usage%, too high to continue backup."
         __info "Allowed maximum disk usage: $MAX_DISK_PERCENTAGE."
+        # only delete backup path when it is empty and ends with timestamp like 20240506-163855
+        if [ -z "$(ls -A $BKUP_PATH)" ] && [[ "$BKUP_PATH" =~ [0-9]{8}-[0-9]{6}$ ]]; then
+            rm -rf "$BKUP_PATH"
+        fi
         exit 1
     fi
     __info "Backup Disk: $disk; Used: $disk_usage%"
