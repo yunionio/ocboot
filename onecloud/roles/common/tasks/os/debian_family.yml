@@ -36,7 +36,6 @@
 - name: Install latest packages via loop for debian-based system
   package:
     name: "{{ package_item }}"
-    state: latest
   become: true
   with_items:
   - "{{ latest_packages }}"
