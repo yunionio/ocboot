@@ -79,7 +79,7 @@
   when:
   - hugetlb_is_ready == false
 
-- name: Reboot system if not cloud kernel, it should take a few minutes...
+- name: SSH Reboot system if not cloud kernel, it should take a few minutes...
   reboot:
     reboot_timeout:  900 # 15 mins
     connect_timeout: 900 # 15 mins
@@ -87,16 +87,30 @@
     test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
   become: yes
   when:
-  - is_centos_x86 | default(false) | bool  == true
-  - ansible_connection == "ssh"
-  - is_yunion_kernel_running.rc != 0 or hugetlb_is_ready == false
+    - is_centos_x86 | default(false) | bool  == true
+    - is_yunion_kernel_running.rc != 0
+    - ansible_connection == "ssh"
 
-- name: Reboot system if hugetlb conf is updated
+- name: Local Reboot system if not cloud kernel, it should take a few minutes...
+  command: reboot
+  become: yes
+  when:
+    - is_centos_x86 | default(false) | bool  == true
+    - is_yunion_kernel_running.rc != 0
+    - ansible_connection == "local"
+
+- name: SSH Reboot system if hugetlb conf is updated
   reboot:
     reboot_timeout:  900 # 15 mins
     connect_timeout: 900 # 15 mins
-    msg: "rebooting host to enable cloud hugetlb ... please wait... "
   become: yes
   when:
-  - ansible_connection == "ssh"
   - hugetlb_is_ready == false
+  - ansible_connection == "ssh"
+
+- name: Local Reboot system if hugetlb conf is updated
+  command: reboot
+  become: yes
+  when:
+  - hugetlb_is_ready == false
+  - ansible_connection == "local"
