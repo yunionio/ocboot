@@ -1,0 +1,39 @@
+node-ip: {{ node_ip }}
+{% if high_availability_vip is defined %}
+tls-san: {{ high_availability_vip }}
+{% endif %}
+{% if is_k3s_server %}
+flannel-backend: none
+disable-network-policy: true
+cluster-cidr: {{ pod_network_cidr }}
+service-cidr: {{ service_cidr }}
+cluster-domain: {{ service_dns_domain }}
+default-local-storage-path: /opt/k3s/storage
+# See:
+# - https://github.com/kubernetes/kubernetes/issues/55713#issuecomment-922168158
+# - https://github.com/kubernetes/website/issues/39681#issuecomment-1880846778
+kube-apiserver-arg:
+  - "enable-admission-plugins=DefaultTolerationSeconds"
+  - "default-not-ready-toleration-seconds=10"
+  - "default-unreachable-toleration-seconds=10"
+kube-controller-manager-arg:
+  - "node-monitor-period=4s"
+  - "node-monitor-grace-period=16s"
+{% endif %}
+node-label:
+{% if is_k3s_server %}
+  - onecloud.yunion.io/controller=enable
+{% endif %}
+{% if join_as_host %}
+  - onecloud.yunion.io/host=enable
+{% endif %}
+kubelet-arg:
+  - "pod-manifest-path=/var/lib/rancher/k3s/agent/pod-manifests"
+  - "eviction-hard=memory.available<200Mi,nodefs.available<1Gi,nodefs.inodesFree<5%,imagefs.available<1Gi"
+  - "container-log-max-size=100Mi"
+  - "pod-max-pids=1024"
+  - "serialize-image-pulls=false"
+  - "node-status-update-frequency=4s"
+kube-proxy-arg:
+  - proxy-mode=ipvs
+  - ipvs-strict-arp=true

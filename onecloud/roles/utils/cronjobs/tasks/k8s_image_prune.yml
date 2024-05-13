@@ -1,0 +1,8 @@
+- name: Ensure a job that Remove unused dangling docker images
+  cron:
+    name: "Remove unused dangling docker images"
+    special_time: daily
+    user: root
+    job: "/usr/bin/docker image prune -f"
+    cron_file: yunion_docker_image_prune
+  become: true

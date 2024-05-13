@@ -1,12 +1,6 @@
 ---
-- name: Ensure a job that runs every minute
-  cron:
-    name: "Remove unused dangling docker images"
-    special_time: daily
-    user: root
-    job: "/usr/bin/docker image prune -f"
-    cron_file: yunion_docker_image_prune
-  become: true
+- name: Ensure a job that runs daily
+  include_tasks: "{{ k8s_or_k3s }}_image_prune.yml"
 
 - name: ensure /opt/yunion/scripts path exists
   file:

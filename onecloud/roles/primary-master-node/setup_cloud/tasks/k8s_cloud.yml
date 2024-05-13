@@ -1,0 +1,26 @@
+- name: Wait onecloud CRD created
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: 'kubectl get crd | grep onecloudcluster'
+  become: yes
+  retries: 30
+  delay: 10
+  register: result
+  until: result.rc == 0
+
+- name: Check onecloud cluster exists
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: "kubectl get onecloudcluster -n onecloud | grep default | wc -l"
+  register: OC_CLUSTER_COUNT
+
+- name: Init construct create cluster args
+  set_fact:
+    init_cluster_args: ""
+
+- name: construct create cluster args use-ee
+  set_fact:
+    init_cluster_args: "{{ init_cluster_args }} --use-ee"
+  when:
+  - use_ee is defined
+  - use_ee|default(false)|bool == true

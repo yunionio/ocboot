@@ -1,0 +1,26 @@
+- name: Check server node is join
+  shell: test -f /etc/systemd/system/k3s.service
+  register: kubelet_result
+  ignore_errors: yes
+  changed_when: false
+  failed_when: false
+
+- name: Include role k3s/prereq
+  include_role:
+    name: k3s/prereq
+
+- name: Configure host service
+  include_role:
+    name: utils/host-service
+  when:
+  - join_as_host | default(false)|bool == true
+
+- name: Include role k3s/airgap
+  include_role:
+    name: k3s/airgap
+
+- name: Include role k3s/k3s_server
+  include_role:
+    name: k3s/k3s_server
+  vars:
+    is_keepalived_master: false

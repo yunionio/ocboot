@@ -1,0 +1,8 @@
+- name: Ensure a job that runs daily Remove unused dangling k3s container images
+  cron:
+    name: "Remove unused dangling k3s container images"
+    special_time: daily
+    user: root
+    job: "k3s crictl rmi --prune"
+    cron_file: yunion_k3s_image_prune
+  become: true

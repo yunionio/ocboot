@@ -1,8 +1,7 @@
 - name: add sync-user option
   shell: |
-    export KUBECONFIG=/etc/kubernetes/admin.conf
     tmp=$(mktemp).yaml
-    kubectl get deployment onecloud-operator -n onecloud -o yaml > $tmp
+    {{ K3S_CMDLINE_PREFIX }} kubectl get deployment onecloud-operator -n onecloud -o yaml > $tmp
     sed -i -e '/onecloud-controller-manager$/a \        - -sync-user' $tmp
     kubectl replace -f $tmp
     rm -f $tmp

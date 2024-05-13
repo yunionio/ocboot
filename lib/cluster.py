@@ -7,8 +7,9 @@ import re
 from getpass import getuser
 from .ssh import SSHClient
 from . import k8s
-
+from .k3s import is_using_k3s
 from .ocboot import GROUP_PRIMARY_MASTER_NODE, GROUP_MASTER_NODES, GROUP_WORKER_NODES
+from .color import GB
 
 A_OCBOOT_UPGRADE_CURRENT_VERSION = 'upgrade.ocboot.yunion.io/current-version'
 
@@ -40,8 +41,10 @@ class OnecloudCluster(object):
             sudo_exec = 'sudo'
 
         self.ssh_client = ssh_client
+        k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
         ret = ssh_client.exec_command(
-            f'{sudo_exec} kubectl -n onecloud get onecloudclusters default -o json')
+            f'{sudo_exec} {k3s_cmd_placeholder} kubectl -n onecloud get onecloudclusters default -o json')
+        print(GB(f'{sudo_exec} {k3s_cmd_placeholder} kubectl -n onecloud get onecloudclusters default -o json'))
         try:
             cluster = json.loads(ret)
         except ValueError:
@@ -98,8 +101,9 @@ class OnecloudCluster(object):
         sudo_exec = ''
         if user != 'root':
             sudo_exec = 'sudo'
-
-        k8s_nodes = json.loads(self.ssh_client.exec_command(f'{sudo_exec} kubectl get nodes -o json')).get('items')
+        k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
+        print(GB(f'{sudo_exec} {k3s_cmd_placeholder} kubectl get nodes -o json'))
+        k8s_nodes = json.loads(self.ssh_client.exec_command(f'{sudo_exec} {k3s_cmd_placeholder} kubectl get nodes -o json')).get('items')
         self.k8s_nodes = [k8s.Node(obj) for obj in k8s_nodes]
         self.master_nodes = [node for node in self.k8s_nodes if node.is_master()]
         self.worker_nodes = [node for node in self.k8s_nodes if not node.is_master()]
@@ -142,7 +146,9 @@ class OnecloudCluster(object):
         if user != 'root':
             sudo_exec = 'sudo'
 
-        cmd = f'{sudo_exec} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
+        k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
+        cmd = f'{sudo_exec} {k3s_cmd_placeholder} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
+        print(GB(cmd))
         self.ssh_client.exec_command(cmd)
 
 

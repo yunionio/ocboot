@@ -13,9 +13,7 @@ common_packages:
     - ceph-common
     - chrony
     - conntrack-tools
-    - cri-tools
     - curl
-    - docker-ce
     - fuse
     - fuse-devel
     - fuse-libs
@@ -27,10 +25,6 @@ common_packages:
     - keyutils
     - kmod
     - kmod-openvswitch
-    - kubeadm-1.15.12-0
-    - kubectl-1.15.12-0
-    - kubelet-1.15.12-0
-    - kubernetes-cni
     - libaio
     - libbasicobjects
     - libcollection
@@ -83,3 +77,13 @@ dnf_modules:
     - perl-libwww-perl:6.34
     - perl:5.26
     - python36:3.6
+
+k8s_packages:
+    - container-selinux
+    - containerd.io
+    - cri-tools
+    - docker-ce
+    - kubeadm-1.15.12-0
+    - kubectl-1.15.12-0
+    - kubelet-1.15.12-0
+    - kubernetes-cni

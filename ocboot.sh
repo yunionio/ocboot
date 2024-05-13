@@ -3,7 +3,7 @@
 set -e
 
 REGISTRY=${REGISTRY:-registry.cn-beijing.aliyuncs.com/yunionio}
-VERSION=${VERSION:-v3.11-buildah.1}
+VERSION=${VERSION:-v4-k3s.4}
 OCBOOT_IMAGE="$REGISTRY/ocboot:$VERSION"
 
 CUR_DIR="$(pwd)"
@@ -39,6 +39,8 @@ if is_ocboot_subcmd $1; then
 fi
 
 buildah run -t \
+    --net=host \
     -v "$HOME/.ssh:/root/.ssh" \
     -v "$(pwd):/ocboot" \
+    -v "$(pwd)/airgap_assets/k3s-install.sh:/airgap_assets/k3s-install.sh:ro" \
     "$CONTAINER_NAME" $CMD $@

@@ -52,3 +52,19 @@
 - name: check if os/ver is supported
   include_tasks: os.yml
 
+- name: Get SELinux status
+  shell: |
+    setenforce 0
+    getenforce
+  become: yes
+  register: selinux_status
+  failed_when: false
+  args:
+    executable: /bin/bash
+
+- name: Warning for SELinux
+  fail:
+    msg: "Please disable selinux and reboot the OS before deploying centos. "
+  when:
+  - selinux_status.stdout == 'Enforcing'
+

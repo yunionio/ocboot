@@ -45,3 +45,8 @@ onecloud/zz_generated.*
 config-allinone-current.yml
 
 compose/data
+airgap_assets/k3s
+airgap_assets/k3s-arm64
+airgap_assets/*.tar
+airgap_assets/*.tar.gz
+airgap_assets/*.zst

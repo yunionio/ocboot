@@ -15,6 +15,10 @@
   when:
   - onecloud_version is defined
   - onecloud_version is version('v3.10.7', '>=') or online_status == 'offline'
+  retries: 3
+  delay: 30
+  register: install_kernel_yn20230805
+  until: install_kernel_yn20230805.rc == 0
 
 - name: Install kernel-5.4.130-1.yn20221208.el7 when LE v3.10.6
   yum:
@@ -28,3 +32,8 @@
   when:
   - onecloud_version is defined
   - onecloud_version is version('v3.10.7', '<')
+  retries: 3
+  delay: 30
+  register: install_kernel_yn20221208
+  until: install_kernel_yn20221208.rc == 0
+
