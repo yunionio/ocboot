@@ -70,12 +70,12 @@ common_services:
     - yunion-executor
 
 dnf_modules:
-  - container-tools:rhel8
-  - mariadb:10.3
-  - perl:5.26
-  - perl-DBD-MySQL:4.046
-  - perl-DBI:1.641
-  - python36:3.6
+    - container-tools:rhel8
+    - mariadb:10.3
+    - perl:5.26
+    - perl-DBD-MySQL:4.046
+    - perl-DBI:1.641
+    - python36:3.6
 
 k8s_packages:
     - container-selinux

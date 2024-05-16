@@ -70,11 +70,11 @@ common_services:
     - yunion-executor
 
 dnf_modules:
-  - container-tools:rhel8
-  - perl:5.26
-  - perl-IO-Socket-SSL:2.066
-  - perl-libwww-perl:6.34
-  - python36:3.6
+    - container-tools:rhel8
+    - perl:5.26
+    - perl-IO-Socket-SSL:2.066
+    - perl-libwww-perl:6.34
+    - python36:3.6
 
 k8s_packages:
     - container-selinux

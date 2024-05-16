@@ -76,6 +76,12 @@
   - k8s_packages is defined
   - k8s_or_k3s | default('k8s') == 'k8s'
 
+- name: Update latest packages for CE
+  set_fact:
+    latest_packages: "{{ latest_packages | select('match', '^(?!.*climc-ee.*$).*') | list }}"
+  when:
+  - use_ee|default(false)|bool == false # false: CE
+
 - name: Lookup offline data path
   ansible.builtin.set_fact:
     offline_data_path: "{{ lookup('env', 'OFFLINE_DATA_PATH') }}"
