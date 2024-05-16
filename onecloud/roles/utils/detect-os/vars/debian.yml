@@ -37,9 +37,6 @@ common_packages:
   - usbutils
   - wget
   - "{{ yunion_qemu_package }}"
-  - "yunion-climc={{ onecloud_version_abbr }}*"
-  - "yunion-climc-ee={{ onecloud_version_abbr }}*"
-  - "yunion-ocadm={{ onecloud_version_abbr }}*"
   - yunion-executor
   - yunion-fetcherfs
 
@@ -49,3 +46,12 @@ common_services:
 
 latest_packages:
     - ca-certificates
+    - "yunion-climc={{ onecloud_version_abbr }}*"
+    - "yunion-climc-ee={{ onecloud_version_abbr }}*"
+    - "yunion-ocadm={{ onecloud_version_abbr }}*"
+
+k8s_packages:
+    - docker-ce
+    - kubeadm=1.15.12-00
+    - kubectl=1.15.12-00
+    - kubelet=1.15.12-00
