@@ -5,7 +5,6 @@ common_packages:
   - apt-transport-https
   - bash-completion
   - bridge-utils
-  - ca-certificates
   - ceph-common
   - chntpw
   - conntrack
@@ -37,13 +36,16 @@ common_packages:
   - python3-pip
   - software-properties-common
   - wget
-  - yunion-climc
-  - yunion-climc-ee
-  - yunion-executor
-  - yunion-fetcherfs
-  - yunion-ocadm
   - "{{ yunion_qemu_package }}"
 
 common_services:
     - ntp
     - yunion-executor
+
+latest_packages:
+    - ca-certificates
+    - yunion-climc
+    - yunion-climc-ee
+    - yunion-executor
+    - yunion-fetcherfs
+    - yunion-ocadm
