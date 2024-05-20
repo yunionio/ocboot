@@ -27,7 +27,6 @@ common_packages:
     - jq
     - keyutils
     - kmod
-    - kmod-openvswitch
     - kubeadm-1.15.12-0
     - kubectl-1.15.12-0
     - kubelet-1.15.12-0
