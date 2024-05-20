@@ -25,7 +25,6 @@ common_packages:
     - jq
     - keyutils
     - kmod
-    - kmod-openvswitch
     - libbasicobjects
     - libcollection
     - libini_config
