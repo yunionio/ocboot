@@ -10,4 +10,3 @@
   become: true
   args:
     executable: /bin/bash
-

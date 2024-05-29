@@ -1,0 +1,16 @@
+- name: Search for host_type in host.conf
+  ansible.builtin.lineinfile:
+    dest: /etc/yunion/host.conf
+    regexp: '^host_type: \w+$'
+    line: 'host_type: container'
+    backup: yes
+    state: present
+  failed_when: false
+
+- name: show host_type result
+  shell: |
+    cat /etc/yunion/host.conf | grep host_type
+  register: host_type_ret
+  failed_when: false
+
+- debug: var=host_type_ret.stdout_lines

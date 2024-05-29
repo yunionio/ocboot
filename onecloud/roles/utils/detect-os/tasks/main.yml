@@ -79,11 +79,21 @@
   when:
   - onecloud_version | default('') | length == 0
 
-- name: set var
+- name: set var for master
+  set_fact:
+    onecloud_version_abbr: "master"
+  when:
+  - onecloud_version is defined
+  - onecloud_version | regex_search('^master-[-0-9.]+')
+
+- name: set var for non master
   set_fact:
     onecloud_version_abbr: "{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('')}}"
   when:
   - onecloud_version is defined
+  - onecloud_version | regex_search('v[0-9][-0-9.]+')
+
+- debug: var=onecloud_version_abbr
 
 - name: gather os specific variables
   include_vars: "{{ item }}"
@@ -190,3 +200,9 @@
   when:
   - join_as_host | default(false)|bool == true
 
+- name: Unmount /tmp if mounted
+  shell: |
+    mount | grep 'tmpfs on /tmp' && umount -l /tmp || :
+  become: yes
+  args:
+    executable: /bin/bash

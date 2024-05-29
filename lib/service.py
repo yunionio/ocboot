@@ -6,7 +6,10 @@ from __future__ import unicode_literals
 from .ocboot import NodeConfig, Config
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
-from .parser import inject_add_hostagent_options, inject_ssh_hosts_options, inject_add_nodes_options, inject_auto_backup_options
+from .parser import inject_add_hostagent_options
+from .parser import inject_add_nodes_options
+from .parser import inject_auto_backup_options
+from .parser import inject_ssh_hosts_options
 from . import utils
 from . import ansible
 from .cluster import construct_cluster
@@ -142,9 +145,11 @@ class AddNodesConfig(object):
     def __init__(self, cluster, target_nodes, ssh_user, ssh_private_file,
                  controlplane_ssh_port, ssh_port,
                  enable_host_on_vm=False,
-                 enable_lbagent=False):
+                 enable_lbagent=False,
+                 **kwargs):
         target_nodes = list(set(target_nodes))
         target_hostnames = [node.get_hostname() for node in cluster.k8s_nodes]
+        self.enable_containerd = kwargs.get('runtime') == 'containerd'
 
         for target_node in target_nodes:
             # check IP:
@@ -203,7 +208,9 @@ class AddNodesConfig(object):
         )
 
     def get_vars(self):
-        return get_ansible_global_vars(self.current_version)
+        vars = get_ansible_global_vars(self.current_version)
+        vars.update({'enable_containerd': self.enable_containerd })
+        return vars
 
 
 class AutoBackupConfig(NodesConfig):

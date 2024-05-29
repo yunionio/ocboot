@@ -1,0 +1,6 @@
+- name: Ensure containderd binaries ready
+  include_tasks: "{{ item }}"
+  loop:
+  - "ensure-binaries.yml"
+  - "ensure-services.yml"
+  - "config-host.yml"

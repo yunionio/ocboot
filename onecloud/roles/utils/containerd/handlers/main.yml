@@ -1,0 +1,11 @@
+- name: enable yunion-containerd
+  ansible.builtin.systemd:
+    name: yunion-containerd
+    enabled: yes
+    state: started
+
+- name: restart yunion-containerd
+  ansible.builtin.systemd:
+    name: yunion-containerd
+    enabled: yes
+    state: restarted
