@@ -9,7 +9,7 @@
 
 - name: Please wait until all pods are in a "Running" state. This process may take several minutes.
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: bash /tmp/wait-for-pods-running.sh
   register: wait_for_running_ret
   delegate_to: "{{ k8s_controlplane_host }}"

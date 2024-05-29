@@ -22,11 +22,21 @@
     command: update-grub
 
   - name: "Reboot the system because GRUB updated. You can rerun this script when system running"
-    ansible.builtin.reboot:
+    shell: reboot
+    args:
+      executable: /bin/bash
+    become: yes
+    ignore_errors: yes
 
-  - name: Wait for the system to become available
-    wait_for_connection:
-      timeout: 900
+  - name: Wait for the system to reboot
+    wait_for:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port | default(22) }}"
+      state: started
+      delay: 15
+      timeout: 300
+    delegate_to: localhost
+    become: false
 
   when:
   - unified_cgroup_hierarchy.rc != 0

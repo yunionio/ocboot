@@ -4,19 +4,22 @@
 
 - name: Get Current Version
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: |
-    kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}'
+    {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}'
   args:
     executable: /bin/bash
   register: current_oc_version
+  retries: 3
+  delay: 15
+  until: current_oc_version.rc == 0
 
 - name: Prepare image list
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: |
-    OCVER=$(kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}')
-    nslist="$(kubectl get namespace | tail -n +2 | awk '{print $1}' | xargs)"
+    OCVER=$({{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}')
+    nslist="$({{ K3S_CMDLINE_PREFIX }} kubectl get namespace | tail -n +2 | awk '{print $1}' | xargs)"
     namespace=onecloud
     typ=deployment
     image_repository={{ image_repository }}

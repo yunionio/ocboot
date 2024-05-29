@@ -5,7 +5,7 @@
 
 - name: Get Upgrade Command For Worker
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: |
     OCVER="$(kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}')"
     NEW_VER="{{upgrade_onecloud_version}}"
@@ -63,7 +63,7 @@
 
 - name: Apply new images for Host pods
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: |
     {{image_item}}
   with_items:

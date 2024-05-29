@@ -1,8 +1,8 @@
 - name: get version tag
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ENV_KUBECONFIG}}"
   shell: |
-    /usr/bin/kubectl get OnecloudCluster -n onecloud -o jsonpath='{.items[0].spec.version}'
+    {{ K3S_CMDLINE_PREFIX }} /usr/bin/kubectl get OnecloudCluster -n onecloud -o jsonpath='{.items[0].spec.version}'
   args:
       executable: /bin/bash
   delegate_to: "{{ k8s_controlplane_host }}"

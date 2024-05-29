@@ -1,6 +1,6 @@
 - name: Update OnecloudCluster Only
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: |
     pkill -9 ocadm || :
     /opt/yunion/bin/ocadm cluster update --operator-version {{ upgrade_onecloud_version }} \
@@ -18,7 +18,7 @@
 
 - name: Apply new images and restart deployment
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: |
     {{image_item}}
     cmd="$(echo "{{image_item}}" | sed -e 's#set image#rollout restart deployments#' -e 's# deployment/# #' -e 's#[a-zA-Z0-9-]*=.*##g')"
@@ -42,9 +42,9 @@
 
 - name: Check remaining images for at {{ current_oc_version.stdout }}
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: |
-    kubectl describe pods -n onecloud |grep -i image: |grep '{{ current_oc_version.stdout }}' | grep -Pv 'host|region-dns|sdnagent' |sort -u |wc -l
+    {{ K3S_CMDLINE_PREFIX }} kubectl describe pods -n onecloud |grep -i image: |grep '{{ current_oc_version.stdout }}' | grep -Pv 'host|region-dns|sdnagent' |sort -u |wc -l
   delegate_to: "{{ k8s_controlplane_host }}"
   run_once: true
   register: remaining_images

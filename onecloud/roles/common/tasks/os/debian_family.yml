@@ -20,7 +20,7 @@
 - name: Unified Cgroup Hierarchy
   include_tasks: utils/unified_cgroup_hierarchy.yml
 
-- name: install common packages via loop
+- name: install common packages via loop for Debian Family
   package:
     name: "{{ package_item }}"
   become: true
