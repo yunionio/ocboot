@@ -1,6 +1,6 @@
 ---
 - name: Ensure a job that runs daily
-  include_tasks: "{{ k8s_or_k3s }}_image_prune.yml"
+  include_tasks: "{{ k8s_or_k3s | default('k8s') }}_image_prune.yml"
 
 - name: ensure /opt/yunion/scripts path exists
   file:
