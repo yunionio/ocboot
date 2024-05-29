@@ -38,10 +38,11 @@ UPGRADE_MODES_FINISH_MSG = {
     UPGRADE_MODES_UPGRADE_FINAL: "The final step of the upgraded is now finished.",
 }
 
+
 def add_command(subparsers, command="upgrade"):
     parser = subparsers.add_parser(
         command, help=UPGRADE_MODES_HELP_MSGS.get(command, ''))
-    #parser.add_argument('config', help="config file")
+    # parser.add_argument('config', help="config file")
     # requirement options
     parser.add_argument("primary_master_host",
                         metavar="FIRST_MASTER_HOST",
@@ -53,7 +54,7 @@ def add_command(subparsers, command="upgrade"):
                               e.g., v3.6.9")
 
     # optional options
-    help_d = lambda help: help + " (default: %(default)s)"
+    def help_d(help): return help + " (default: %(default)s)"
     parser.add_argument("--user", "-u",
                         dest="ssh_user",
                         default=getuser(),
@@ -104,11 +105,11 @@ def add_command(subparsers, command="upgrade"):
 
     if command == UPGRADE_MODES_UPGRADE_HOST:
         parser.add_argument("--hosts", "-H",
-                        dest='target_node_hosts',
-                        nargs='+',
-                        default=[],
-                        metavar="TARGET_NODE_HOSTS",
-                        help="target nodes ip added into cluster")
+                            dest='target_node_hosts',
+                            nargs='+',
+                            default=[],
+                            metavar="TARGET_NODE_HOSTS",
+                            help="target nodes ip added into cluster")
 
     parser.set_defaults(func=do_upgrade)
 
@@ -144,7 +145,7 @@ def do_upgrade(args):
     with open(inventory_f, 'w') as f:
         f.write(inventory_content)
 
-    vars=config.to_ansible_vars()
+    vars = config.to_ansible_vars()
     if args.image_repository:
         if args.image_repository == consts.REGISTRY_ALI_YUNION:
             if utils.is_below_v3_9(args.version):
@@ -193,7 +194,6 @@ class UpgradeConfig(object):
         ver = ver[1:]
         return "https://iso.yunion.cn/centos/7/%s/x86_64/yunion.repo" % (ver)
 
-
     def to_ansible_vars(self):
         return {
             "current_onecloud_version": self.current_onecloud_version,
@@ -202,4 +202,5 @@ class UpgradeConfig(object):
             "upgrade_onecloud_major_version": self.upgrade_onecloud_major_version,
             "is_major_upgrade": self.is_major_upgrade(),
             "yunion_yum_repo": self.get_yunion_yum_repo(),
+            "yunion_qemu_package": "yunion-qemu-4.2.0",
         }

@@ -72,3 +72,7 @@ k8s_packages:
     - kubectl-1.15.12-0
     - kubelet-1.15.12-0
     - kubernetes-cni
+<<<<<<< HEAD
+=======
+
+>>>>>>> fix(upgrade): 升级变量判断兼容
