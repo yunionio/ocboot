@@ -24,7 +24,7 @@ class ComposeServiceInitService(ClusterService):
                  db_svc=None,
                  keystone_svc=None,
                  depend_svc=None,
-                 version="v3.10-20231222.3"):
+                 version="v3.11-0530.0"):
         super().__init__(f"{component_name}-{step}", version, image_name='compose-service-init')
 
         if not step:
