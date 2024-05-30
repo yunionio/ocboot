@@ -49,6 +49,12 @@
     when:
       node_ip is defined
 
+  # define var host_networks if not set.
+  - name: Set node_interface_name
+    include_role:
+      name: utils/set-hostnetworks
+    when: host_networks is undefined or host_networks == ''
+
   - name: construct host network args
     set_fact:
       join_args: "{{ join_args }} --host-networks {{ host_networks }} "
@@ -84,3 +90,4 @@
 - name: Include utils/k8s/kubelet/extra-args tasks
   include_role:
     name: utils/k8s/kubelet/extra-args
+

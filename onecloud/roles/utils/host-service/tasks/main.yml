@@ -1,14 +1,6 @@
-- block:
-
-  - name: Set node_interface_name
-    include_role:
-      name: utils/fetch-node-interface
-
-  - name: Set host_networks to {{ node_interface_name }}/br0/{{ node_ip }}
-    set_fact:
-      host_networks: '{{ node_interface_name }}/br0/{{ node_ip }}'
-
-  when: host_networks is undefined or host_networks == ''
+- name: Set node_interface_name
+  include_role:
+    name: utils/set-hostnetworks
 
 - name: Set host_enable_hugepage to true
   set_fact:
