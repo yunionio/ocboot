@@ -12,6 +12,18 @@
       dest: /etc/sysconfig/kubelet
     become: true
 
+  - name: Check if kube-apiserver.yaml exists
+    stat:
+      path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    register: kube_apiserver_yaml_stat
+
+  - name: Check and insert TLS cipher suite line in kube-apiserver.yaml
+    ansible.builtin.lineinfile:
+      path: /etc/kubernetes/manifests/kube-apiserver.yaml
+      insertafter: '    - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key'
+      line: '    - --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_128_CBC_SHA'
+    when: kube_apiserver_yaml_stat.stat.exists
+
   - name: "Restart kubelet"
     systemd:
       name: kubelet
