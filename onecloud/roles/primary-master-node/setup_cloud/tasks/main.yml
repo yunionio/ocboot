@@ -298,26 +298,34 @@
 
 - debug: var=adm0_cmd
 
-- name: "Register adm0 network for {{ default_ip }}/{{ default_masklen }}, gateway {{ default_gateway }}"
-  shell: |
-    source ~/.onecloud_rcadmin
-    {{ adm0_cmd }}
-  when: network_admin_exist.rc != 0 and admin_network_count|int == 0
-  become: yes
-  args:
-    executable: /bin/bash
-  register: run_create_adm0
-  until: run_create_adm0.rc == 0
-  retries: 3
-  delay: 15
+# as of zentao/task-view-4914.html
+- block:
+  - name: "Register adm0 network for {{ default_ip }}/{{ default_masklen }}, gateway {{ default_gateway }}"
+    shell: |
+      source ~/.onecloud_rcadmin
+      {{ adm0_cmd }}
+    when: network_admin_exist.rc != 0 and admin_network_count|int == 0
+    become: yes
+    args:
+      executable: /bin/bash
+    register: run_create_adm0
+    until: run_create_adm0.rc == 0
+    retries: 3
+    delay: 15
+    failed_when: false
 
-- name: Make network adm0 private
-  shell: |
-    source ~/.onecloud_rcadmin
-    /opt/yunion/bin/climc network-private adm0
-  become: yes
-  args:
-    executable: /bin/bash
+  - name: Make network adm0 private
+    shell: |
+      source ~/.onecloud_rcadmin
+      /opt/yunion/bin/climc network-private adm0
+    become: yes
+    args:
+      executable: /bin/bash
+    retries: 3
+    delay: 15
+    failed_when: false
+  when:
+  - product_version | default("") in ['FullStack', 'Edge']
 
 - name: rm sync-user option
   include_role:
