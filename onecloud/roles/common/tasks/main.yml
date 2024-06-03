@@ -2,20 +2,6 @@
 - name: checking ports
   include_role:
     name: utils/misc-check
-
-- name: Set facts
-  set_fact:
-    major_version_task_file: "{{ onecloud_major_version }}_{{ online_status }}.yml"
-
-- name: Import task "{{ major_version_task_file }}"
-  include_tasks: "{{item}}"
-  with_first_found:
-  - files:
-      - "{{ major_version_task_file }}"
-      - "{{ ansible_distribution | lower}}_offline.yml"
-      - offline.yml
-    skip: false
-
 # onecloud/roles/common/tasks/
 - name: Import OS Arch tasks
   include_tasks: "{{ item }}"
