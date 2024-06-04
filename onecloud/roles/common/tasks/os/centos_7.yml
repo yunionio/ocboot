@@ -1,6 +1,6 @@
 - name: Add cloud rpm repository for {{ ansible_distribution }} {{ ansible_distribution_version }}
   get_url:
-    url: https://iso.yunion.cn/centos/7/3.10/{{ansible_architecture}}/yunion.repo
+    url: https://iso.yunion.cn/centos/7/{{ onecloud_version_abbr }}/{{ansible_architecture}}/yunion.repo
     dest: /etc/yum.repos.d/yunion.repo
     validate_certs: no
   become: yes
