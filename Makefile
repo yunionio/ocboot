@@ -22,5 +22,5 @@ image:
 generate-docker-compose-manifests:
 	VERSION=$(VERSION) python3 ./generate-compose.py > ./compose/docker-compose.yml
 	@if [ -n "$(OLD_VERSION)" ] && [ -n "$(VERSION)" ]; then \
-		perl -pi -e "s#$(OLD_VERSION)#$(VERSION)#" $$(find . -type f \( -iname \*.py -o -iname \*.yaml -o -iname \*.sh \) ! -path "./.git/*" ); \
+		perl -pi -e "s#$(OLD_VERSION)#$(VERSION)#" $$(find . -type f \( -iname \*.py -o -iname \*.yaml -o -iname \*.sh -o -iname VERSION \) ! -path "./.git/*" ); \
 	fi
