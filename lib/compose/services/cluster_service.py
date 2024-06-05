@@ -1,6 +1,12 @@
+import os
+
 from lib.compose.object import Service, ServiceDataVolume
 from lib.compose import SERVICE_RESTART_ON_FAILURE
 from lib.compose.object import DependOn
+
+
+def COMPOSE_SERVICE_INIT_VERSION():
+    return os.environ.get('VERSION', 'v3.11-0530.0')
 
 
 class ClusterService(Service):
@@ -24,7 +30,7 @@ class ComposeServiceInitService(ClusterService):
                  db_svc=None,
                  keystone_svc=None,
                  depend_svc=None,
-                 version="v3.11-0530.0"):
+                 version=COMPOSE_SERVICE_INIT_VERSION()):
         super().__init__(f"{component_name}-{step}", version, image_name='compose-service-init')
 
         if not step:
