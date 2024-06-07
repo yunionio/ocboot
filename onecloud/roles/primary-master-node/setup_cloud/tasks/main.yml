@@ -110,7 +110,7 @@
 
 - name: Create onecloud cluster CRD
   shell: |
-    KUBECONFIG=~/.kube/config {{ K3S_CMDLINE_PREFIX }} kubectl apply -f /tmp/onecloud-manifests.yaml
+    KUBECONFIG={{ENV_KUBECONFIG}} {{ K3S_CMDLINE_PREFIX }} kubectl apply -f /tmp/onecloud-manifests.yaml
   register: result
   until: result.rc == 0
   retries: 6

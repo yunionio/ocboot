@@ -1,10 +1,6 @@
 #!/bin/bash
 
-if [[ "{{ k8s_or_k3s }}" == "k8s" ]]; then
-	export KUBECONFIG=/etc/kubernetes/admin.conf
-elif [[ "{{ k8s_or_k3s }}" == "k3s" ]]; then
-	export KUBECONFIG=~/.kube/config
-fi
+export KUBECONFIG="{{ ENV_KUBECONFIG }}"
 
 services="
 onecloud-operator

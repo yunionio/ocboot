@@ -5,7 +5,7 @@
 
 - name: patch {{ resource }} {{ namespace }}/{{ resource_name }} onecloud.yunion.io/controller node selector
   shell: |
-    KUBECONFIG=/etc/kubernetes/admin.conf kubectl patch {{ resource }} -n {{ namespace }} {{ resource_name }} --patch "$(cat /tmp/{{ resource_name }}.patch.yml)" --type merge && rm -f /tmp/{{ resource_name }}.patch.yml
+    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl patch {{ resource }} -n {{ namespace }} {{ resource_name }} --patch "$(cat /tmp/{{ resource_name }}.patch.yml)" --type merge && rm -f /tmp/{{ resource_name }}.patch.yml
   become: yes
   args:
     executable: /bin/bash

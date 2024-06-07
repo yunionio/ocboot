@@ -1,17 +1,17 @@
 ---
 - name: switch to EE
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
     PATH: /opt/yunion/bin:{{ ansible_env.PATH }}
   shell: |
       source <(/opt/yunion/bin/ocadm cluster rcadmin)
       ocadm cluster update --use-ee --wait
-      kubectl -n onecloud patch onecloudcluster default --type='json' -p="[{'op': 'replace', 'path': '/spec/web/imageName', 'value': 'web-ee'}]"
-      kubectl delete configmap -n onecloud default-web
-      kubectl rollout restart deployment -n onecloud default-web
+      {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud patch onecloudcluster default --type='json' -p="[{'op': 'replace', 'path': '/spec/web/imageName', 'value': 'web-ee'}]"
+      {{ K3S_CMDLINE_PREFIX }} kubectl delete configmap -n onecloud default-web
+      {{ K3S_CMDLINE_PREFIX }} kubectl rollout restart deployment -n onecloud default-web
       sleep 3
       while true; do
-        pod=$(kubectl -n onecloud get pods |grep -v '^NAME' |grep -vi run |awk '{print $1}')
+        pod=$({{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud get pods |grep -v '^NAME' |grep -vi run |awk '{print $1}')
         if [ -z "$pod" ]; then
           echo all running
           break

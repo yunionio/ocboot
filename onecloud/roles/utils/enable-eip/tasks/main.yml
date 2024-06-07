@@ -1,6 +1,6 @@
 - name: test var enable_eip_man
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
   shell: |
     source <(/opt/yunion/bin/fetch-rcadmin.sh cluster rcadmin)
     if grep -q '^sdn_enable_eip_man:' /etc/yunion/host.conf; then
@@ -8,7 +8,7 @@
     else
       echo 'sdn_enable_eip_man: true' >> /etc/yunion/host.conf
     fi
-    kubectl rollout restart ds -n onecloud default-host
+    {{ K3S_CMDLINE_PREFIX }} kubectl rollout restart ds -n onecloud default-host
   args:
     executable: /bin/bash
   become: yes

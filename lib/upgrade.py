@@ -7,6 +7,7 @@ from .ansible import AnsibleBastionHost
 from .cmd import run_ansible_playbook
 from .utils import get_major_version
 from .cluster import construct_cluster
+from .ocboot import get_ansible_global_vars
 from . import consts
 from getpass import getuser
 from lib import utils
@@ -195,7 +196,7 @@ class UpgradeConfig(object):
         return "https://iso.yunion.cn/centos/7/%s/x86_64/yunion.repo" % (ver)
 
     def to_ansible_vars(self):
-        return {
+        ret = {
             "current_onecloud_version": self.current_onecloud_version,
             "current_onecloud_major_version": self.current_onecloud_major_version,
             "upgrade_onecloud_version": self.upgrade_onecloud_version,
@@ -204,3 +205,6 @@ class UpgradeConfig(object):
             "yunion_yum_repo": self.get_yunion_yum_repo(),
             "yunion_qemu_package": "yunion-qemu-4.2.0",
         }
+        g_var = get_ansible_global_vars(self.current_onecloud_version)
+        ret.update(g_var)
+        return ret

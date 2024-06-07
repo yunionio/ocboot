@@ -1,27 +1,69 @@
 ---
-# This role contains common plays that will run on all nodes
+
+- name: set var
+  set_fact:
+    k8s_controlplane_host: "{{ hostvars[inventory_hostname]['groups']['primary_master_node'][0] }}"
+  run_once: true
+  when:
+  - k8s_controlplane_host | default('') | length == 0
+
+- name: Assert k8s_controlplane_host
+  fail:
+    msg: "k8s_controlplane_host is not defined. "
+  when:
+  - k8s_controlplane_host | default('') | length == 0
+
+- name: set k8s cmdline env
+  set_fact:
+    k8s_or_k3s: "k8s"
+    K3S_CMDLINE_PREFIX: ''
+    ENV_KUBECONFIG: '/etc/kubernetes/admin.conf'
+
+- name: set k3s cmdline env
+  set_fact:
+    k8s_or_k3s : "k3s"
+    K3S_CMDLINE_PREFIX: 'k3s'
+    ENV_KUBECONFIG: "{{ '~/.kube/config' | expanduser }}"
+  when:
+  - env_k8s_or_k3s | default('k8s')  == 'k3s'
+
 - block:
-  - name: set var
+  - name: stat k3s bin
+    stat:
+      path: /usr/local/bin/k3s
+    register: k3s_bin
+    delegate_to: "{{ k8s_controlplane_host }}"
+
+  - name: stat k3s config
+    stat:
+      path: /root/.kube/config
+    register: k3s_config
+    delegate_to: "{{ k8s_controlplane_host }}"
+
+  - name: set k3s var
     set_fact:
-      k8s_controlplane_host: "{{ hostvars[inventory_hostname]['groups']['primary_master_node'][0] }}"
-    run_once: true
+      k8s_or_k3s: "k3s"
+      K3S_CMDLINE_PREFIX: 'k3s'
+      ENV_KUBECONFIG: "{{ '~/.kube/config' | expanduser }}"
     when:
-    - k8s_controlplane_host | default('') | length == 0
+    - k3s_bin.stat.exists | default(false) == true
+    - k3s_config.stat.exists | default(false) == true
+  when:
+  - env_k8s_or_k3s | default('') == 'k8s'
 
-  - name: Assert k8s_controlplane_host
-    fail:
-      msg: "k8s_controlplane_host is not defined. "
-    when:
-    - k8s_controlplane_host | default('') | length == 0
+- debug: var=ENV_KUBECONFIG
+- debug: var=K3S_CMDLINE_PREFIX
 
+- block:
   - name: Set Onecloud Version If Not Defined
     environment:
-      KUBECONFIG: /etc/kubernetes/admin.conf
+      KUBECONFIG: "{{ ENV_KUBECONFIG }}"
     shell: |
-      kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}'
+      {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud get onecloudclusters default -o=jsonpath='{.spec.version}'
     register: k8s_oc_ver
     delegate_to: "{{ k8s_controlplane_host }}"
     run_once: true
+    become: true
 
   - name: Set K8s Version
     set_fact:

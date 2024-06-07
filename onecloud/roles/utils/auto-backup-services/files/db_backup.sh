@@ -24,7 +24,7 @@ export PV_ARGS='pv --wait --timer --rate --eta --size '
 export MAX_DISK_PERCENTAGE=${MAX_DISK_PERCENTAGE:-75}
 export K3S_CMDLINE_PREFIX=
 
-if hash k3s &>/dev/null; then
+if hash k3s && [[ -s ~/.kube/config ]] &>/dev/null; then
     export KUBECONFIG=~/.kube/config
     export K3S_CMDLINE_PREFIX=k3s
 fi

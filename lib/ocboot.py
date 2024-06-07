@@ -30,7 +30,7 @@ KEY_AS_HOST = 'as_host'
 KEY_AS_HOST_ON_VM = 'as_host_on_vm'
 KEY_EXTRA_PACKAGES = 'extra_packages'
 
-KEY_K8S_OR_K3S = 'k8s_or_k3s'
+KEY_K8S_OR_K3S = 'env_k8s_or_k3s'
 KEY_K3S_API_ENDPOINT = "api_endpoint"
 KEY_K3S_API_PORT = "api_port"
 KEY_K3S_AIRGAP_DIR = "airgap_dir"
@@ -45,7 +45,6 @@ KEY_STACK_CMP = 'CMP'
 KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
 
 KEY_USER_DNS = 'user_dns'
-K3S_CMDLINE_PREFIX = 'K3S_CMDLINE_PREFIX'
 
 def load_config(config_file):
     import yaml
@@ -65,7 +64,6 @@ def get_ansible_global_vars(version):
         KEY_K3S_AIRGAP_DIR: k3s.GET_AIRGAP_DIR(),
         KEY_K3S_TOKEN: VAL_K3S_TOKEN,
         KEY_K8S_OR_K3S: 'k3s' if _is_using_k3s else 'k8s',      # for path, eg: utils/k8s/kubelet or utils/k3s/kubelet,
-        K3S_CMDLINE_PREFIX: 'k3s' if _is_using_k3s else '',     # for commandline prefix, eg: k3s kubexxx
     }
 
     # set yunion_qemu_package for pre released version
