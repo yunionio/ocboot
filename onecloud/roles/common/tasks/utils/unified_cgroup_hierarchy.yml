@@ -4,6 +4,9 @@
   ignore_errors: true
   failed_when: false
 
+- debug: var=unified_cgroup_hierarchy.rc
+- debug: var=unified_cgroup_hierarchy.stdout
+
 - block:
   - name: Append systemd.unified_cgroup_hierarchy=0 to GRUB_CMDLINE_LINUX
     shell: |
@@ -21,22 +24,21 @@
   - name: Update GRUB
     command: update-grub
 
-  - name: "Reboot the system because GRUB updated. You can rerun this script when system running"
-    shell: reboot
-    args:
-      executable: /bin/bash
-    become: yes
-    ignore_errors: yes
+  - name: Reboot the system
+    reboot:
+      reboot_timeout: 600
+    async: 30
+    poll: 0
+    ignore_errors: true
 
-  - name: Wait for the system to reboot
-    wait_for:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port | default(22) }}"
-      state: started
+  - name: Wait for the system to come back online
+    become: yes
+    wait_for_connection:
       delay: 15
-      timeout: 300
-    delegate_to: localhost
-    become: false
+      timeout: 600
+    vars:
+      ansible_connection: smart
+      ansible_ssh_host: "{{ ansible_host }}"  #
 
   when:
   - unified_cgroup_hierarchy.rc != 0

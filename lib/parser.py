@@ -82,6 +82,13 @@ def inject_add_hostagent_options(parser):
                         help="enable kvm host service inside virtual machine")
 
 
+def inject_add_nodes_runtime_options(parser):
+    parser.add_argument("--runtime",
+                        dest="runtime",
+                        default='qemu',
+                        choices=['qemu', 'containerd'],
+                        help="select runtime type when adding node. default: qemu")
+
 def inject_auto_backup_options(parser):
     parser.add_argument(
         '--backup-path', help="backup path, default: /opt/yunion/backup", default="/opt/yunion/backup")

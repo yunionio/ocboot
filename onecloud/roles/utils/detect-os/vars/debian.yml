@@ -40,11 +40,13 @@ common_services:
     - ntp
     - yunion-executor
 
+debian_latest_version_tag: "{% if onecloud_version | regex_search('^master') %}20{% else %}{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('') }}{% endif %}"
+
 latest_packages:
     - ca-certificates
-    - "yunion-climc={{ onecloud_version_abbr }}*"
-    - "yunion-climc-ee={{ onecloud_version_abbr }}*"
-    - "yunion-ocadm={{ onecloud_version_abbr }}*"
+    - "yunion-climc={{ debian_latest_version_tag }}*"
+    - "yunion-climc-ee={{ debian_latest_version_tag }}*"
+    - "yunion-ocadm={{ debian_latest_version_tag }}*"
 
 k8s_packages:
     - docker-ce

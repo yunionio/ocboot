@@ -31,6 +31,7 @@
     executable: /bin/bash
   when:
   - online_status | default('') == 'online'
+  - is_centos | default(false) == true
 
 - name: Add cloud rpm repository for Kylin
   get_url:
