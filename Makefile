@@ -24,3 +24,7 @@ generate-docker-compose-manifests:
 	@if [ -n "$(OLD_VERSION)" ] && [ -n "$(VERSION)" ]; then \
 		perl -pi -e "s#$(OLD_VERSION)#$(VERSION)#" $$(find . -type f \( -iname \*.py -o -iname \*.yaml -o -iname \*.sh -o -iname VERSION \) ! -path "./.git/*" ); \
 	fi
+
+generate-baremetal-compose-manifests:
+	VERSION=$(VERSION) PRODUCT_VERSION=Baremetal \
+		python3 ./generate-compose.py > bareman/compose/docker-compose.yml

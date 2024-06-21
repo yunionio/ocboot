@@ -97,6 +97,7 @@ class Service(ComposeObject):
         self.healthcheck = None
         self.restart = None
         self.privileged = False
+        self.network_mode = None
 
     def get_name(self):
         return self.name
@@ -105,12 +106,21 @@ class Service(ComposeObject):
         self.volumes = self.volumes + list(vol)
         return self
 
+    def get_volumes(self):
+        return self.volumes
+
     def add_port(self, *port):
         self.ports = self.ports + list(port)
         return self
 
     def enable_privileged(self):
         self.privileged = True
+
+    def use_host_network(self):
+        self.network_mode = "host"
+
+    def is_host_network(self):
+        return self.network_mode == "host"
 
     def add_environment(self, env):
         for key in env:
@@ -162,13 +172,16 @@ class Service(ComposeObject):
     def set_restart_on_failure(self):
         return self.set_restart(SERVICE_RESTART_ON_FAILURE)
 
+    def get_ports(self):
+        return self.ports
+
     def to_output(self):
         data = {
             "image": self.image,
         }
 
-        self.inject_data(data, "ports", self.ports, list_as_dict=False)
-        self.inject_data(data, "volumes", self.volumes, list_as_dict=False)
+        self.inject_data(data, "ports", self.get_ports(), list_as_dict=False)
+        self.inject_data(data, "volumes", self.get_volumes(), list_as_dict=False)
         self.inject_data(data, "environment", self.environment)
         self.inject_data(data, "env_file", self.env_file)
         self.inject_data(data, "depends_on", self.depends_on)
@@ -177,6 +190,8 @@ class Service(ComposeObject):
         self.inject_data(data, "restart", self.restart)
         if self.privileged:
             self.inject_data(data, "privileged", self.privileged)
+        if self.network_mode:
+            self.inject_data(data, "network_mode", self.network_mode)
 
         return data
 
@@ -210,12 +225,13 @@ class ServiceDataVolume(ServiceVolume):
 
 class ServicePort(ComposeObject):
 
-    def __init__(self, src, target):
+    def __init__(self, src, target, protocol='tcp'):
         self.src_port = src
         self.target_port = target
+        self.protocol = protocol
 
     def __str__(self):
-        return '%s:%s' % (self.src_port, self.target_port)
+        return '%s:%s/%s' % (self.src_port, self.target_port, self.protocol)
 
     def to_output(self):
         return self.__str__()
