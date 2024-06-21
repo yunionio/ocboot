@@ -1,8 +1,9 @@
 import os
 
-from lib.compose.object import Service, ServiceDataVolume
+from lib.compose.object import Service, ServiceDataVolume, ServicePort
 from lib.compose import SERVICE_RESTART_ON_FAILURE
 from lib.compose.object import DependOn
+from lib.compose import options
 
 
 def COMPOSE_SERVICE_INIT_VERSION():
@@ -30,11 +31,14 @@ class ComposeServiceInitService(ClusterService):
                  db_svc=None,
                  keystone_svc=None,
                  depend_svc=None,
-                 version=COMPOSE_SERVICE_INIT_VERSION()):
+                 version='v3.11-0620.0',
+                 product_version="CMP"):
         super().__init__(f"{component_name}-{step}", version, image_name='compose-service-init')
 
         if not step:
             raise Exception("step is required")
+
+        pv = os.getenv("PRODUCT_VERSION", product_version)
 
         self.component_name = component_name
         self.db_svc = db_svc
@@ -45,6 +49,7 @@ class ComposeServiceInitService(ClusterService):
             "--config-dir=/",
             f"--component={self.component_name}",
             f"--step={step}",
+            f"--product-version={pv}",
         ]
         if self.db_svc:
             cmd = cmd + [
@@ -56,6 +61,10 @@ class ComposeServiceInitService(ClusterService):
 
         self.set_command(*cmd)
         self.add_volume(vol)
+        if options.has_public_ip():
+            self.add_environment({
+                "PUBLIC_IP": "$PUBLIC_IP",
+            })
         if self.db_svc:
             self.depend_on_health(db_svc)
         if keystone_svc:
@@ -68,11 +77,11 @@ class ComposeServiceInitService(ClusterService):
 
 
 class ClusterCommonService(ClusterService):
-
     YUNION_BIN_PATH = "/opt/yunion/bin/"
     YUNION_ETC_PATH = "/etc/yunion/"
     YUNION_CLOUD_PATH = "/opt/cloud"
-    YUNION_GLANCE_DATA_PATH = f'{YUNION_CLOUD_PATH}/workspace/data/glance'
+    YUNION_CLOUD_WORKSPACE_PATH = "/opt/cloud/workspace"
+    YUNION_GLANCE_DATA_PATH = f'{YUNION_CLOUD_WORKSPACE_PATH}/data/glance'
     YUNION_RUN_ONECLOUD_PATH = "/var/run/onecloud"
     YUNION_RUN_VMWARE_PATH = "/var/run/vmware"
     YUNION_CERTS_PATH = YUNION_ETC_PATH + "pki/"
@@ -107,6 +116,12 @@ class ClusterCommonService(ClusterService):
         if self.port >= 0:
             self.set_healthcheck(f"netstat -tln | grep -c {self.port}")
         self.set_restart_on_failure()
+
+    def get_ports(self):
+        if self.port >= 0:
+            if options.has_public_ip() and not self.is_host_network():
+                self.add_port(ServicePort(self.port, self.port, 'tcp'))
+        return super().get_ports()
 
     def get_command(self):
         cmd = [
