@@ -45,3 +45,4 @@ onecloud/zz_generated.*
 config-allinone-current.yml
 
 compose/data
+bareman
