@@ -1,4 +1,4 @@
-from lib.compose.object import ServiceVolume, ServiceDataVolume
+from lib.compose.object import ServiceVolume, ServiceDataVolume, ServicePort
 from lib.compose.services.cluster_service import ClusterService, ComposeServiceInitService, ClusterCommonService
 from lib.compose.services.mysql import MysqlService
 from lib.compose.services.etcd import EtcdService
@@ -6,9 +6,11 @@ from lib.compose.services.climc import ClimcService
 from lib.compose.services.kubeserver import KubeServerService
 from lib.compose.services.web import WebService
 from lib.compose.services.influxdb import InfluxdbService
+from lib.compose import options
 
 SVC_KEYSTONE = "keystone"
 SVC_PORT_KEYSTONE = 30500
+SVC_PORT_KEYSTONE_2 = 30357
 
 SVC_REGION = "region"
 SVC_PORT_REGION = 30888
@@ -66,6 +68,8 @@ def new_cloud_service(name, version, port,
 
 def new_keystone_service(version, db_svc, etcd_svc):
     svc = new_cloud_service(SVC_KEYSTONE, version, SVC_PORT_KEYSTONE, db_svc)
+    if options.has_public_ip():
+        svc.add_port(ServicePort(SVC_PORT_KEYSTONE_2, SVC_PORT_KEYSTONE_2))
     svc.depend_on_health(etcd_svc)
     return svc
 
@@ -97,7 +101,8 @@ def new_glance_service(version, db_svc, keystone_svc, hostdeployer_svc):
 
 
 def new_esxi_agent_service(version, keystone_svc, region_svc):
-    svc = new_cloud_service(SVC_ESXI_AGENT, version, SVC_PORT_ESXI_AGENT, keystone_svc=keystone_svc, depend_svc=region_svc)
+    svc = new_cloud_service(SVC_ESXI_AGENT, version, SVC_PORT_ESXI_AGENT, keystone_svc=keystone_svc,
+                            depend_svc=region_svc)
     svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_VMWARE_PATH))
     svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_ONECLOUD_PATH))
     svc.add_volume(ServiceDataVolume(svc.YUNION_CLOUD_PATH))
@@ -105,7 +110,8 @@ def new_esxi_agent_service(version, keystone_svc, region_svc):
 
 
 def new_apigateway_service(version, keystone_svc, depend_svc):
-    return new_cloud_service(SVC_APIGATEWAY, version, SVC_PORT_APIGATEWAY, keystone_svc=keystone_svc, depend_svc=depend_svc)
+    return new_cloud_service(SVC_APIGATEWAY, version, SVC_PORT_APIGATEWAY, keystone_svc=keystone_svc,
+                             depend_svc=depend_svc)
 
 
 def new_webconsole_service(version, db_svc, keystone_svc):
