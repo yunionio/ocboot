@@ -46,6 +46,7 @@ KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
 
 KEY_USER_DNS = 'user_dns'
 
+
 def load_config(config_file):
     import yaml
     with open(config_file) as f:
@@ -161,7 +162,6 @@ class OcbootConfig(object):
         return filepath
 
     def get_login_info(self):
-        # TODO 验证接口、参数是否 OK
         if self.primary_master_config is None:
             return None
         p_master_config = self.primary_master_config

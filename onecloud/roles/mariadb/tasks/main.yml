@@ -43,9 +43,17 @@
   loop_control:
     loop_var: package_item
 
-- name: pips for mysql/mariadb online
+- name: Get pip version
+  shell: |
+    /usr/bin/python3 -m pip --version | awk '{print $2}'
+  register: pip_version
+
+# the --break-system-packages is introduced since pip 23.
+# this block has been properly tested on all supported platforms as in https://www.cloudpods.org/docs/getting-started/onpremise/quickstart-virt
+- name: Pips for mysql/mariadb online
   pip:
     name: "{{ pip_item }}"
+    extra_args: "{{ pip_version.stdout is version('23', '>=') | ternary('--break-system-packages', omit) }}"
   vars:
     ansible_python_interpreter: /usr/bin/python3
   when:
