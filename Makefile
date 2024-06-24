@@ -26,4 +26,4 @@ generate-docker-compose-manifests:
 
 generate-baremetal-compose-manifests:
 	VERSION=$(VERSION) PRODUCT_VERSION=Baremetal \
-		python3 ./generate-compose.py > bareman/compose/docker-compose.yml
+		python3 ./generate-compose.py > compose/baremetal/docker-compose.yml
