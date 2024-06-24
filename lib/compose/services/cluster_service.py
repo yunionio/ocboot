@@ -31,7 +31,7 @@ class ComposeServiceInitService(ClusterService):
                  db_svc=None,
                  keystone_svc=None,
                  depend_svc=None,
-                 version='v3.11-0625.0',
+                 version='v3.11-0626.1',
                  product_version="CMP"):
         super().__init__(f"{component_name}-{step}", version, image_name='compose-service-init')
 
