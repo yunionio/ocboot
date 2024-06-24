@@ -47,7 +47,11 @@ services:
       start_period: 30s
     restart: on-failure
   keystone-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -87,7 +91,11 @@ services:
       start_period: 30s
     restart: on-failure
   keystone-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -106,7 +114,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   host-deployer-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     command:
@@ -136,7 +148,11 @@ services:
     restart: on-failure
     privileged: true
   logger-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -176,7 +192,11 @@ services:
       start_period: 30s
     restart: on-failure
   logger-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -195,7 +215,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   notify-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -235,7 +259,11 @@ services:
       start_period: 30s
     restart: on-failure
   notify-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -254,7 +282,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   influxdb-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -286,7 +318,11 @@ services:
       start_period: 30s
     restart: on-failure
   influxdb-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -299,7 +335,11 @@ services:
     - --step=post-init
     restart: on-failure
   region-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -339,7 +379,11 @@ services:
       start_period: 30s
     restart: on-failure
   region-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -358,7 +402,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   scheduler-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -397,7 +445,11 @@ services:
       start_period: 30s
     restart: on-failure
   scheduler-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -416,7 +468,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   scheduledtask-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -455,7 +511,11 @@ services:
       start_period: 30s
     restart: on-failure
   scheduledtask-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -474,7 +534,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   glance-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -516,7 +580,11 @@ services:
       start_period: 30s
     restart: on-failure
   glance-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -534,8 +602,13 @@ services:
     - --mysql-user=root
     - --mysql-password=your-sql-password
     restart: on-failure
+<<<<<<< HEAD:compose/docker-compose.yml
   kubeserver-init:
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+  baremetal-agent-init:
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -575,8 +648,15 @@ services:
       retries: 10
       start_period: 30s
     restart: on-failure
+<<<<<<< HEAD:compose/docker-compose.yml
   kubeserver-post-init:
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    privileged: true
+    network_mode: host
+  baremetal-agent-post-init:
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -595,7 +675,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   ansibleserver-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -635,7 +719,11 @@ services:
       start_period: 30s
     restart: on-failure
   ansibleserver-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -654,7 +742,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   climc-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     environment:
@@ -685,7 +777,11 @@ services:
     - "/opt/climc-entrypoint.sh"
     restart: on-failure
   yunionconf-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -725,7 +821,11 @@ services:
       start_period: 30s
     restart: on-failure
   yunionconf-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -744,7 +844,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   apigateway-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -777,7 +881,11 @@ services:
       start_period: 30s
     restart: on-failure
   apigateway-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -790,7 +898,11 @@ services:
     - --step=post-init
     restart: on-failure
   webconsole-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -830,7 +942,11 @@ services:
       start_period: 30s
     restart: on-failure
   webconsole-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -849,7 +965,11 @@ services:
     - --mysql-password=your-sql-password
     restart: on-failure
   monitor-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -889,7 +1009,11 @@ services:
       start_period: 30s
     restart: on-failure
   monitor-post-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     depends_on:
@@ -1060,7 +1184,11 @@ services:
     - --step=post-init
     restart: on-failure
   web-init:
+<<<<<<< HEAD:compose/docker-compose.yml
     image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11.4
+=======
+    image: registry.cn-beijing.aliyuncs.com/yunionio/compose-service-init:v3.11-0626.1
+>>>>>>> feat: baremetal compose file:compose/baremetal/docker-compose.yml
     volumes:
     - ./data/etc/yunion/:/etc/yunion/
     - ./data/etc/nginx/conf.d/:/etc/nginx/conf.d/
