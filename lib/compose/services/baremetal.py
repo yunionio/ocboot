@@ -19,6 +19,9 @@ class BaremetalService(ClusterCommonService):
         # self.add_port(ServicePort(http_port, http_port, 'tcp'))
 
     def get_command(self):
-        cmd = [self.get_bin_path(), "--auth-url", "https://${PUBLIC_IP}:30357/v3", "--listen-interface",
-               "${LISTEN_INTERFACE}", "--config", self.get_config_path()]
+        cmd = [self.get_bin_path(),
+               "--auth-url", "https://${PUBLIC_IP}:30357/v3",
+               "--listen-interface", "${LISTEN_INTERFACE}",
+               "--session-endpoint-type", "public",
+               "--config", self.get_config_path()]
         return cmd

@@ -197,11 +197,13 @@ class Service(ComposeObject):
 
 
 class ServiceVolume(ComposeObject):
+    BIND_PROPAGATION_SHARED = "shared"
 
-    def __init__(self, src, target, readonly=False):
+    def __init__(self, src, target, readonly=False, bind=None):
         self.src = src
         self.target = target
         self.readonly = readonly
+        self.bind = bind
 
     def __str__(self):
         ret = '%s:%s' % (self.src, self.target)
@@ -210,17 +212,28 @@ class ServiceVolume(ComposeObject):
         return ret
 
     def to_output(self):
-        return self.__str__()
+        if self.bind:
+            return {
+                "type": "bind",
+                "source": self.src,
+                "target": self.target,
+                "read_only": self.readonly,
+                "bind": {
+                    "propagation": self.bind,
+                },
+            }
+        else:
+            return self.__str__()
 
 
 class ServiceDataVolume(ServiceVolume):
     SRC_DATA_DIR = "./data"
 
-    def __init__(self, target_dir, readonly=False):
+    def __init__(self, target_dir, readonly=False, bind=None):
         super().__init__(
             self.SRC_DATA_DIR + target_dir,
             target_dir,
-            readonly=readonly)
+            readonly=readonly, bind=bind)
 
 
 class ServicePort(ComposeObject):
