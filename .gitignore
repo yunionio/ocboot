@@ -45,6 +45,7 @@ onecloud/zz_generated.*
 config-allinone-current.yml
 
 compose/data
+compose/baremetal/data
 airgap_assets/k3s
 airgap_assets/k3s-arm64
 airgap_assets/*.tar
