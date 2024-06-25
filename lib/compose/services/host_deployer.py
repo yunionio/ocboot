@@ -9,8 +9,8 @@ class HostDeployerService(ClusterCommonService):
         self.enable_privileged()
         self.add_volume(ServiceVolume("/dev", "/dev"))
         self.add_volume(ServiceVolume("/sys", "/sys"))
-        self.add_volume(ServiceDataVolume(self.YUNION_RUN_ONECLOUD_PATH))
-        self.add_volume(ServiceDataVolume(self.YUNION_RUN_VMWARE_PATH))
+        self.add_volume(ServiceDataVolume(self.YUNION_RUN_ONECLOUD_PATH, bind=ServiceVolume.BIND_PROPAGATION_SHARED))
+        self.add_volume(ServiceDataVolume(self.YUNION_RUN_VMWARE_PATH, bind=ServiceVolume.BIND_PROPAGATION_SHARED))
         self.add_volume(ServiceDataVolume(self.YUNION_CLOUD_PATH))
 
     def get_command(self):
