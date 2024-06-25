@@ -5,4 +5,6 @@ spec:
       - command:
         - /bin/onecloud-controller-manager
         - -clear-component
+        {% if k8s_or_k3s | default('') == 'k3s' %}- -disable-init-crd{% endif %}
+
         name: onecloud-operator

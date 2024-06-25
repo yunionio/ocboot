@@ -1,0 +1,9 @@
+- name: Copy wait-onecloud-services.sh
+  template:
+    src: "wait-onecloud-services.sh.j2"
+    dest: "/opt/yunion/bin/wait-onecloud-services.sh"
+    mode: '0755'
+  vars:
+    ENV_KUBECONFIG: "{{ ENV_KUBECONFIG | default('/etc/kubernetes/admin.conf') }}"
+    K3S_CMDLINE_PREFIX: "{{ K3S_CMDLINE_PREFIX | default('k8s') }}"
+
