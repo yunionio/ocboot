@@ -4,4 +4,6 @@ spec:
       containers:
       - command:
         - /bin/onecloud-controller-manager
+        {% if k8s_or_k3s | default('') == 'k3s' %}- -disable-init-crd{% endif %}
+
         name: onecloud-operator

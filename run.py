@@ -174,7 +174,7 @@ def check_env(ipaddr=None, pip_mirror=None):
 
     ignore_check = os.getenv("IGNORE_ALL_CHECKS")
     if ignore_check == "true":
-       return
+        return
     check_pip3()
     # check_ansible(pip_mirror)
     if match_ip4addr(ipaddr):
@@ -524,7 +524,6 @@ def main():
             install_packages(['python3-pip'])
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
-
     if match_ip4addr(ip_conf):
         conf = generate_config(ip_conf, stackDict.get(stack), user_dns)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:

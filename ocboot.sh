@@ -34,13 +34,25 @@ is_ocboot_subcmd() {
     return 1
 }
 
-if is_ocboot_subcmd $1; then
+if is_ocboot_subcmd "$1"; then
     CMD="ocboot.py"
 fi
 
-buildah run -t \
+buildah_version=$(buildah --version | awk '{print $3}')
+buildah_version_major=$(echo "$buildah_version" | awk -F. '{print $1}')
+buildah_version_minor=$(echo "$buildah_version" | awk -F. '{print $2}')
+
+buildah_extra_args=()
+
+# buildah accept --env since 1.23
+echo "buildah version: $buildah_version"
+if [[ $buildah_version_major -eq 1 ]] && [[ "$buildah_version_minor" -gt 23 ]]; then
+    buildah_extra_args+=(-e ANSIBLE_VERBOSITY="${ANSIBLE_VERBOSITY:-0}")
+fi
+
+buildah run -t "${buildah_extra_args[@]}" \
     --net=host \
     -v "$HOME/.ssh:/root/.ssh" \
     -v "$(pwd):/ocboot" \
     -v "$(pwd)/airgap_assets/k3s-install.sh:/airgap_assets/k3s-install.sh:ro" \
-    "$CONTAINER_NAME" $CMD $@
+    "$CONTAINER_NAME" $CMD "$@"

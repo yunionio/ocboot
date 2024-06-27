@@ -124,11 +124,9 @@
     dest: "/opt/yunion/bin/fetch-rcadmin.sh"
     mode: '0755'
 
-- name: Copy wait-onecloud-services.sh
-  template:
-    src: "wait-onecloud-services.sh.j2"
-    dest: "/opt/yunion/bin/wait-onecloud-services.sh"
-    mode: '0755'
+- name: Init waiter script
+  include_role:
+    name: utils/onecloud-waiter
 
 - name: "Execute `/opt/yunion/bin/wait-onecloud-services.sh` to wait essential services to be running. You can open another terminal and execute `kubectl get pods -n onecloud -w` to watch the process."
   shell: "bash /opt/yunion/bin/wait-onecloud-services.sh"
