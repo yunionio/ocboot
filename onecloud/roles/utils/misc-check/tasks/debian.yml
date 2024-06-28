@@ -1,6 +1,17 @@
+- name: set os var
+  set_fact:
+    max_allowed_debian_version_before: '12'
+
+- name: reset os var for k3s
+  set_fact:
+    max_allowed_debian_version_before: '13'
+  when:
+  - env_k8s_or_k3s | default('') == 'k3s'
+
 - name: Assert {{ ansible_distribution }} {{ ansible_distribution_version }} conditions
   assert:
     that:
     - "ansible_distribution_version is version('10', '>=')"
-    - "ansible_distribution_version is version('12', '<')"
+    - "ansible_distribution_version is version(max_allowed_debian_version_before, '<')"
+    fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} {{ ansible_architecture }} is not supported by {{ onecloud_version }} {{env_k8s_or_k3s | default('')}}"
 
