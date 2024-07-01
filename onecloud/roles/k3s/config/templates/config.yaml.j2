@@ -27,6 +27,9 @@ node-label:
 {% if join_as_host %}
   - onecloud.yunion.io/host=enable
 {% endif %}
+{% if enable_lbagent %}
+  - onecloud.yunion.io/lbagent=enable
+{% endif %}
 kubelet-arg:
   - "pod-manifest-path=/var/lib/rancher/k3s/agent/pod-manifests"
   - "eviction-hard=memory.available<200Mi,nodefs.available<1Gi,nodefs.inodesFree<5%,imagefs.available<1Gi"
