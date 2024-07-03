@@ -7,7 +7,7 @@ from lib.compose import options
 
 
 def COMPOSE_SERVICE_INIT_VERSION():
-    return os.environ.get('VERSION', 'v3.11-0530.0')
+    return os.environ.get('VERSION', 'v3.11-0626.1')
 
 
 class ClusterService(Service):
@@ -31,9 +31,8 @@ class ComposeServiceInitService(ClusterService):
                  db_svc=None,
                  keystone_svc=None,
                  depend_svc=None,
-                 version='v3.11-0626.1',
                  product_version="CMP"):
-        super().__init__(f"{component_name}-{step}", version, image_name='compose-service-init')
+        super().__init__(f"{component_name}-{step}", COMPOSE_SERVICE_INIT_VERSION(), image_name='compose-service-init')
 
         if not step:
             raise Exception("step is required")
