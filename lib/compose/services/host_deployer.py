@@ -5,7 +5,7 @@ from lib.compose.services.cluster_service import ClusterCommonService
 class HostDeployerService(ClusterCommonService):
 
     def __init__(self, version, keystone):
-        super().__init__("host-deployer", "master-0617.0", keystone_svc=keystone)
+        super().__init__("host-deployer", version, keystone_svc=keystone)
         self.enable_privileged()
         self.add_volume(ServiceVolume("/dev", "/dev"))
         self.add_volume(ServiceVolume("/sys", "/sys"))
