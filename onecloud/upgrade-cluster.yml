@@ -16,6 +16,10 @@
   roles:
     - { role: upgrade/worker_nodes }
 
+- hosts: primary_master_node:master_nodes
+  roles:
+    - { role: utils/k8s/apiserver/args }
+
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:
     - { role: utils/gpu-init }

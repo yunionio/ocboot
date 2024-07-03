@@ -77,6 +77,10 @@
   tags:
     - eip
 
+- hosts: primary_master_node:master_nodes
+  roles:
+    - utils/k8s/apiserver/args
+
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:
     - primary-master-node/reboot
