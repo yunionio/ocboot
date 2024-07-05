@@ -26,7 +26,7 @@
   copy:
     content: |
       [keyfile]
-      unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:br*
+      unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:br*;interface-name:v*
     dest: /etc/NetworkManager/conf.d/calico.conf
   become: true
   when:
