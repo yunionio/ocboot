@@ -3,21 +3,20 @@
 export KUBECONFIG="{{ ENV_KUBECONFIG }}"
 
 services=(
-	onecloud-operator
 	keystone
-	default-region-
+	region
 	scheduler
 	glance
 	apigateway
 	kubeserver
-	default-web-
+	web
 	webconsole
 	climc
 )
 
 check_svc() {
 	local svc="$1"
-	local status=$(kubectl get pods -n onecloud | grep "$svc" | grep -v Terminating | awk '{print $3}' | sort -u | xargs)
+	local status=$(kubectl get pods -n onecloud -l app=$svc | grep "$svc" | grep -v Terminating | awk '{print $3}' | sort -u | xargs)
 	if [[ "$status" == "Running" ]]; then
 		echo "true"
 	else

@@ -7,57 +7,18 @@ is_centos_based: true
 
 common_packages:
     - bash-completion
-    - boost-iostreams
-    - boost-random
-    - boost-system
-    - boost-thread
     - bridge-utils
-    - celt051
     - ceph-common
     - conntrack-tools
     - curl
     - fuse
-    - fuse-libs
-    - gssproxy
-    - ipset
-    - ipvsadm
     - jq
-    - keyutils
     - kmod
-    - libbasicobjects
-    - libcollection
-    - libini_config
-    - libjpeg-turbo
-    - libnfsidmap
-    - libogg
-    - libpath_utils
-    - libpcap
-    - librados2
-    - librbd1
-    - libref_array
-    - libtirpc
-    - libusb
-    - libusbx
-    - libverto-libevent
-    - lm_sensors-libs
     - nfs-utils
-    - nmap-ncat
-    - openvswitch
+    - openvswitch-2.12.4
     - parallel
-    - pixman
-    - python3-libselinux
-    - quota
-    - quota-nls
-    - rpcbind
     - rsync
-    - sysstat
-    - tcp_wrappers
     - tcpdump
-    - unbound
-    - unbound-libs
-    - usbredir
-    - usbutils
-    - wget
     - "{{ yunion_qemu_package }}"
 
 common_services:
