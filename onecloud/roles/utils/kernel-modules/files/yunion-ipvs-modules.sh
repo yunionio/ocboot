@@ -13,3 +13,11 @@ if [[ $tcp_be_liberal -ne 1 ]]; then
     echo "net.netfilter.nf_conntrack_tcp_be_liberal = 1" >>/etc/sysctl.conf
     sysctl -p || :
 fi
+
+tcp_mtu_probing=$(sysctl net.ipv4.tcp_mtu_probing | awk '{print $NF}')
+
+if [[ $tcp_mtu_probing -ne 2 ]]; then
+    echo "net.ipv4.tcp_mtu_probing is not enabled. Updating sysctl.conf ..."
+    echo "net.ipv4.tcp_mtu_probing = 2" >>/etc/sysctl.conf
+    sysctl -p || :
+fi
