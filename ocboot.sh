@@ -2,9 +2,9 @@
 
 set -e
 
-REGISTRY=${REGISTRY:-registry.cn-beijing.aliyuncs.com/yunionio}
+IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-registry.cn-beijing.aliyuncs.com/yunionio}
 VERSION=${VERSION:-v4-k3s.4}
-OCBOOT_IMAGE="$REGISTRY/ocboot:$VERSION"
+OCBOOT_IMAGE="$IMAGE_REPOSITORY/ocboot:$VERSION"
 
 CUR_DIR="$(pwd)"
 CONTAINER_NAME="buildah-ocboot"
