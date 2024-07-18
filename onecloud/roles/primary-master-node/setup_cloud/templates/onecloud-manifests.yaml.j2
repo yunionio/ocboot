@@ -146,8 +146,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: onecloud-operator
-        # image: {{ image_repository }}/onecloud-operator:{{ onecloud_version }}
-        image: registry.cn-beijing.aliyuncs.com/yunionio/onecloud-operator:k3s-0118.0
+        image: {{ image_repository }}/onecloud-operator:{{ onecloud_version }}
         imagePullPolicy: IfNotPresent
         command:
         - "/bin/onecloud-controller-manager"

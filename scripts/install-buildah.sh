@@ -26,15 +26,15 @@ supported_os=(
     "openEuler 22.03 aarch64"
     "OpenCloudOS 8.8 x86_64"
     "Rocky Linux 8.9 x86_64"
-    "Ubuntu 22.04.2 LTS x86_64"
-    "Ubuntu 22.04.2 LTS aarch64"
+    "Ubuntu 22.04.* LTS x86_64"
+    "Ubuntu 22.04.* LTS aarch64"
 )
 
 is_supported() {
     local s
     s="$(get_name_version)"
     for i in "${supported_os[@]}"; do
-        if [[ "$i" == "$s" ]]; then
+        if echo "$s" | grep "$i"; then
             return 0
         fi
     done
