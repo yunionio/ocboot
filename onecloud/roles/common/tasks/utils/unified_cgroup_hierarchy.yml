@@ -24,6 +24,11 @@
   - name: Update GRUB
     command: update-grub
 
+  - name: Check is need manual reboot to disable unified cgroup hierarchy
+    fail:
+      msg: "GRUB updated, Please reboot to disable cgroup hierarchy and run install script again"
+    when: is_controller_node|default(false)|bool == true
+
   - name: Reboot the system
     reboot:
       reboot_timeout: 600
