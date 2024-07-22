@@ -285,7 +285,7 @@ env_check() {
         error_exit "You need sudo or root to run this script."
     fi
 
-    local supported_distros=("centos" "debian" "openeuler", "ubuntu")
+    local supported_distros=("centos" "debian" "openeuler" "ubuntu")
     local distros=($(get_distro))
 
     local found_supported_distro=false
