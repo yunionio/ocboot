@@ -138,18 +138,8 @@ services:
     - ./data/etc/yunion/host-deployer.conf:/etc/yunion/host-deployer.conf:ro
     - /dev:/dev
     - /sys:/sys
-    - type: bind
-      source: ./data/var/run/onecloud
-      target: /var/run/onecloud
-      read_only: false
-      bind:
-        propagation: shared
-    - type: bind
-      source: ./data/var/run/vmware
-      target: /var/run/vmware
-      read_only: false
-      bind:
-        propagation: shared
+    - ./data/var/run/onecloud:/var/run/onecloud
+    - ./data/var/run/vmware:/var/run/vmware
     - ./data/opt/cloud:/opt/cloud
     depends_on:
       host-deployer-init:
@@ -577,12 +567,7 @@ services:
     - ./data/etc/yunion/pki/:/etc/yunion/pki/:ro
     - ./data/etc/yunion/glance.conf:/etc/yunion/glance.conf:ro
     - ./data/opt/cloud/workspace/data/glance:/opt/cloud/workspace/data/glance
-    - type: bind
-      source: ./data/var/run/onecloud
-      target: /var/run/onecloud
-      read_only: false
-      bind:
-        propagation: shared
+    - ./data/var/run/onecloud:/var/run/onecloud
     depends_on:
       glance-init:
         condition: service_completed_successfully
