@@ -96,15 +96,15 @@ def new_scheduledtask_service(version, db_svc, region_svc):
 def new_glance_service(version, db_svc, keystone_svc, hostdeployer_svc):
     svc = new_cloud_service(SVC_GLANCE, version, SVC_PORT_GLANCE, db_svc, keystone_svc, depend_svc=hostdeployer_svc)
     svc.add_volume(ServiceDataVolume(svc.YUNION_GLANCE_DATA_PATH))
-    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_ONECLOUD_PATH, bind=ServiceVolume.BIND_PROPAGATION_SHARED))
+    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_ONECLOUD_PATH))
     return svc
 
 
 def new_esxi_agent_service(version, keystone_svc, region_svc):
     svc = new_cloud_service(SVC_ESXI_AGENT, version, SVC_PORT_ESXI_AGENT, keystone_svc=keystone_svc,
                             depend_svc=region_svc)
-    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_VMWARE_PATH, bind=ServiceVolume.BIND_PROPAGATION_SHARED))
-    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_ONECLOUD_PATH, bind=ServiceVolume.BIND_PROPAGATION_SHARED))
+    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_VMWARE_PATH))
+    svc.add_volume(ServiceDataVolume(svc.YUNION_RUN_ONECLOUD_PATH))
     svc.add_volume(ServiceDataVolume(svc.YUNION_CLOUD_PATH))
     return svc
 
