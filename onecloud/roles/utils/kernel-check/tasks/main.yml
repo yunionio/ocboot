@@ -89,6 +89,7 @@
   when:
     - is_centos_x86 | default(false) | bool  == true
     - is_yunion_kernel_running.rc != 0
+    - is_controller_node is not defined or is_controller_node|default(false)|bool == false
     - ansible_connection == "ssh"
 
 - name: Local Reboot system if not cloud kernel, it should take a few minutes...
@@ -97,6 +98,7 @@
   when:
     - is_centos_x86 | default(false) | bool  == true
     - is_yunion_kernel_running.rc != 0
+    - is_controller_node is not defined or is_controller_node|default(false)|bool == false
     - ansible_connection == "local"
 
 - name: SSH Reboot system if hugetlb conf is updated
@@ -106,6 +108,7 @@
   become: yes
   when:
   - hugetlb_is_ready == false
+  - is_controller_node is not defined or is_controller_node|default(false)|bool == false
   - ansible_connection == "ssh"
 
 - name: Local Reboot system if hugetlb conf is updated
@@ -113,4 +116,5 @@
   become: yes
   when:
   - hugetlb_is_ready == false
+  - is_controller_node is not defined or is_controller_node|default(false)|bool == false
   - ansible_connection == "local"
