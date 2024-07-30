@@ -97,7 +97,10 @@ def start(config_file):
     except AttributeError:
         pass
     vars = config.ansible_global_vars()
-    vars['no_reboot'] = 'false' if need_reboot(ip, inside=True) else 'true'
+    # 240722 wanyaoqi: no_reboot has been removed before this change
+    # vars['no_reboot'] = 'false' if need_reboot(ip, inside=True) else 'true'
+    vars['is_controller_node'] = 'true' if config.is_controller_node() else 'false'
+    print("vars: ", vars)
     return_code = cmd.run_ansible_playbook(
         inventory_f,
         './onecloud/install-cluster.yml',

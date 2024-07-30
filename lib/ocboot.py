@@ -121,6 +121,13 @@ class OcbootConfig(object):
             return
         return self.primary_master_config.node.port
 
+    def is_controller_node(self):
+        if self.primary_master_config:
+            return True
+        if self.master_config:
+            return True
+        return False
+
     def _fetch_conf(self, config_cls):
         group = config_cls.get_group()
         group_config = self.config.get(group, None)
