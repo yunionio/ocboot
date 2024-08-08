@@ -107,6 +107,7 @@
     connect_timeout: 900 # 15 mins
   become: yes
   when:
+  - is_centos_x86 | default(false) | bool  == true
   - hugetlb_is_ready == false
   - is_controller_node is not defined or is_controller_node|default(false)|bool == false
   - ansible_connection == "ssh"
@@ -115,6 +116,7 @@
   command: reboot
   become: yes
   when:
+  - is_centos_x86 | default(false) | bool  == true
   - hugetlb_is_ready == false
   - is_controller_node is not defined or is_controller_node|default(false)|bool == false
   - ansible_connection == "local"

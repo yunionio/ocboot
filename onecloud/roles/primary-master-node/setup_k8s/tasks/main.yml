@@ -10,6 +10,10 @@
   shell: /opt/yunion/bin/ocadm token list | cut -d  ' ' -f1 | sed -n '2p'
   register: K8S_TOKEN
 
+- name: Verify online status
+  ansible.builtin.debug:
+    msg: Online status is {{ online_status }} and offline_data_path is {{ offline_data_path }}
+
 - name: loading images
   include_role:
     name: utils/load-images
