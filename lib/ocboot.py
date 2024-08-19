@@ -254,6 +254,8 @@ class Node(object):
             'ansible_user': self.user,
             'ansible_port': self.port,
         }
+        if self.user != 'root':
+            vars['ansible_become'] = 'yes'
         if self.bastion_host:
             vars['ansible_ssh_common_args'] = self.bastion_host.to_option()
         if self.host != "127.0.0.1":
