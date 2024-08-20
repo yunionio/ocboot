@@ -32,16 +32,14 @@ def json_trim(str_2_replace):
 
 class OnecloudCluster(object):
 
-    def __init__(self, ssh_client):
+    def use_sudo(self):
+        return getuser() != 'root'
 
-        user = getuser()
-        sudo_exec = ''
-        if user != 'root':
-            sudo_exec = 'sudo'
+    def __init__(self, ssh_client):
 
         self.ssh_client = ssh_client
         ret = ssh_client.exec_command(
-            f'{sudo_exec} kubectl -n onecloud get onecloudclusters default -o json')
+            'kubectl -n onecloud get onecloudclusters default -o json', self.use_sudo())
         try:
             cluster = json.loads(ret)
         except ValueError:
@@ -94,12 +92,7 @@ class OnecloudCluster(object):
         return self.get_spec().get('version')
 
     def _construct_nodes(self):
-        user = getuser()
-        sudo_exec = ''
-        if user != 'root':
-            sudo_exec = 'sudo'
-
-        k8s_nodes = json.loads(self.ssh_client.exec_command(f'{sudo_exec} kubectl get nodes -o json')).get('items')
+        k8s_nodes = json.loads(self.ssh_client.exec_command('kubectl get nodes -o json', self.use_sudo())).get('items')
         self.k8s_nodes = [k8s.Node(obj) for obj in k8s_nodes]
         self.master_nodes = [node for node in self.k8s_nodes if node.is_master()]
         self.worker_nodes = [node for node in self.k8s_nodes if not node.is_master()]
@@ -137,13 +130,8 @@ class OnecloudCluster(object):
         return inventory.generate_content()
 
     def set_current_version(self, version):
-        user = getuser()
-        sudo_exec = ''
-        if user != 'root':
-            sudo_exec = 'sudo'
-
-        cmd = f'{sudo_exec} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
-        self.ssh_client.exec_command(cmd)
+        cmd = f'kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
+        self.ssh_client.exec_command(cmd, self.use_sudo())
 
 
 class AnsibleInventory(object):
