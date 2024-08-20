@@ -224,6 +224,8 @@ class ansibleHost(object):
             self.user,
             self.port,
             self.port)
+        if self.user != 'root':
+            config += " ansible_become=yes"
         if self.bastion_host:
             config += " ansible_ssh_common_args='%s'" % self.bastion_host.to_option()
         return config
