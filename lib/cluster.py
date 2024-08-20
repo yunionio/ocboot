@@ -33,18 +33,16 @@ def json_trim(str_2_replace):
 
 class OnecloudCluster(object):
 
-    def __init__(self, ssh_client):
+    def use_sudo(self):
+        return getuser() != 'root'
 
-        user = getuser()
-        sudo_exec = ''
-        if user != 'root':
-            sudo_exec = 'sudo'
+    def __init__(self, ssh_client):
 
         self.ssh_client = ssh_client
         k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
         ret = ssh_client.exec_command(
-            f'{sudo_exec} {k3s_cmd_placeholder} kubectl -n onecloud get onecloudclusters default -o json')
-        print(GB(f'{sudo_exec} {k3s_cmd_placeholder} kubectl -n onecloud get onecloudclusters default -o json'))
+            f'{k3s_cmd_placeholder} kubectl -n onecloud get onecloudclusters default -o json', self.use_sudo())
+        print(GB(f'{k3s_cmd_placeholder} kubectl -n onecloud get onecloudclusters default -o json'))
         try:
             cluster = json.loads(ret)
         except ValueError:
@@ -97,13 +95,9 @@ class OnecloudCluster(object):
         return self.get_spec().get('version')
 
     def _construct_nodes(self):
-        user = getuser()
-        sudo_exec = ''
-        if user != 'root':
-            sudo_exec = 'sudo'
         k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
-        print(GB(f'{sudo_exec} {k3s_cmd_placeholder} kubectl get nodes -o json'))
-        k8s_nodes = json.loads(self.ssh_client.exec_command(f'{sudo_exec} {k3s_cmd_placeholder} kubectl get nodes -o json')).get('items')
+        print(GB(f'{k3s_cmd_placeholder} kubectl get nodes -o json'))
+        k8s_nodes = json.loads(self.ssh_client.exec_command(f'{k3s_cmd_placeholder} kubectl get nodes -o json', self.use_sudo())).get('items')
         self.k8s_nodes = [k8s.Node(obj) for obj in k8s_nodes]
         self.master_nodes = [node for node in self.k8s_nodes if node.is_master()]
         self.worker_nodes = [node for node in self.k8s_nodes if not node.is_master()]
@@ -141,15 +135,10 @@ class OnecloudCluster(object):
         return inventory.generate_content()
 
     def set_current_version(self, version):
-        user = getuser()
-        sudo_exec = ''
-        if user != 'root':
-            sudo_exec = 'sudo'
-
         k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
-        cmd = f'{sudo_exec} {k3s_cmd_placeholder} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
+        cmd = f'{k3s_cmd_placeholder} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
         print(GB(cmd))
-        self.ssh_client.exec_command(cmd)
+        self.ssh_client.exec_command(cmd, self.use_sudo())
 
 
 class AnsibleInventory(object):

@@ -78,8 +78,10 @@ class SSHClient(object):
     #         timeout=60)
     #     return c
 
-    def exec_command(self, command):
-        # command = '%s %s' % ('[ -s /etc/kubernetes/admin.conf ] && export KUBECONFIG=/etc/kubernetes/admin.conf || :;', command)
+    def exec_command(self, command, use_sudo=False):
+        command = "bash -c '%s %s'" % ('[ -s /etc/kubernetes/admin.conf ] && export KUBECONFIG=/etc/kubernetes/admin.conf || :;', command)
+        if use_sudo:
+            command = f'sudo {command}'
         logger.info("exec_command: %s" % command)
         # _, stdout, stderr = self.client.exec_command(command)
         out, err = self.client(command)
