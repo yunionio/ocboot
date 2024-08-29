@@ -1,7 +1,9 @@
 import os
 import hashlib
 
+from lib import consts
 from lib.cmd import run_cmd
+from lib.ssh import StderrException
 
 def GET_AIRGAP_DIR():
     default_dir = os.path.join(os.getcwd(), "airgap_assets")
@@ -50,9 +52,27 @@ def download_asset(dest_dir, k3s_version, asset_url):
             print(f"{target_path}'s sha256 checksum {exists_checksum} != {expect_checksum}, redownload it.")
     run_cmd(f'curl -L {asset_url} > {target_path}', no_strip=True, realtime_output=True)
 
-def is_using_k3s():
-    ret = os.environ.get('K3S') == 'TRUE'
-    return ret
+
+def is_using_k3s(ssh_client=None, use_sudo=False):
+    if ssh_client is None:
+        if os.environ.get(consts.ENV_K8S_V115) == consts.ENV_VAL_TRUE:
+            return False
+        return True
+    else:
+        try:
+            kubelet_config = '/etc/kubernetes/kubelet.conf'
+            ret = ssh_client.exec_command(f'ls -alh {kubelet_config}', use_sudo)
+            if kubelet_config in ret:
+                return False
+            return True
+        except StderrException as e:
+            if f'{kubelet_config}: No such file or directory' in str(e):
+                return True
+            else:
+                raise e
+        except Exception as e:
+            raise e
+
 
 def init_airgap_assets(dest_dir, k3s_version):
     # usage: K3S_URL_PREFIX=http://LOCAL_k3s_host_url

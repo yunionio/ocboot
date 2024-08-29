@@ -192,8 +192,8 @@ class AddNodesConfig(object):
         if is_insecure:
             woker_config_dict['insecure_registries'] = [repo]
         self.worker_config = WorkerConfig(Config(woker_config_dict))
-        print("Get current cluster %s version: %s" %
-              (controlplane_host, self.current_version))
+        self.is_using_k3s = cluster.is_using_k3s()
+        utils.pr_green(f"Get current cluster: {controlplane_host}, version: {self.current_version}, is_using_k3s: {self.is_using_k3s}")
 
     def run(self):
         inventory_content = ansible.get_inventory_config(self.worker_config)
@@ -209,7 +209,7 @@ class AddNodesConfig(object):
         )
 
     def get_vars(self):
-        vars = get_ansible_global_vars(self.current_version)
+        vars = get_ansible_global_vars(self.current_version, self.is_using_k3s)
         return vars
 
 
