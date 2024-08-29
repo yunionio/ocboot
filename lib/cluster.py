@@ -36,10 +36,13 @@ class OnecloudCluster(object):
     def use_sudo(self):
         return getuser() != 'root'
 
+    def is_using_k3s(self):
+        return is_using_k3s(self.ssh_client, self.use_sudo())
+
     def __init__(self, ssh_client):
 
         self.ssh_client = ssh_client
-        k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
+        k3s_cmd_placeholder = 'k3s' if self.is_using_k3s() else ''
         ret = ssh_client.exec_command(
             f'{k3s_cmd_placeholder} kubectl -n onecloud get onecloudclusters default -o json', self.use_sudo())
         print(GB(f'{k3s_cmd_placeholder} kubectl -n onecloud get onecloudclusters default -o json'))
@@ -95,7 +98,7 @@ class OnecloudCluster(object):
         return self.get_spec().get('version')
 
     def _construct_nodes(self):
-        k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
+        k3s_cmd_placeholder = 'k3s' if self.is_using_k3s() else ''
         print(GB(f'{k3s_cmd_placeholder} kubectl get nodes -o json'))
         k8s_nodes = json.loads(self.ssh_client.exec_command(f'{k3s_cmd_placeholder} kubectl get nodes -o json', self.use_sudo())).get('items')
         self.k8s_nodes = [k8s.Node(obj) for obj in k8s_nodes]
@@ -135,7 +138,7 @@ class OnecloudCluster(object):
         return inventory.generate_content()
 
     def set_current_version(self, version):
-        k3s_cmd_placeholder = 'k3s' if is_using_k3s() else ''
+        k3s_cmd_placeholder = 'k3s' if self.is_using_k3s() else ''
         cmd = f'{k3s_cmd_placeholder} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
         print(GB(cmd))
         self.ssh_client.exec_command(cmd, self.use_sudo())

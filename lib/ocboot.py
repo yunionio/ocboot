@@ -57,8 +57,9 @@ def load_config(config_file):
         return OcbootConfig(config)
 
 
-def get_ansible_global_vars(version):
-    _is_using_k3s = is_using_k3s()
+def get_ansible_global_vars(version, _is_using_k3s=None):
+    if _is_using_k3s is None:
+        _is_using_k3s = is_using_k3s()
     major_version = utils.get_major_version(version)
     vars = {
         KEY_ONECLOUD_VERSION: version,
