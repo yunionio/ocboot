@@ -6,6 +6,6 @@
   roles:
     - common
     - worker-node
-    - { role: utils/gpu-init, when: "join_as_host|default(false)" }
+    - { role: utils/gpu-init, when: "join_as_host|default(false) and enable_containerd|default(false) == false" }
     - { role: utils/containerd, when: 'enable_containerd | default(false) == true'}
     - utils/kernel-check

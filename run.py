@@ -13,12 +13,13 @@ import subprocess
 
 from lib import install
 from lib import cmd
-from lib.parser import inject_add_hostagent_options
+from lib.parser import inject_add_hostagent_options, inject_add_nodes_runtime_options
 from lib.utils import init_local_user_path
 from lib.utils import pr_red, pr_green
 from lib.utils import regex_search
 from lib.utils import is_valid_dns
 from lib import ocboot
+from lib import consts
 
 
 def show_usage():
@@ -277,7 +278,7 @@ def dynamic_load():
             print("\t%s" % p)
 
 
-def update_config(yaml_conf, produc_stack):
+def update_config(yaml_conf, produc_stack, runtime):
     import os.path
     import os
     import yaml
@@ -310,6 +311,17 @@ def update_config(yaml_conf, produc_stack):
         else:
             yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_AS_HOST] = True
             yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_AS_HOST_ON_VM] = True
+
+    enable_containerd = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ENABLE_CONTAINERD, False)
+    if enable_containerd:
+        if runtime != consts.RUNTIME_CONTAINERD:
+            to_write = True
+            yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_ENABLE_CONTAINERD] = False
+    else:
+        if runtime == consts.RUNTIME_CONTAINERD:
+            to_write = True
+            yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE][ocboot.KEY_ENABLE_CONTAINERD] = True
+
     if to_write:
         with open(yaml_conf, 'w') as f:
             f.write(yaml.dump(yaml_data))
@@ -317,7 +329,7 @@ def update_config(yaml_conf, produc_stack):
     return yaml_conf
 
 
-def generate_config(ipv4, produc_stack, dns_list=[]):
+def generate_config(ipv4, produc_stack, dns_list=[], runtime=consts.RUNTIME_QEMU):
     global conf
     import os.path
     import os
@@ -353,7 +365,7 @@ def generate_config(ipv4, produc_stack, dns_list=[]):
 
     if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipv4 and \
             yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
-        update_config(temp, produc_stack)
+        update_config(temp, produc_stack, runtime)
         pr_green(f"reuse conf: {temp}")
         return temp
 
@@ -394,6 +406,11 @@ def generate_config(ipv4, produc_stack, dns_list=[]):
         ocboot.KEY_PRODUCT_VERSION: produc_stack,
     }
 
+    if runtime == consts.RUNTIME_CONTAINERD:
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE].update({
+            ocboot.KEY_ENABLE_CONTAINERD: True,
+        })
+
     if len(dns_list) > 0:
         yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE].update({
             ocboot.KEY_USER_DNS: dns_list
@@ -428,6 +445,7 @@ def get_args():
     parser.add_argument('--k3s', action='store_true', default=False,
                         help="Using k3s rather than k8s to manage the cluster. Default: False (using k8s)")
     inject_add_hostagent_options(parser)
+    inject_add_nodes_runtime_options(parser)
     return parser.parse_args()
 
 
@@ -525,9 +543,9 @@ def main():
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
     if match_ip4addr(ip_conf):
-        conf = generate_config(ip_conf, stackDict.get(stack), user_dns)
+        conf = generate_config(ip_conf, stackDict.get(stack), user_dns, args.runtime)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
-        conf = update_config(ip_conf, stackDict.get(stack))
+        conf = update_config(ip_conf, stackDict.get(stack), args.runtime)
     else:
         pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()

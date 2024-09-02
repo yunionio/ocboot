@@ -46,6 +46,8 @@ KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
 
 KEY_USER_DNS = 'user_dns'
 
+KEY_ENABLE_CONTAINERD = "enable_containerd"
+
 
 def load_config(config_file):
     import yaml
@@ -413,6 +415,7 @@ class OnecloudConfig(object):
         self.enable_eip_man = config.get('enable_eip_man', False)
         self.offline_deploy = config.get('offline_deploy', False) or os.environ.get('OFFLINE_DEPLOY') == 'true'
         self.enable_lbagent = config.get('enable_lbagent', False)
+        self.enable_containerd = config.get(KEY_ENABLE_CONTAINERD, False)
 
     def ansible_vars(self):
         vars = {
@@ -427,6 +430,7 @@ class OnecloudConfig(object):
             'enable_eip_man': self.enable_eip_man,
             'offline_deploy': self.offline_deploy,
             'enable_lbagent': self.enable_lbagent,
+            KEY_ENABLE_CONTAINERD: self.enable_containerd,
         }
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip

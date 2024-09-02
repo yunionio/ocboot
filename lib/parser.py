@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os
 
+from . import consts
 
 def inject_ssh_options(parser):
     # optional options
@@ -85,8 +86,8 @@ def inject_add_hostagent_options(parser):
 def inject_add_nodes_runtime_options(parser):
     parser.add_argument("--runtime",
                         dest="runtime",
-                        default='qemu',
-                        choices=['qemu', 'containerd'],
+                        default=consts.RUNTIME_QEMU,
+                        choices=[consts.RUNTIME_QEMU, consts.RUNTIME_CONTAINERD],
                         help="select runtime type when adding node. default: qemu")
 
 def inject_auto_backup_options(parser):
