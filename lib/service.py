@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 
-from .ocboot import NodeConfig, Config
+from .ocboot import KEY_ENABLE_CONTAINERD, NodeConfig, Config
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
 from .parser import inject_add_hostagent_options
@@ -185,7 +185,8 @@ class AddNodesConfig(object):
             'as_host': as_host,
             'as_host_on_vm': enable_host_on_vm,
             'controlplane_ssh_port': controlplane_ssh_port,
-            'enable_lbagent': enable_lbagent
+            'enable_lbagent': enable_lbagent,
+            KEY_ENABLE_CONTAINERD: self.enable_containerd,
         }
         (repo, is_insecure) = cluster.get_repository()
         if is_insecure:
@@ -209,7 +210,6 @@ class AddNodesConfig(object):
 
     def get_vars(self):
         vars = get_ansible_global_vars(self.current_version)
-        vars.update({'enable_containerd': self.enable_containerd })
         return vars
 
 

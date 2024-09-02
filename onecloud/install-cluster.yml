@@ -45,9 +45,15 @@
 
 - hosts: primary_master_node:master_nodes:worker_nodes
   roles:
-    - utils/gpu-init
+    - { role: utils/gpu-init, when: 'enable_containerd|default(false) == false' }
   tags:
     - gpu
+
+- hosts: primary_master_node:master_nodes:worker_nodes
+  roles:
+    - { role: utils/containerd, when: 'enable_containerd|default(false) == true' }
+  tags:
+    - containerd
 
 - hosts: master_nodes:worker_nodes
   roles:

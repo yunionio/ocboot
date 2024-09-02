@@ -31,7 +31,8 @@
 
 - name: Copy ocnet-cni.conflist file
   ansible.builtin.copy:
-    content: "{{ lookup('file', '10-ocnet-cni.conflist') }}"
+    # content: "{{ lookup('file', '10-ocnet-cni.conflist') }}"
+    src: 10-ocnet-cni.conflist
     dest: /etc/yunion/cni/net.d/10-ocnet-cni.conflist
     mode: '0644'
   notify: restart yunion-containerd
