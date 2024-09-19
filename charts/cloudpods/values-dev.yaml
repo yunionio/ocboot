@@ -141,6 +141,11 @@ cluster:
       nodePort: 30086
     requests:
       storage: 100G
+  victoriaMetrics:
+    service:
+      nodePort: 30428
+    requests:
+      storage: 100G
   itsm:
     service:
       nodePort: 30595
