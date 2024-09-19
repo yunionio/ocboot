@@ -65,6 +65,12 @@ spec:
     requests:
       storage: {{ $cluster.influxdb.requests.storage }}
     storageClassName: {{ template "cloudpods.cluster.storageClass" . }}
+  victoriaMetrics:
+    service:
+      nodePort: {{ int $cluster.victoriaMetrics.service.nodePort }}
+    requests:
+      storage: {{ $cluster.victoriaMetrics.requests.storage }}
+    storageClassName: {{ template "cloudpods.cluster.storageClass" . }}
   itsm:
     service:
       nodePort: {{ int $cluster.itsm.service.nodePort }}
