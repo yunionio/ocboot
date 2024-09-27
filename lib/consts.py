@@ -6,3 +6,6 @@ REGISTRY_ALI_YUNIONIO = "registry.cn-beijing.aliyuncs.com/yunionio"
 
 RUNTIME_QEMU = "qemu"
 RUNTIME_CONTAINERD = "containerd"
+ENV_K3S = "K3S"
+ENV_K8S_V115 = "K8S_V115"
+ENV_VAL_TRUE = 'TRUE'
