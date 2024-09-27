@@ -66,7 +66,7 @@ def is_using_k3s(ssh_client=None, use_sudo=False):
                 return False
             return True
         except StderrException as e:
-            if f'{kubelet_config}: No such file or directory' in str(e):
+            if f'No such file or directory' in str(e):
                 return True
             else:
                 raise e
