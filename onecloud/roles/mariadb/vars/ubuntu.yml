@@ -1,5 +1,6 @@
 packages:
   - mariadb-server
+  - python3-pip
 
 pips:
   - PyMySQL
