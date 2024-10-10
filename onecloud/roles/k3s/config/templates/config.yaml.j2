@@ -1,4 +1,5 @@
 node-ip: {{ node_ip }}
+pause-image: {{ image_repository }}/pause:3.1
 {% if high_availability_vip is defined %}
 tls-san: {{ high_availability_vip }}
 {% endif %}
