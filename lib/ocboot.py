@@ -29,6 +29,7 @@ KEY_PRODUCT_VERSION = 'product_version'
 KEY_AS_HOST = 'as_host'
 KEY_AS_HOST_ON_VM = 'as_host_on_vm'
 KEY_EXTRA_PACKAGES = 'extra_packages'
+KEY_IMAGE_REPOSITORY = 'image_repository'
 
 KEY_K8S_OR_K3S = 'env_k8s_or_k3s'
 KEY_K3S_API_ENDPOINT = "api_endpoint"

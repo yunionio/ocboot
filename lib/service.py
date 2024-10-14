@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 
-from .ocboot import KEY_ENABLE_CONTAINERD, NodeConfig, Config
+from .ocboot import KEY_ENABLE_CONTAINERD, KEY_IMAGE_REPOSITORY, NodeConfig, Config
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
 from .parser import inject_add_hostagent_options
@@ -192,6 +192,7 @@ class AddNodesConfig(object):
         if is_insecure:
             woker_config_dict['insecure_registries'] = [repo]
         self.worker_config = WorkerConfig(Config(woker_config_dict))
+        self.image_repository = cluster.get_image_repository()
         print("Get current cluster %s version: %s" %
               (controlplane_host, self.current_version))
 
@@ -210,6 +211,7 @@ class AddNodesConfig(object):
 
     def get_vars(self):
         vars = get_ansible_global_vars(self.current_version)
+        vars[KEY_IMAGE_REPOSITORY] = self.image_repository
         return vars
 
 
