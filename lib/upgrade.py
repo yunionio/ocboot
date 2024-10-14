@@ -84,7 +84,6 @@ def add_command(subparsers, command="upgrade"):
 
     parser.add_argument("--image-repository", "-i",
                         dest="image_repository",
-                        default=consts.REGISTRY_ALI_YUNION,
                         help="specify 3rd party image and namespace")
 
     parser.add_argument("--offline-data-path",
@@ -151,6 +150,8 @@ def do_upgrade(args):
             if utils.is_below_v3_9(args.version):
                 args.image_repository = consts.REGISTRY_ALI_YUNIONIO
         vars['image_repository'] = args.image_repository.rstrip('/')
+    else:
+        vars['image_repository'] = cluster.get_image_repository()
 
     if args.offline_data_path:
         vars['offline_data_path'] = args.offline_data_path
