@@ -329,7 +329,7 @@ def update_config(yaml_conf, produc_stack, runtime):
     return yaml_conf
 
 
-def generate_config(ipv4, produc_stack, dns_list=[], runtime=consts.RUNTIME_QEMU):
+def generate_config(ipv4, produc_stack, dns_list=[], runtime=consts.RUNTIME_QEMU, image_repository=None):
     global conf
     import os.path
     import os
@@ -338,7 +338,6 @@ def generate_config(ipv4, produc_stack, dns_list=[], runtime=consts.RUNTIME_QEMU
     from lib.get_interface_by_ip import get_interface_by_ip
 
     config_dir = os.getenv("OCBOOT_CONFIG_DIR")
-    image_repository = os.getenv('IMAGE_REPOSITORY')
 
     cur_path = os.path.abspath(os.path.dirname(__file__))
     if not config_dir:
@@ -375,7 +374,7 @@ def generate_config(ipv4, produc_stack, dns_list=[], runtime=consts.RUNTIME_QEMU
     # else set to 'yunionio' namespace if it is daily build.
     # default is 'yunion', for the official and public release.
     elif re.search(r'\b\d{8}\.\d$', ver):
-        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['image_repository'] = 'registry.cn-beijing.aliyuncs.com/yunionio'
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['image_repository'] = consts.REGISTRY_ALI_YUNIONIO
 
     if image_repository and '5000' in image_repository:
         r = image_repository
@@ -442,8 +441,11 @@ def get_args():
     pip_mirror_suggest = "https://mirrors.aliyun.com/pypi/simple/"
     parser.add_argument('--pip-mirror', '-m', type=str, dest='pip_mirror',
                         help=f"{pip_mirror_help}, e.g.: {pip_mirror_suggest}")
-    parser.add_argument('--k3s', action='store_true', default=False,
-                        help="Using k3s rather than k8s to manage the cluster. Default: False (using k8s)")
+    parser.add_argument('--k8s-v115', action='store_true', default=False,
+                        help="Using old k8s v1.15 rather than k3s to manage the cluster. Default: False (using k3s)")
+    parser.add_argument('--image-repository', '-i', type=str, dest='image_repository',
+                        default=consts.REGISTRY_ALI_YUNIONIO,
+                        help=f"Image repository for container images, e.g.: docker.io/yunion. Default: {consts.REGISTRY_ALI_YUNIONIO}")
     inject_add_hostagent_options(parser)
     inject_add_nodes_runtime_options(parser)
     return parser.parse_args()
@@ -519,8 +521,10 @@ def main():
         'virt': ocboot.KEY_STACK_EDGE,
     }
 
-    if args.k3s:
-        os.environ['K3S'] = 'TRUE'
+    if not args.k8s_v115:
+        os.environ[consts.ENV_K3S] = consts.ENV_VAL_TRUE
+    else:
+        os.environ[consts.ENV_K8S_V115] = consts.ENV_VAL_TRUE
 
     # 1. try to get offline data path from optional args
     # 2. if not exist, try to get from os env
@@ -543,7 +547,7 @@ def main():
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
     if match_ip4addr(ip_conf):
-        conf = generate_config(ip_conf, stackDict.get(stack), user_dns, args.runtime)
+        conf = generate_config(ip_conf, stackDict.get(stack), user_dns, args.runtime, args.image_repository)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
         conf = update_config(ip_conf, stackDict.get(stack), args.runtime)
     else:

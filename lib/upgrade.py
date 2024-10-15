@@ -145,7 +145,7 @@ def do_upgrade(args):
     with open(inventory_f, 'w') as f:
         f.write(inventory_content)
 
-    vars = config.to_ansible_vars()
+    vars = config.to_ansible_vars(cluster)
     if args.image_repository:
         if args.image_repository == consts.REGISTRY_ALI_YUNION:
             if utils.is_below_v3_9(args.version):
@@ -196,7 +196,7 @@ class UpgradeConfig(object):
         ver = ver[1:]
         return "https://iso.yunion.cn/centos/7/%s/x86_64/yunion.repo" % (ver)
 
-    def to_ansible_vars(self):
+    def to_ansible_vars(self, cluster):
         ret = {
             "current_onecloud_version": self.current_onecloud_version,
             "current_onecloud_major_version": self.current_onecloud_major_version,
@@ -206,6 +206,6 @@ class UpgradeConfig(object):
             "yunion_yum_repo": self.get_yunion_yum_repo(),
             "yunion_qemu_package": "yunion-qemu-4.2.0",
         }
-        g_var = get_ansible_global_vars(self.current_onecloud_version)
+        g_var = get_ansible_global_vars(self.current_onecloud_version, cluster.is_using_k3s())
         ret.update(g_var)
         return ret

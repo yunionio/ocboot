@@ -22,7 +22,7 @@
 - name: set k3s cmdline env
   set_fact:
     k8s_or_k3s : "k3s"
-    K3S_CMDLINE_PREFIX: 'k3s'
+    K3S_CMDLINE_PREFIX: '/usr/local/bin/k3s'
     ENV_KUBECONFIG: "{{ '~/.kube/config' | expanduser }}"
   when:
   - env_k8s_or_k3s | default('k8s')  == 'k3s'

@@ -68,8 +68,8 @@
     - name: Add K3s autocomplete to user bashrc
       ansible.builtin.lineinfile:
         path: "~{{ ansible_user }}/.bashrc"
-        regexp: '\.\s+<\(k3s completion bash\)'
-        line: ". <(k3s completion bash)  # Added by k3s-ansible"
+        regexp: '\.\s+<\(/usr/local/bin/k3s completion bash\)'
+        line: ". <(/usr/local/bin/k3s completion bash)  # Added by k3s-ansible"
 
     # - name: Change server to API endpoint instead of localhost
     #   ansible.builtin.command: >-
