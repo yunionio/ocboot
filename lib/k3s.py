@@ -75,8 +75,7 @@ def is_using_k3s(ssh_client=None, use_sudo=False):
             for err in NO_SUCH_FILE_OR_DIR_ERR:
                 if err in str(e):
                     return True
-                else:
-                    raise e
+            raise e
         except Exception as e:
             raise e
 
