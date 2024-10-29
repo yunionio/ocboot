@@ -53,6 +53,12 @@ def download_asset(dest_dir, k3s_version, asset_url):
     run_cmd(f'curl -L {asset_url} > {target_path}', no_strip=True, realtime_output=True)
 
 
+NO_SUCH_FILE_OR_DIR_ERR = [
+    'No such file or directory',
+    '没有那个文件或目录',
+]
+
+
 def is_using_k3s(ssh_client=None, use_sudo=False):
     if ssh_client is None:
         if os.environ.get(consts.ENV_K8S_V115) == consts.ENV_VAL_TRUE:
@@ -66,10 +72,11 @@ def is_using_k3s(ssh_client=None, use_sudo=False):
                 return False
             return True
         except StderrException as e:
-            if f'No such file or directory' in str(e):
-                return True
-            else:
-                raise e
+            for err in NO_SUCH_FILE_OR_DIR_ERR:
+                if err in str(e):
+                    return True
+                else:
+                    raise e
         except Exception as e:
             raise e
 
