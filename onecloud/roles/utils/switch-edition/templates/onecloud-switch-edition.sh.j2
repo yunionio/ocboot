@@ -1,0 +1,130 @@
+#!/bin/bash
+
+set -e
+
+export KUBECONFIG="{{ ENV_KUBECONFIG }}"
+K3S_CMDLINE_PREFIX="{{ K3S_CMDLINE_PREFIX }}"
+KUBECTL="$K3S_CMDLINE_PREFIX kubectl -n onecloud"
+TARGET_EDITION="{{ TARGET_EDITION }}"
+
+CLIMC="/opt/yunion/bin/climc"
+# UUID_REG='[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}'
+SVC_UUID_REG='[0-9a-f]{32}'
+OCBOOT_BK_DIR="/opt/yunion/ocboot/_switch_edition"
+
+source_auth_env() {
+    if [[ -z "$K3S_CMDLINE_PREFIX" ]]; then
+        source <(/opt/yunion/bin/ocadm cluster rcadmin)
+    else
+        source <(/opt/yunion/bin/fetch-rcadmin.sh)
+    fi
+}
+
+check_svc() {
+	local svc="$1"
+	local status=$($KUBECTL get pods | grep "$svc" | grep -v Terminating | awk '{print $3}' | sort -u | xargs)
+	if [[ "$status" == "Running" ]]; then
+		echo "true"
+	else
+		echo "service pod $svc status is $status"
+		echo "false"
+	fi
+}
+
+wait_svc() {
+	local svc="$1"
+	local is_running=$(check_svc "$svc")
+	sleep 1
+	while true; do
+		if [[ "$is_running" == "true" ]]; then
+			echo "service pod $svc is running"
+			return
+		else
+			echo "continue waiting service pod $svc, sleep 30s"
+			is_running=$(check_svc "$svc")
+			sleep 30
+		fi
+	done
+}
+
+clean_service_endpoint() {
+    source_auth_env
+    local service="$1"
+    for ep in `$CLIMC endpoint-list --service "$service" | egrep "$SVC_UUID_REG" | awk '{print $2}'`; do
+        echo "delete endpoint $ep of service $service"
+        $CLIMC endpoint-update --disabled $ep
+        $CLIMC endpoint-delete $ep
+    done
+
+    for svc in `$CLIMC service-list --name "$service" | egrep "$SVC_UUID_REG" | awk '{print $2}'`; do
+        echo "delete service $service"
+        $CLIMC service-update --disabled $svc
+        $CLIMC service-delete $svc
+    done
+}
+
+clean_compoent() {
+    local k8s_res="$1"
+    local k8s_name="$2"
+    local cloud_svc="$3"
+    $KUBECTL delete "$k8s_res" "$k8s_name" || true
+    clean_service_endpoint "$cloud_svc"
+}
+
+backup_files() {
+    local bk_dir="$OCBOOT_BK_DIR/$TARGET_EDITION-`date +%Y.%m.%d-%H:%M:%S`"
+    local defaul_web_configmap_yml="$bk_dir/default-web-configmap.yml"
+    local default_oc_yml="$bk_dir/oc.yml"
+
+    mkdir -p $bk_dir
+    echo "backup default-web configmap to $defaul_web_configmap_yml"
+    $KUBECTL get configmap default-web -o yaml > $defaul_web_configmap_yml
+    echo "backup default onecloudcluster to $defaul_web_configmap_yml"
+    $KUBECTL get oc default -o yaml >$default_oc_yml
+}
+
+backup_files
+
+$KUBECTL annotate --overwrite onecloudcluster default onecloud.yunion.io/edition="$TARGET_EDITION"
+$KUBECTL patch onecloudcluster default --type='json' -p="[{'op': 'replace', 'path': '/spec/web/imageName', 'value': ''}]"
+$KUBECTL delete configmap default-web
+$KUBECTL rollout restart deployment default-web
+
+services=(
+    default-web-
+    default-apigateway
+    default-yunionagent
+)
+
+if [[ "$TARGET_EDITION" == "ce" ]]; then
+    services=(
+        default-web-
+    )
+fi
+
+if [[ "$TARGET_EDITION" == "ee" ]]; then
+    services=(
+        default-web-
+        default-apigateway
+        default-yunionagent
+        default-itsm
+    )
+fi
+
+for svc in ${@:-${services[@]}}; do
+	echo "waiting service pod $svc to be running"
+	wait_svc "$svc"
+done
+
+if [[ "$TARGET_EDITION" == "ce" ]]; then
+    clean_compoent daemonset default-yunionagent yunionagent
+    clean_compoent deployment default-meter meter
+    clean_compoent deployment default-autoupdate autoupdate
+    clean_compoent deployment default-itsm itsm
+fi
+
+if [[ "$TARGET_EDITION" == "ce/support" ]]; then
+    clean_compoent deployment default-meter meter
+    clean_compoent deployment default-autoupdate autoupdate
+    clean_compoent deployment default-itsm itsm
+fi

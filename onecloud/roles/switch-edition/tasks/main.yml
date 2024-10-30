@@ -1,0 +1,8 @@
+---
+- name: detect os
+  include_role:
+    name: utils/detect-os
+
+- name: "switch to edition {{ TARGET_EDITION }}"
+  include_role:
+    name: utils/switch-edition

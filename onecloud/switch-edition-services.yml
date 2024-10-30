@@ -1,5 +1,3 @@
 - hosts: all
   roles:
     - role: switch-edition
-      vars:
-        TARGET_EDITION: ee
