@@ -30,6 +30,7 @@ KEY_AS_HOST = 'as_host'
 KEY_AS_HOST_ON_VM = 'as_host_on_vm'
 KEY_EXTRA_PACKAGES = 'extra_packages'
 KEY_IMAGE_REPOSITORY = 'image_repository'
+KEY_K8S_CONTROLPLANE_HOST = 'k8s_controlplane_host'
 
 KEY_K8S_OR_K3S = 'env_k8s_or_k3s'
 KEY_K3S_API_ENDPOINT = "api_endpoint"
@@ -44,6 +45,7 @@ KEY_STACK_FULLSTACK = 'FullStack'
 KEY_STACK_EDGE = 'Edge'
 KEY_STACK_CMP = 'CMP'
 KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
+KEY_TARGET_EDITION = 'TARGET_EDITION'
 
 KEY_USER_DNS = 'user_dns'
 
@@ -437,7 +439,7 @@ class OnecloudConfig(object):
         vars = {
             'docker_registry_mirrors': self.registry_mirrors,
             'docker_insecure_registries': self.insecure_registries,
-            'k8s_controlplane_host': self.controlplane_host,
+            KEY_K8S_CONTROLPLANE_HOST: self.controlplane_host,
             KEY_K3S_API_ENDPOINT: self.controlplane_host,
             'k8s_controlplane_port': self.controlplane_port,
             KEY_K3S_API_PORT: self.controlplane_port,
