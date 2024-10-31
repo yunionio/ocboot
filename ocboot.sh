@@ -35,7 +35,7 @@ mkdir -p "$HOME/.ssh"
 CMD=""
 
 is_ocboot_subcmd() {
-    local subcmds="install upgrade add-node add-lbagent backup restore setup-container-env"
+    local subcmds="install upgrade add-node add-lbagent backup restore setup-container-env switch-edition"
     for subcmd in $subcmds; do
         if [[ "$1" == "$subcmd" ]]; then
             return 0
