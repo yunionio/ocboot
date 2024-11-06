@@ -47,6 +47,9 @@ KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
 
 KEY_USER_DNS = 'user_dns'
 
+KEY_REGION = "region"
+KEY_ZONE = "zone"
+
 KEY_ENABLE_CONTAINERD = "enable_containerd"
 
 
@@ -494,6 +497,8 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.service_dns_domain = config.get('service_dns_domain', 'cluster.local')
         self.product_version = self.get_product_version(config)
         self.user_dns = config.get(KEY_USER_DNS, [])
+        self.region = config.get(KEY_REGION, "region0")
+        self.zone = config.get(KEY_ZONE, "zone0")
 
     def get_product_version(self, config):
         pv = config.get('product_version', self.PRODUCT_VERSION_FULL_STACK)
@@ -531,6 +536,8 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['product_version'] = self.product_version
         if self.user_dns:
             vars[KEY_USER_DNS] = self.user_dns
+        vars[KEY_REGION] = self.region
+        vars[KEY_ZONE] = self.zone
         return vars
 
     def get_nodes(self):

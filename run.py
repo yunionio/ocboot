@@ -329,7 +329,12 @@ def update_config(yaml_conf, produc_stack, runtime):
     return yaml_conf
 
 
-def generate_config(ipv4, produc_stack, dns_list=[], runtime=consts.RUNTIME_QEMU, image_repository=None):
+def generate_config(
+    ipv4, produc_stack,
+    dns_list=[], runtime=consts.RUNTIME_QEMU,
+    image_repository=None,
+    region=consts.DEFAULT_REGION_NAME,
+    zone=consts.DEFAULT_ZONE_NAME):
     global conf
     import os.path
     import os
@@ -403,6 +408,8 @@ def generate_config(ipv4, produc_stack, dns_list=[], runtime=consts.RUNTIME_QEMU
         ocboot.KEY_HOSTNAME: ipv4,
         ocboot.KEY_ONECLOUD_VERSION: ver,
         ocboot.KEY_PRODUCT_VERSION: produc_stack,
+        ocboot.KEY_REGION: region,
+        ocboot.KEY_ZONE: zone,
     }
 
     if runtime == consts.RUNTIME_CONTAINERD:
@@ -446,6 +453,14 @@ def get_args():
     parser.add_argument('--image-repository', '-i', type=str, dest='image_repository',
                         default=consts.REGISTRY_ALI_YUNIONIO,
                         help=f"Image repository for container images, e.g.: docker.io/yunion. Default: {consts.REGISTRY_ALI_YUNIONIO}")
+
+    parser.add_argument('--region', type=str, dest='region',
+                        default=consts.DEFAULT_REGION_NAME,
+                        help=f"Default region name: {consts.DEFAULT_REGION_NAME}")
+    parser.add_argument('--zone', type=str, dest='zone',
+                        default=consts.DEFAULT_ZONE_NAME,
+                        help=f"Default zone name: {consts.DEFAULT_ZONE_NAME}")
+
     inject_add_hostagent_options(parser)
     inject_add_nodes_runtime_options(parser)
     return parser.parse_args()
@@ -547,7 +562,10 @@ def main():
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
     if match_ip4addr(ip_conf):
-        conf = generate_config(ip_conf, stackDict.get(stack), user_dns, args.runtime, args.image_repository)
+        conf = generate_config(ip_conf, stackDict.get(stack),
+                               user_dns, args.runtime,
+                               args.image_repository,
+                               args.region, args.zone)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
         conf = update_config(ip_conf, stackDict.get(stack), args.runtime)
     else:
