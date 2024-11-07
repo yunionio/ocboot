@@ -1,10 +1,12 @@
 mariadb_node:
   hostname: 10.127.10.158
+  port: 22
   user: root
   db_user: root
   db_password: your-sql-password
 primary_master_node:
   hostname: 10.127.10.158
+  port: 22
   user: root
   db_host: 10.127.10.158
   db_user: root
@@ -16,3 +18,5 @@ primary_master_node:
   controlplane_port: "6443"
   as_host: true
   as_host_on_vm: true # only for vm.
+  region: region0
+  zone: zone0

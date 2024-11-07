@@ -1,10 +1,12 @@
 mariadb_node:
   hostname: 10.127.10.156
   user: root
+  port: 22
   db_user: root
   db_password: your-sql-password
 primary_master_node:
   hostname: 10.127.10.156
+  port: 22
   user: root
   db_host: 10.127.10.156
   db_user: root
@@ -12,28 +14,25 @@ primary_master_node:
   onecloud_version: v3.10.6
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
+  region: region0
+  zone: zone0
   as_host: true
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
-  - https://lms7sxqp.mirror.aliyuncs.com
   insecure_registries:
   - 192.168.222.172:3000
 master_nodes:
   hosts:
   - hostname: 10.127.10.157
     user: root
+    port: 22
     use_local: false
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
   as_controller: true
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com
 worker_nodes:
   hosts:
   - hostname: 10.127.10.158
     user: root
+    port: 22
   controlplane_host: 10.127.10.156
   controlplane_port: "6443"
   as_host: true
-  registry_mirrors:
-  - https://lje6zxpk.mirror.aliyuncs.com

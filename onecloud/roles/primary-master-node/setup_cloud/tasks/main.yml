@@ -93,11 +93,6 @@
   ansible.builtin.template:
     src: "onecloud-manifests.yaml.j2"
     dest: "/tmp/onecloud-manifests.yaml"
-  vars:
-    namespace: onecloud
-    edition: ce
-    region: region0
-    zone: zone0
 
 - name: include cluster task if needed
   include_tasks: "k8s_create_cluster.yml"

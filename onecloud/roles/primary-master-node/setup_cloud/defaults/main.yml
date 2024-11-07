@@ -1,0 +1,4 @@
+namespace: onecloud
+edition: ce
+region: region0
+zone: zone0
