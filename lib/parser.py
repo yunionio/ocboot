@@ -82,6 +82,18 @@ def inject_add_hostagent_options(parser):
                         action="store_true", default=False,
                         help="enable kvm host service inside virtual machine")
 
+    parser.add_argument("--host-network",
+                        nargs="*",
+                        action="extend",
+                        dest="host_networks",
+                        help="networks option of /etc/yunion/host.conf")
+
+    parser.add_argument("--disk-path",
+                        nargs="*",
+                        action="extend",
+                        dest="disk_paths",
+                        help="local_image_path of /etc/yunion/host.conf")
+
 
 def inject_add_nodes_runtime_options(parser):
     parser.add_argument("--runtime",
@@ -89,6 +101,7 @@ def inject_add_nodes_runtime_options(parser):
                         default=consts.RUNTIME_QEMU,
                         choices=[consts.RUNTIME_QEMU, consts.RUNTIME_CONTAINERD],
                         help="select runtime type when adding node. default: qemu")
+
 
 def inject_auto_backup_options(parser):
     parser.add_argument(

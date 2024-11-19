@@ -51,6 +51,8 @@ KEY_REGION = "region"
 KEY_ZONE = "zone"
 
 KEY_ENABLE_CONTAINERD = "enable_containerd"
+KEY_HOST_NETWORKS = "host_networks"
+KEY_DISK_PATHS = "disk_paths"
 
 
 def load_config(config_file):
@@ -170,7 +172,7 @@ class OcbootConfig(object):
     def generate_inventory_file(self):
         content = self.get_ansible_inventory()
         yaml_content = utils.to_yaml(content)
-        filepath = '/tmp/host_inventory.yml'
+        filepath = './host_inventory.yml'
         with open(filepath, 'w') as f:
             f.write(yaml_content)
         return filepath
@@ -237,7 +239,10 @@ class Node(object):
         self.host = '127.0.0.1' if self.use_local else config.ensure_get('host', 'hostname')
         self.user = config.get('user', 'root')
         self.port = config.get('port', 22)
-        self.host_networks = config.get('host_networks', None)
+        self.host_networks = config.get(KEY_HOST_NETWORKS, None)
+        if isinstance(self.host_networks, str):
+            self.host_networks = [self.host_networks]
+        self.disk_paths = config.get(KEY_DISK_PATHS, None)
         self.enable_hugepage = config.get('enable_hugepage', True)
         self.node_ip = config.get('node_ip', None)
         if not self.node_ip:
@@ -270,7 +275,9 @@ class Node(object):
         if self.use_local:
             vars['ansible_connection'] = 'local'
         if self.host_networks:
-            vars['host_networks'] = self.host_networks
+            vars[KEY_HOST_NETWORKS] = self.host_networks
+        if self.disk_paths:
+            vars[KEY_DISK_PATHS] = self.disk_paths
         if self.enable_hugepage:
             vars['enable_hugepage'] = self.enable_hugepage
         if self.vrrp_interface or self.vrrp_vip:
@@ -421,6 +428,10 @@ class OnecloudConfig(object):
         self.offline_deploy = config.get('offline_deploy', False) or os.environ.get('OFFLINE_DEPLOY') == 'true'
         self.enable_lbagent = config.get('enable_lbagent', False)
         self.enable_containerd = config.get(KEY_ENABLE_CONTAINERD, False)
+        self.host_networks = config.get(KEY_HOST_NETWORKS, None)
+        if isinstance(self.host_networks, str):
+            self.host_networks = [self.host_networks]
+        self.disk_paths = config.get(KEY_DISK_PATHS, None)
 
     def ansible_vars(self):
         vars = {
@@ -448,6 +459,10 @@ class OnecloudConfig(object):
             vars['node_ip'] = self.node_ip
         if self.iso_install_mode:
             vars['iso_install_mode'] = True
+        if self.host_networks:
+            vars[KEY_HOST_NETWORKS] = self.host_networks
+        if self.disk_paths:
+            vars[KEY_DISK_PATHS] = self.disk_paths
         return vars
 
 

@@ -71,13 +71,17 @@ is_slave_node: false
 kubelet_run_directory: /var/lib/kubelet
 linux_default_root_user: true
 local_image_path:
-- /opt/cloud/workspace/disks
+{% for disk_path in disk_paths %}
+- {{ disk_path }}
+{% endfor %}
 log_level: info
 log_verbose_level: 0
 manage_ntp_configuration: true
 max_reserved_memory: 10240
 networks:
-- {{ host_networks }}
+{% for network in host_networks %}
+- {{ network }}
+{% endfor %}
 non_default_domain_projects: false
 notify_admin_users:
 - sysadmin

@@ -8,7 +8,7 @@ from .parser import inject_add_nodes_runtime_options
 class AddWorkerNodeService(AddNodeService):
 
     def inject_options(self, parser):
-        super(AddNodeService, self).inject_options(parser)
+        super(AddWorkerNodeService, self).inject_options(parser)
         inject_add_nodes_runtime_options(parser)
 
     def do_action(self, args):
@@ -25,7 +25,9 @@ class AddWorkerNodeService(AddNodeService):
                                 args.ssh_port,
                                 args.ssh_node_port,
                                 enable_host_on_vm=True,
-                                runtime=args.runtime)
+                                runtime=args.runtime,
+                                host_networks=args.host_networks,
+                                disk_paths=args.disk_paths)
         config.run()
 
 

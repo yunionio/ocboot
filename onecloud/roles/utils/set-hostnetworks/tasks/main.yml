@@ -6,6 +6,6 @@
 
   - name: Set host_networks to {{ node_interface_name }}/br0/{{ node_ip }}
     set_fact:
-      host_networks: '{{ node_interface_name }}/br0/{{ node_ip }}'
+      host_networks: "['{{ node_interface_name }}/br0/{{ node_ip }}']"
 
   when: host_networks is undefined or host_networks == ''
