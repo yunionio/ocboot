@@ -1,0 +1,10 @@
+- name: Copy switch edition script to /opt/yunion/bin/onecloud-switch-edition.sh
+  template:
+    src: "onecloud-switch-edition.sh.j2"
+    dest: "/opt/yunion/bin/onecloud-switch-edition.sh"
+    mode: '0755'
+
+- name: "Execute `/opt/yunion/bin/onecloud-switch-edition.sh`, checking log at /tmp/onecloud-switch-edition.log"
+  shell: "set -o pipefail && bash /opt/yunion/bin/onecloud-switch-edition.sh 2>&1 | tee /tmp/onecloud-switch-edition.log"
+  args:
+    executable: /bin/bash

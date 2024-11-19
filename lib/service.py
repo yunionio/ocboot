@@ -3,10 +3,10 @@
 
 from __future__ import unicode_literals
 
-from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, NodeConfig, Config
+from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, NodeConfig, Config
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
-from .parser import inject_add_hostagent_options
+from .parser import inject_add_hostagent_options, inject_primary_node_options, inject_ssh_options
 from .parser import inject_add_nodes_options
 from .parser import inject_auto_backup_options
 from .parser import inject_ssh_hosts_options
@@ -67,7 +67,7 @@ class NodesConfig(object):
         }
         self.nodes_config = NodeConfig(Config(conf_dict))
 
-    def run(self, action):
+    def run(self, action, vars=None):
         inventory_content = get_inventory_config(self.nodes_config)
         yaml_content = utils.to_yaml(inventory_content)
         filepath = '/tmp/cluster_%s_node_services_inventory.yml' % action
@@ -77,7 +77,41 @@ class NodesConfig(object):
         run_ansible_playbook(
             filepath,
             './onecloud/%s-services.yml' % action,
+            vars=vars,
         )
+
+
+class PrimaryMasterService(BaseService):
+
+    def __init__(self, subparsers, action):
+        super().__init__(subparsers, action, f"{action} service of primary_master_host")
+
+    def inject_options(self, parser):
+        inject_primary_node_options(parser)
+        inject_ssh_options(parser)
+
+    def get_ansible_vars(self, args, cluster, primary_master_host):
+        vars = get_ansible_global_vars(
+            cluster.get_current_version(),
+            cluster.is_using_k3s())
+        vars[KEY_K8S_CONTROLPLANE_HOST] = primary_master_host
+        return vars
+
+
+    def do_action(self, args):
+        cluster = construct_cluster(
+            args.primary_master_host,
+            args.ssh_user,
+            args.ssh_private_file,
+            args.ssh_port)
+        vars = self.get_ansible_vars(args, cluster, args.primary_master_host)
+        config = NodesConfig(
+            [args.primary_master_host],
+            args.ssh_user,
+            args.ssh_private_file,
+            args.ssh_port,
+        )
+        config.run(self.action, vars=vars)
 
 
 class AddNodeBaseService(BaseService):

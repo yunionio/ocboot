@@ -38,11 +38,15 @@ def inject_ssh_hosts_options(parser):
     return parser
 
 
-def inject_add_nodes_options(parser):
+def inject_primary_node_options(parser):
     parser.add_argument("primary_master_host",
                         metavar="FIRST_MASTER_HOST",
                         help="onecloud cluster primary master host, \
                               e.g., 10.1.2.56")
+
+
+def inject_add_nodes_options(parser):
+    inject_primary_node_options(parser)
 
     parser.add_argument("target_node_hosts",
                         nargs='+',

@@ -3,7 +3,7 @@
 import sys
 import argparse
 
-from lib import install
+from lib import install, switch_edition
 from lib import upgrade
 from lib import backup, restore
 from lib import add_node
@@ -23,8 +23,7 @@ def main():
     add_node.add_command(subparsers)
     auto_backup.add_command(subparsers)
     backup.add_command(subparsers)
-    ce.add_command(subparsers)
-    ee.add_command(subparsers)
+    switch_edition.add_command(subparsers)
     install.add_command(subparsers)
     restore.add_command(subparsers)
     start.add_command(subparsers)

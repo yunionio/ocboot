@@ -1,3 +1,5 @@
 - hosts: all
   roles:
-    - { role: utils/ce-services }
+    - role: switch-edition
+      vars:
+        TARGET_EDITION: ce
