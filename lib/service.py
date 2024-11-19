@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 
-from .ocboot import KEY_ENABLE_CONTAINERD, KEY_IMAGE_REPOSITORY, NodeConfig, Config
+from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, NodeConfig, Config
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
 from .parser import inject_add_hostagent_options
@@ -187,6 +187,8 @@ class AddNodesConfig(object):
             'controlplane_ssh_port': controlplane_ssh_port,
             'enable_lbagent': enable_lbagent,
             KEY_ENABLE_CONTAINERD: self.enable_containerd,
+            KEY_HOST_NETWORKS: kwargs.get(KEY_HOST_NETWORKS, None),
+            KEY_DISK_PATHS: kwargs.get(KEY_DISK_PATHS, None),
         }
         (repo, is_insecure) = cluster.get_repository()
         if is_insecure:
@@ -199,7 +201,7 @@ class AddNodesConfig(object):
     def run(self):
         inventory_content = ansible.get_inventory_config(self.worker_config)
         yaml_content = utils.to_yaml(inventory_content)
-        filepath = '/tmp/cluster_add_node_inventory.yml'
+        filepath = './cluster_add_node_inventory.yml'
         with open(filepath, 'w') as f:
             f.write(yaml_content)
         # start run upgrade playbook

@@ -1,2 +1,4 @@
 ---
 host_enable_hugepage: false
+disk_paths:
+- /opt/cloud/workspace/disks

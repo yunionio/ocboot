@@ -94,7 +94,7 @@ def run_ansible_playbook(hosts_f, playbook_f, debug_level=0, vars=None):
     cmd = ["ansible-playbook"]
 
     if vars:
-        vars_f = "/tmp/oc_vars.yml"
+        vars_f = "./oc_vars.yml"
         with open(vars_f, 'w') as f:
             f.write(utils.to_yaml(vars))
         cmd.extend(["-e", "@%s" % vars_f])
