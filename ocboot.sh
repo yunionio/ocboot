@@ -32,6 +32,8 @@ buildah_from_image "$OCBOOT_IMAGE"
 
 mkdir -p "$HOME/.ssh"
 
+ROOT_DIR='/ocboot'
+
 CMD=""
 
 is_ocboot_subcmd() {
@@ -45,7 +47,7 @@ is_ocboot_subcmd() {
 }
 
 if is_ocboot_subcmd "$1"; then
-    CMD="ocboot.py"
+    CMD="$ROOT_DIR/ocboot.py"
 fi
 
 buildah_version=$(buildah --version | awk '{print $3}')
@@ -61,16 +63,19 @@ if [[ $buildah_version_major -eq 1 ]] && [[ "$buildah_version_minor" -gt 23 ]]; 
 fi
 
 cmd_extra_args=""
+origin_args="$@"
 
 if [[ "$1" == "run.py" ]]; then
     if [[ "$IMAGE_REPOSITORY" != "$DEFAULT_REPO" ]]; then
         cmd_extra_args="$cmd_extra_args -i $IMAGE_REPOSITORY"
     fi
+    origin_args="$ROOT_DIR/$origin_args"
 fi
 
-buildah run -t "${buildah_extra_args[@]}" \
+buildah run --isolation chroot --user $(whoami) \
+    -t "${buildah_extra_args[@]}" \
     --net=host \
-    -v "$HOME/.ssh:/root/.ssh" \
-    -v "$(pwd):/ocboot" \
+    -v "$HOME/.ssh:$HOME/.ssh" \
+    -v "$(pwd):$ROOT_DIR" \
     -v "$(pwd)/airgap_assets/k3s-install.sh:/airgap_assets/k3s-install.sh:ro" \
-    "$CONTAINER_NAME" $CMD "$@" $cmd_extra_args
+    "$CONTAINER_NAME" $CMD $origin_args $cmd_extra_args
