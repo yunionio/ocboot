@@ -2,11 +2,24 @@
   include_role:
     name: utils/set-hostnetworks
 
+- name: Is Support 1G hugepage
+  shell: |
+    cat /proc/cpuinfo | grep pdpe1gb > /dev/null
+  register: is_support_1g_hugepage
+  changed_when: false
+  failed_when: false
+
 - name: Set host_enable_hugepage to true
   set_fact:
     host_enable_hugepage: true
   when:
   - enable_hugepage is defined
+  - is_controller_node|default(false)|bool == false
+  - is_support_1g_hugepage.rc == 0
+  - (is_centos_x86 is defined and is_centos_x86 | default(false) | bool) == true
+    or (is_openeuler_x86 is defined and is_openeuler_x86 | default(false) | bool) == true
+    or (is_ubuntu_based_x86 is defined and is_ubuntu_based_x86 | default(false) | bool) == true
+    or (is_debian_based_x86 is defined and is_debian_based_x86 | default(false) | bool) == true
   - onecloud_version is defined
   - onecloud_version is version('v3.10', '>=')
   - ansible_architecture == 'x86_64'

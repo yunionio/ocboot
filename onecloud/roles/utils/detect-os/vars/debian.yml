@@ -1,4 +1,5 @@
 is_debian_based: true
+is_debian_based_x86: true
 debian_based_arch: amd64
 
 common_packages:
