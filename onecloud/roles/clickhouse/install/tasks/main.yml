@@ -76,6 +76,24 @@
       replace: '<access_management>1</access_management>'
       backup: yes
 
+  - name: Allow drop large tables (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<!-- <max_table_size_to_drop>0</max_table_size_to_drop> -->'
+      replace: '<max_table_size_to_drop>0</max_table_size_to_drop>'
+
+  - name: Allow drop large partitions (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<!-- <max_partition_size_to_drop>0</max_partition_size_to_drop> -->'
+      replace: '<max_partition_size_to_drop>0</max_partition_size_to_drop>'
+
+  - name: Config clickhouse system logging
+    copy:
+      mode: "0600"
+      src: system_logs.xml
+      dest: /etc/clickhouse-server/config.d/system_logs.xml
+
   - name: restart clickhouse-server
     service:
       name: clickhouse-server
