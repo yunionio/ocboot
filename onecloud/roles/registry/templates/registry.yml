@@ -6,9 +6,9 @@ storage:
   cache:
     blobdescriptor: inmemory
   filesystem:
-    rootdirectory: {{ root_dir }}
+    rootdirectory: /opt/registry
 http:
-  addr: :{{ listen_port }}
+  addr: :5000
   headers:
     X-Content-Type-Options: [nosniff]
 health:
