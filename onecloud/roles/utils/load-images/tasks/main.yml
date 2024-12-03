@@ -13,6 +13,7 @@
     offline_node_list: "{{ offline_node_list + [node_ip] }}"
   when:
   - offline_data_path is defined
+  - high_availability_vip is not defined
 
 - name: cp load-images.sh
   copy:
@@ -26,7 +27,7 @@
   with_items:
   - "{{ offline_node_list }}"
 
-- name: loading images
+- name: loading images (this is slow, be patient)
   shell: bash /tmp/load-images.sh
   delegate_to: '{{ item }}'
   with_items:
