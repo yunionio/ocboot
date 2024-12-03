@@ -17,7 +17,16 @@
   - online_status == "offline"
   - offline_data_path | length > 0
 
-- name: Tag and push images for non-HA mode. It might take a few minutes...
+- name: setup local registry
+  include_role:
+    name: registry
+  when:
+  - online_status == "offline"
+  - offline_data_path | length > 0
+  - docker_insecure_registries is defined
+  - docker_insecure_registries | length > 0
+
+- name: Tag and push images to local registry. It might take a few minutes...
   shell: |
     export version_file={{ offline_data_path }}/versions.json
     if ! [ -f "$version_file" ]; then
@@ -50,7 +59,6 @@
   when:
   - docker_insecure_registries is defined
   - docker_insecure_registries | length > 0
-  - high_availability_vip is not defined
   - online_status == "offline"
   - offline_data_path is defined
   - offline_data_path | length > 0
