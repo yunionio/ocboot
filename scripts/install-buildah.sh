@@ -28,6 +28,8 @@ supported_os=(
     "Rocky Linux 8.9 x86_64"
     "Ubuntu 22.04.* LTS x86_64"
     "Ubuntu 22.04.* LTS aarch64"
+    "Ubuntu 22.04 LTS x86_64"
+    "Ubuntu 22.04 LTS aarch64"
 )
 
 is_supported() {
