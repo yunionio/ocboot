@@ -20,6 +20,8 @@
   - name: Include role k3s/airgap
     include_role:
       name: k3s/airgap
+    vars:
+      is_k3s_server: False
 
   - name: Include role k3s/k3s_agent with extra_agent_args {{ extra_agent_args }}
     include_role:
