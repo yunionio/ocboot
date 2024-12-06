@@ -88,11 +88,65 @@
       regexp: '<!-- <max_partition_size_to_drop>0</max_partition_size_to_drop> -->'
       replace: '<max_partition_size_to_drop>0</max_partition_size_to_drop>'
 
-  - name: Config clickhouse system logging
-    copy:
-      mode: "0600"
-      src: system_logs.xml
-      dest: /etc/clickhouse-server/config.d/system_logs.xml
+  - name: Set TTL of query_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<query_log>'
+      replace: '<query_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+  - name: Set TTL of trace_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<trace_log>'
+      replace: '<trace_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+  - name: Set TTL of query_thread_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<query_thread_log>'
+      replace: '<query_thread_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+  - name: Set TTL of query_views_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<query_views_log>'
+      replace: '<query_views_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+  - name: Set TTL of part_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<part_log>'
+      replace: '<part_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+  - name: Set TTL of metric_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<metric_log>'
+      replace: '<metric_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+  - name: Set TTL of asynchronous_metric_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<asynchronous_metric_log>'
+      replace: '<asynchronous_metric_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+#  - name: Set TTL of opentelemetry_span_log (config.xml)
+#    replace:
+#      path: /etc/clickhouse-server/config.xml
+#      regexp: '<opentelemetry_span_log>'
+#      replace: '<opentelemetry_span_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+  - name: Set TTL of crash_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<crash_log>'
+      replace: '<crash_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
+
+  - name: Set TTL of session_log (config.xml)
+    replace:
+      path: /etc/clickhouse-server/config.xml
+      regexp: '<session_log>'
+      replace: '<session_log>\n        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>'
 
   - name: restart clickhouse-server
     service:
