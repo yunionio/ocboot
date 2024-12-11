@@ -1,0 +1,5 @@
+- hosts: clickhouse_node
+  roles:
+    - { role: utils/detect-os }
+    - { role: clickhouse/install }
+    - { role: clickhouse/deploy }

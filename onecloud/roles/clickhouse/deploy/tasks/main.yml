@@ -7,13 +7,13 @@
 
   - name: Apply modifications for clickhouse
     environment:
-      KUBECONFIG: /etc/kubernetes/admin.conf
+      KUBECONFIG: "{{ ENV_KUBECONFIG }}"
     shell: |
-      kubectl patch onecloudclusters -n onecloud default --patch "$(cat /tmp/clickhouse.spec.yaml)" --type merge
+      {{ K3S_CMDLINE_PREFIX }} kubectl patch onecloudclusters -n onecloud default --patch "$(cat /tmp/clickhouse.spec.yaml)" --type merge
       for i in autoupdate cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
       do
-        kubectl delete configmap -n onecloud default-$i
-        kubectl rollout restart deployment -n onecloud default-$i
+        {{ K3S_CMDLINE_PREFIX }} kubectl delete configmap -n onecloud default-$i
+        {{ K3S_CMDLINE_PREFIX }} kubectl rollout restart deployment -n onecloud default-$i
       done
 
       sleep 30
@@ -21,7 +21,7 @@
       # check all services that use clickhouse
       for i in autoupdate cloudevent glance keystone region kubeserver logger meter monitor notify webconsole
       do
-        kubectl -n onecloud get configmap default-$i -o yaml | grep -qP '^\s+clickhouse: tcp'
+        {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud get configmap default-$i -o yaml | grep -qP '^\s+clickhouse: tcp'
       done
     args:
       executable: /bin/bash
