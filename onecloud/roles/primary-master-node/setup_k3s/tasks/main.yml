@@ -15,6 +15,8 @@
 - name: Include role k3s/airgap
   include_role:
     name: k3s/airgap
+  vars:
+    is_k3s_server: true
 
 - name: Include role k3s/k3s_server
   include_role:
