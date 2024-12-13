@@ -10,6 +10,12 @@
   set_fact:
     lbagent_access_ip: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
 
+- name: ensure that the directory /etc/yunion/ exists.
+  file:
+    path: /etc/yunion/
+    state: directory
+    mode: '0755'
+
 - name: copy lbagent configuration file
   template:
     dest: /etc/yunion/lbagent.conf
