@@ -59,7 +59,7 @@ spec:
 {% if use_hyper_image %}
   useHyperImage: true
 {% endif %}
-  loadBalancerEndpoint: "{{ apiserver_advertise_address }}"
+  loadBalancerEndpoint: "{{ api_endpoint }}"
 {% if disable_resource_management %}
   disableResourceManagement: true
 {% else %}
