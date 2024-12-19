@@ -540,7 +540,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['onecloud_user_password'] = self.onecloud_user_password
         vars['use_ee'] = self.use_ee
         vars['apiserver_advertise_address'] = self.node.node_ip
-        vars[KEY_K3S_API_ENDPOINT] = self.node.node_ip
+        vars[KEY_K3S_API_ENDPOINT] = self.controlplane_host
         vars['ip_autodetection_method'] = self.ip_autodetection_method
         vars['image_repository'] = self.image_repository
         vars['enable_minio'] = self.enable_minio
