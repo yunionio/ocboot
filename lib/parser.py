@@ -38,6 +38,10 @@ def inject_ssh_hosts_options(parser):
     return parser
 
 
+def help_d(help):
+    return help + " (default: %(default)s)"
+
+
 def inject_primary_node_options(parser):
     parser.add_argument("primary_master_host",
                         metavar="FIRST_MASTER_HOST",
@@ -47,7 +51,7 @@ def inject_primary_node_options(parser):
 
 def inject_add_nodes_options(parser):
     inject_primary_node_options(parser)
-
+    inject_ssh_options(parser)
     parser.add_argument("target_node_hosts",
                         nargs='+',
                         default=[],
@@ -55,24 +59,6 @@ def inject_add_nodes_options(parser):
                         help="target nodes ip added into cluster")
 
     # optional options
-    help_d = lambda help: help + " (default: %(default)s)"
-
-    parser.add_argument("--user", "-u",
-                        dest="ssh_user",
-                        default="root",
-                        help=help_d("primary master host ssh user"))
-
-    parser.add_argument("--key-file", "-k",
-                        dest="ssh_private_file",
-                        default=os.path.expanduser("~/.ssh/id_rsa"),
-                        help=help_d("primary master ssh private key file"))
-
-    parser.add_argument("--port", "-p",
-                        dest="ssh_port",
-                        type=int,
-                        default="22",
-                        help=help_d("primary master host ssh port"))
-
     parser.add_argument("--node-port", "-n",
                         dest="ssh_node_port",
                         type=int,

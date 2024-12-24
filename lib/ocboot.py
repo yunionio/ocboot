@@ -64,6 +64,13 @@ def load_config(config_file):
         return OcbootConfig(config)
 
 
+def get_ansible_global_vars_by_cluster(cluster):
+    vars = get_ansible_global_vars(
+        cluster.get_current_version(),
+        cluster.is_using_k3s())
+    return vars
+
+
 def get_ansible_global_vars(version, _is_using_k3s=None):
     if _is_using_k3s is None:
         _is_using_k3s = is_using_k3s()

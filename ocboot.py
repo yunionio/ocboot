@@ -12,6 +12,7 @@ from lib import stop, start
 from lib import ce, ee
 from lib import auto_backup
 from lib import setup_container_env
+from lib import clickhouse
 
 
 def main():
@@ -33,6 +34,7 @@ def main():
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_CONTROLLER)
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_HOST)
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_FINAL)
+    clickhouse.add_command(subparsers)
     args = parser.parse_args()
     if not args.subcmd:
         parser.print_help()

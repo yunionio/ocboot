@@ -3,10 +3,10 @@
 
 from __future__ import unicode_literals
 
-from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, NodeConfig, Config
+from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, ClickhouseConfig, NodeConfig, Config, get_ansible_global_vars_by_cluster
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
-from .parser import inject_add_hostagent_options, inject_primary_node_options, inject_ssh_options
+from .parser import help_d, inject_add_hostagent_options, inject_primary_node_options, inject_ssh_options
 from .parser import inject_add_nodes_options
 from .parser import inject_auto_backup_options
 from .parser import inject_ssh_hosts_options
@@ -306,3 +306,73 @@ class AutoBackupService(Service):
                                   args.max_disk_percentage,
                                   )
         config.run(self.action)
+
+
+class ClickhouseServiceConfig(object):
+
+    def __init__(self, cluster, primary_host,
+                 ch_pwd, ch_port, offline_data_path,
+                 ssh_user='root', ssh_port=22):
+        cfg = {
+            'host': primary_host,
+            'user': ssh_user,
+            'port': ssh_port,
+            'ch_password': ch_pwd,
+            'ch_port': ch_port,
+        }
+        self.cluster = cluster
+        self.primary_host = primary_host
+        self.ch_config = ClickhouseConfig(Config(cfg))
+        self.offline_data_path = offline_data_path
+
+    def run(self):
+        inventory_content = ansible.get_inventory_config(self.ch_config)
+        yaml_content = utils.to_yaml(inventory_content)
+        filepath = './cluster_clickhouse_inventory.yml'
+        with open(filepath, 'w') as f:
+            f.write(yaml_content)
+        # start run upgrade playbook
+        return_code = run_ansible_playbook(
+            filepath,
+            './onecloud/clickhouse-services.yml',
+            vars=self.get_vars(),
+        )
+
+    def get_vars(self):
+        vars = self.ch_config.ansible_vars()
+        vars['offline_data_path'] = self.offline_data_path
+        vars[KEY_K8S_CONTROLPLANE_HOST] = self.primary_host
+        global_vars = get_ansible_global_vars_by_cluster(self.cluster)
+        vars.update(global_vars)
+        return vars
+
+
+class ClickhouseService(BaseService):
+
+    def __init__(self, subparsers, action):
+        super().__init__(subparsers, action, 'deploy clickhouse')
+
+    def inject_options(self, parser):
+        inject_primary_node_options(parser)
+        inject_ssh_options(parser)
+        parser.add_argument("offline_data_path",
+                            metavar='OFFLINE_DATA_PATH',
+                            help="offline ISO mount point, e.g., /mnt")
+        parser.add_argument("--ch-password", dest="ch_password",
+                            default="your-clickhouse-password",
+                            help=help_d("clickhouse password"))
+        parser.add_argument("--ch-port", dest="ch_port",
+                            default=9000, type=int,
+                            help=help_d("clickhouse port"))
+
+    def do_action(self, args):
+        # config = 
+        cluster = construct_cluster(
+            args.primary_master_host,
+            args.ssh_user,
+            args.ssh_private_file,
+            args.ssh_port)
+        print(f'found cluster {cluster.get_current_version()}')
+        config = ClickhouseServiceConfig(cluster,
+            args.primary_master_host, args.ch_password, args.ch_port, args.offline_data_path, args.ssh_user, args.ssh_port)
+        config.run()
