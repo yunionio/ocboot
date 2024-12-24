@@ -25,7 +25,7 @@ mkdir -p "$HOME/.ssh"
 CMD=""
 
 is_ocboot_subcmd() {
-    local subcmds="install upgrade add-node add-lbagent backup restore"
+    local subcmds="install upgrade add-node add-lbagent backup restore clickhouse"
     for subcmd in $subcmds; do
         if [[ "$1" == "$subcmd" ]]; then
             return 0
