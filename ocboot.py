@@ -11,6 +11,7 @@ from lib import add_lbagent
 from lib import stop, start
 from lib import ce, ee
 from lib import auto_backup
+from lib import clickhouse
 
 
 def main():
@@ -27,12 +28,12 @@ def main():
     install.add_command(subparsers)
     restore.add_command(subparsers)
     start.add_command(subparsers)
-    start.add_command(subparsers)
     stop.add_command(subparsers)
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE)
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_CONTROLLER)
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_HOST)
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_FINAL)
+    clickhouse.add_command(subparsers)
     args = parser.parse_args()
     if not args.subcmd:
         parser.print_help()
