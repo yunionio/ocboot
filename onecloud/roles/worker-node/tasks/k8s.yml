@@ -55,9 +55,15 @@
       name: utils/set-hostnetworks
     when: host_networks is undefined or host_networks == ''
 
+  - name: Set host_networks_options
+    set_fact:
+      host_networks_options: "{{ host_networks | join(' --host-networks ') }}"
+    when:
+      host_networks is defined
+
   - name: construct host network args
     set_fact:
-      join_args: "{{ join_args }} --host-networks {{ host_networks }} "
+      join_args: "{{ join_args }} --host-networks {{ host_networks_options }} "
     when:
       host_networks is defined
 
