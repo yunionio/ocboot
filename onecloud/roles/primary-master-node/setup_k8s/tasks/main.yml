@@ -115,9 +115,15 @@
     when:
       node_ip is defined
 
+  - name: Set host_networks_options
+    set_fact:
+      host_networks_options: "{{ host_networks | join(' --host-networks ') }}"
+    when:
+      host_networks is defined
+
   - name: Construct init args host_networks
     set_fact:
-      init_args: "{{ init_args }} --host-networks {{ host_networks }} "
+      init_args: "{{ init_args }} --host-networks {{ host_networks_options }} "
     when:
       host_networks is defined
 
