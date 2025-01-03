@@ -27,6 +27,7 @@
       src: "keepalived.yaml.j2"
       dest: "/var/lib/rancher/k3s/agent/pod-manifests/keepalived.yaml"
       mode: 0600
+  when: is_k3s_server
 
 # - name: Setup /etc/rancher/k3s/registries.yaml
 #   template:
