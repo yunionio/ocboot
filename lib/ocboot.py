@@ -431,6 +431,8 @@ class OnecloudConfig(object):
             self.high_availability_vip = self.controlplane_host
             self.keepalived_password = base64.b64encode(self.high_availability_vip.encode('ascii'))[0:8].decode()
             self.keepalived_router_id = int(self.high_availability_vip.replace('.', '')) % 255
+            if self.keepalived_router_id == 0:
+                self.keepalived_router_id = 100
             self.keepalived_version_tag = config.get('keepalived_version_tag', default_keepalived_version_tag)
         self.iso_install_mode = config.get('iso_install_mode', False)
         self.enable_eip_man = config.get('enable_eip_man', False)
