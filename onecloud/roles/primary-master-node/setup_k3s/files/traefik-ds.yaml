@@ -32,6 +32,9 @@ spec:
         # - --global.sendanonymoususage
         - --entrypoints.web.address=:80/tcp
         - --entrypoints.websecure.address=:443/tcp
+        - --entrypoints.web.http.redirections.entrypoint.to=websecure
+        - --entrypoints.web.http.redirections.entrypoint.scheme=https
+        - --entrypoints.web.http.redirections.entrypoint.permanent=true
         - --api.dashboard=false
         - --ping=false
         - --metrics.prometheus=true
