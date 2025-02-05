@@ -1,3 +1,7 @@
 - name: include some {{ k8s_or_k3s }} tasks
   include_role:
     name: "primary-master-node/setup_{{k8s_or_k3s}}"
+
+- name: Include utils/k8s/addons tasks
+  include_role:
+    name: utils/k8s/addons
