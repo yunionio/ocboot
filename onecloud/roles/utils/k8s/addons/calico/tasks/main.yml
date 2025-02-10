@@ -3,4 +3,4 @@
     name: utils/k8s/addons/patch
   vars:
     resource_name: calico-kube-controllers
-
+  ignore_errors: true

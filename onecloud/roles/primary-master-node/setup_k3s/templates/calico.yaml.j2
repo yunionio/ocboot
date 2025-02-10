@@ -5080,6 +5080,15 @@ spec:
       labels:
         k8s-app: calico-kube-controllers
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: onecloud.yunion.io/controller
+                operator: In
+                values:
+                - enable
       nodeSelector:
         kubernetes.io/os: linux
       tolerations:
