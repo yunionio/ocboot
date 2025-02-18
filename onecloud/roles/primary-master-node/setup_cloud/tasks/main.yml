@@ -118,7 +118,7 @@
     name: utils/sync-user/on
 
 - name: "Create essential services, wait for a few minutes. You can open another terminal and execute `kubectl get pods -n onecloud -w` to watch the process."
-  shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait"
+  shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }}"
   retries: 6
   delay: 10
   register: result
@@ -156,6 +156,13 @@
     kubectl -n onecloud rollout restart ds default-region-dns || :
   become: yes
   when: user_dns is defined and user_dns|length > 0
+
+- name: Init waiter script
+  include_role:
+    name: utils/onecloud-waiter
+
+- name: "Execute `/opt/yunion/bin/wait-onecloud-services.sh` to wait essential services to be running. You can open another terminal and execute `kubectl get pods -n onecloud -w` to watch the process."
+  shell: "bash /opt/yunion/bin/wait-onecloud-services.sh"
 
 - name: Source climc bash completion in master's ~/.bashrc
   lineinfile:
@@ -325,7 +332,7 @@
     delay: 15
     failed_when: false
   when:
-  - product_version | default("") in ['FullStack', 'Edge']
+  - product_version | default("") in ['FullStack', 'Edge', 'LightEdge']
 
 - name: rm sync-user option
   include_role:
