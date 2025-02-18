@@ -396,7 +396,7 @@ def generate_config(
         'user': username,
         ocboot.KEY_HOSTNAME: ipv4,
     }
-    enable_host = produc_stack in [ocboot.KEY_STACK_FULLSTACK, ocboot.KEY_STACK_EDGE]
+    enable_host = produc_stack in [ocboot.KEY_STACK_FULLSTACK, ocboot.KEY_STACK_EDGE, ocboot.KEY_STACK_LIGHT_EDGE]
     extra_pri_dict = {
         'controlplane_host': ipv4,
         'db_host': ipv4,
@@ -437,8 +437,8 @@ def get_args():
     global parser
     parser = argparse.ArgumentParser()
     parser.add_argument('STACK', metavar="stack", type=str, nargs=1,
-                        help="Choose the product type from ['full', 'cmp', 'virt']",
-                        choices=['full', 'cmp', 'virt'])
+                        help="Choose the product type from ['full', 'cmp', 'virt', 'light-virt']",
+                        choices=['full', 'cmp', 'virt', 'light-virt'])
     parser.add_argument('IP_CONF', metavar="ip_conf", type=str, nargs='?',
                         help="Input the target IPv4 or Config file")
     parser.add_argument('--offline-data-path', nargs='?',
@@ -534,6 +534,7 @@ def main():
         'full': ocboot.KEY_STACK_FULLSTACK,
         'cmp': ocboot.KEY_STACK_CMP,
         'virt': ocboot.KEY_STACK_EDGE,
+        'light-virt': ocboot.KEY_STACK_LIGHT_EDGE,
     }
 
     if not args.k8s_v115:

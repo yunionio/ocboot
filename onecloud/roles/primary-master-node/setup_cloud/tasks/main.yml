@@ -301,7 +301,7 @@
     delay: 15
     failed_when: false
   when:
-  - product_version | default("") in ['FullStack', 'Edge']
+  - product_version | default("") in ['FullStack', 'Edge', 'LightEdge']
 
 - name: rm sync-user option
   include_role:
