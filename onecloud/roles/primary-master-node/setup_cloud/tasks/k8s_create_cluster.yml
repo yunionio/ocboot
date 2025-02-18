@@ -3,6 +3,10 @@
     name: utils/sync-user/on
 
 - name: "Create essential services, wait for a few minutes. You can open another terminal and execute `kubectl get pods -n onecloud -w` to watch the process."
-  shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }} --wait"
+  shell: "/opt/yunion/bin/ocadm cluster create {{ init_cluster_args }}"
   retries: 6
   delay: 10
+
+- name: "patch product version to {{ product_version }} "
+  shell: |
+    KUBECONFIG={{ENV_KUBECONFIG}} kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/productVersion", "value": {{ product_version }} }]'
