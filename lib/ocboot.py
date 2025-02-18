@@ -28,8 +28,9 @@ KEY_EXTRA_PACKAGES = 'extra_packages'
 
 KEY_STACK_FULLSTACK = 'FullStack'
 KEY_STACK_EDGE = 'Edge'
+KEY_STACK_LIGHT_EDGE = 'LightEdge'
 KEY_STACK_CMP = 'CMP'
-KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_CMP]
+KEY_STACK_LIST = [KEY_STACK_FULLSTACK, KEY_STACK_EDGE, KEY_STACK_LIGHT_EDGE, KEY_STACK_CMP]
 
 KEY_USER_DNS = 'user_dns'
 
@@ -423,12 +424,14 @@ class PrimaryMasterConfig(OnecloudConfig):
     # Cloud Management Platform product
     PRODUCT_VERSION_CMP = "CMP"
     # Private Cloud Edge on-premise product
-    PRODUCT_VERSION_Edge = "Edge"
+    PRODUCT_VERSION_EDGE = "Edge"
+    PRODUCT_VERSION_LIGHT_EDGE = "LightEdge"
 
     PRODUCT_VERSIONS = [
         PRODUCT_VERSION_FULL_STACK,
         PRODUCT_VERSION_CMP,
-        PRODUCT_VERSION_Edge,
+        PRODUCT_VERSION_EDGE,
+        PRODUCT_VERSION_LIGHT_EDGE,
     ]
 
     def __init__(self, config, bastion_host=None):
