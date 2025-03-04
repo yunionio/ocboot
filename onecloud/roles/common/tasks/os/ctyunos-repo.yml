@@ -1,0 +1,35 @@
+- name: Online repo
+  shell: |
+    cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
+    [yunion-repo-base]
+    name=Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/{{ yum_os_distribution| replace(' ','') | lower }}/{{ yum_os_version }}/base/{{ ansible_architecture }}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=1
+
+    [yunion-repo-updates]
+    name=Yunion Bin Packages for Yunion Multi-Cloud Platform -
+    baseurl=https://iso.yunion.cn/rpm-updates/{{ansible_architecture}}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=2
+    EOF_MISC
+  become: yes
+  args:
+    executable: /bin/bash
+  when:
+  - online_status is defined
+  - online_status == 'online'
+
+- name: Add cloud rpm repository {{ online_status }} {{ ansible_architecture }}
+  template:
+    src: yunion.repo.j2
+    dest: /etc/yum.repos.d/yunion.repo
+  when:
+  - online_status is defined
+  - online_status == 'offline'
