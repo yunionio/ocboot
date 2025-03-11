@@ -31,8 +31,8 @@ spec:
     #   rollingUpdate:
     #     maxUnavailable: 1
     #     maxSurge: 0
-    # service:
-    #   enabled: false
+    service:
+      enabled: false
     # hostNetwork: true
     # securityContext:
     #   capabilities:
