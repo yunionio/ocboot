@@ -57,7 +57,7 @@
 
 - hosts: master_nodes:worker_nodes
   roles:
-    - utils/kernel-check
+    - { role: utils/kernel-check, when: 'enable_containerd|default(false) == false' }
   tags:
     - kernel
 
