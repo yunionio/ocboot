@@ -8,7 +8,7 @@ class MysqlService(ClusterService):
                  root_pwd="your-sql-password",
                  port="3306",
                  version="10.5.19",
-                 repo="registry.cn-beijing.aliyuncs.com/yunionio"):
+                 repo="${MARIADB_REPO:-registry.cn-beijing.aliyuncs.com/yunionio}"):
         super(MysqlService, self).__init__("mysql", version, repo=repo, image_name="mariadb")
 
         self.password = root_pwd
