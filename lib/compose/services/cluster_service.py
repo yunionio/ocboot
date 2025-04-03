@@ -14,7 +14,7 @@ class ClusterService(Service):
 
     def __init__(self, name, version,
                  image_name='',
-                 repo='registry.cn-beijing.aliyuncs.com/yunionio'):
+                 repo='${CLOUDPODS_REPO:-registry.cn-beijing.aliyuncs.com/yunionio}'):
         if image_name == '':
             image_name = name
         self.image = f'{repo}/{image_name}:{version}'
@@ -94,7 +94,7 @@ class ClusterCommonService(ClusterService):
                  depend_svc=None,
                  port=-1,
                  image_name="",
-                 repo="registry.cn-beijing.aliyuncs.com/yunionio"):
+                 repo="${CLOUDPODS_REPO:-registry.cn-beijing.aliyuncs.com/yunionio}"):
         super().__init__(name, version, image_name=image_name, repo=repo)
 
         self.db_svc = db_svc
