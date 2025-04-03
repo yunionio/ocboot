@@ -134,6 +134,7 @@
     kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/minio/enable", "value": true}]'
     kubectl -n onecloud patch onecloudcluster default --type='json' -p '[{"op": "replace", "path": "/spec/glance/switchToS3", "value": true}]'
   become: yes
+  ignore_errors: yes
   when:
   - enable_minio is defined
   - enable_minio|default(false)|bool == true
