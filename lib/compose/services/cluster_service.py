@@ -7,7 +7,10 @@ from lib.compose import options
 
 
 def COMPOSE_SERVICE_INIT_VERSION():
-    return os.environ.get('VERSION', 'v3.11-0626.1')
+    version = os.environ.get("COMPOSE_SERVICE_INIT_VERSION", None)
+    if version:
+        return version
+    return os.environ.get('VERSION', 'v3.11.9')
 
 
 class ClusterService(Service):
