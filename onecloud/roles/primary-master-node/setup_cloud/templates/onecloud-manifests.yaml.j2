@@ -48,12 +48,12 @@ metadata:
     onecloud.yunion.io/edition: "{{ edition }}"
 spec:
   mysql:
-    host: {{ db_host }}
+    host: "{{ db_host }}"
     port: {{ db_port }}
-    username: {{ db_user }}
-    password: {{ db_password }}
-  region: {{ region }}
-  zone: {{ zone }}
+    username: "{{ db_user }}"
+    password: "{{ db_password }}"
+  region: "{{ region }}"
+  zone: "{{ zone }}"
   imageRepository: "{{ image_repository }}"
   version: "{{ onecloud_version }}"
 {% if use_hyper_image %}
