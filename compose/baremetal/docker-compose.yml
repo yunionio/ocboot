@@ -874,7 +874,7 @@ services:
     - --step=init
     - --product-version=Baremetal
   apigateway:
-    image: ${CLOUDPODS_REPO:-registry.cn-beijing.aliyuncs.com/yunionio}/apigateway:v3.11-0621.0
+    image: ${CLOUDPODS_REPO:-registry.cn-beijing.aliyuncs.com/yunionio}/apigateway:v3.11.10
     ports:
     - 30300:30300/tcp
     volumes:

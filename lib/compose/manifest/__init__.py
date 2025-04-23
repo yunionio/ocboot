@@ -97,7 +97,7 @@ def new_baremetal_manifest(version):
     glance = new_glance_service(version, mysql, keystone, hostdeployer)
     ansibleserver = new_ansibleserver_service(version, mysql, keystone)
     climc = ClimcService(version, keystone, region)
-    apigateway = new_apigateway_service("v3.11-0621.0", keystone, region)
+    apigateway = new_apigateway_service(version, keystone, region)
     webconsole = new_webconsole_service(version, mysql, keystone)
     yunionconf = new_yunionconf_service(version, mysql, keystone)
     monitor = new_monitor_service(version, mysql, region)
