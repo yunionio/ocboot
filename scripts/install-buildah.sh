@@ -26,6 +26,7 @@ supported_os=(
     "openEuler 22.03 aarch64"
     "OpenCloudOS 8.8 x86_64"
     "Rocky Linux 8.9 x86_64"
+    "Ubuntu 20.04.* LTS x86_64"
     "Ubuntu 22.04.* LTS x86_64"
     "Ubuntu 22.04.* LTS aarch64"
     "Ubuntu 22.04 LTS x86_64"

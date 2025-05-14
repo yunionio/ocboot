@@ -1,8 +1,8 @@
 - name: Assert {{ ansible_distribution }} {{ ansible_distribution_version }} conditions
   assert:
     that:
-      - "ansible_distribution_major_version == '22'"
-      - "ansible_distribution_version is version('22.04', '>=')"
+      - "ansible_distribution_major_version in ('20', '22')"
+      - "ansible_distribution_version is version('20.04', '>=')"
       - "onecloud_version is defined"
       - "onecloud_version is version('v3.10', '>=')"
       - "ansible_architecture == 'x86_64'"
