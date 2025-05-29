@@ -1,0 +1,59 @@
+is_debian_based: true
+is_ubuntu_based: true
+is_ubuntu_based_x86: true
+debian_based_arch: amd64
+
+common_packages:
+  - apt-transport-https
+  - bash-completion
+  - bridge-utils
+  - ceph-common
+  - chntpw
+  - conntrack
+  - conntrackd
+  - cron
+  - curl
+  - dkms
+  - glusterfs-common
+  - gnupg-agent
+  - gnupg2
+  - ipset
+  - ipvsadm
+  - jq
+  - libaio1
+  - libgnutls30
+  - libpixman-1-0
+  - libusb-1.0-0
+  - libusbredirparser1
+  - librbd1
+  - libspice-server1
+  - libiscsi7
+  - libcapstone3
+  - nfs-common
+  - ntp
+  - openvswitch-switch
+  - ovmf
+  - parallel
+  - python3-selinux
+  - software-properties-common
+  - usbutils
+  - wget
+  - "{{ yunion_qemu_package }}"
+
+common_services:
+    - ntp
+    - yunion-executor
+
+latest_packages:
+    - "yunion-ocadm={{ onecloud_version_abbr }}*"
+    - "yunion-climc={{ onecloud_version_abbr }}*"
+    - "yunion-climc-ee={{ onecloud_version_abbr }}*"
+    - ca-certificates
+    - yunion-executor
+    - yunion-fetcherfs
+
+k8s_packages:
+    - docker-ce
+    - kubeadm=1.15.12-00
+    - kubectl=1.15.12-00
+    - kubelet=1.15.12-00
