@@ -19,6 +19,9 @@
 
 - name: Unified Cgroup Hierarchy
   include_tasks: utils/unified_cgroup_hierarchy.yml
+  when:
+    - ansible_distribution in ["Debian", "Ubuntu"]
+    - ansible_distribution_major_version in ["11", "12", "13", "22", "24"]
 
 - name: install common packages via loop for Debian Family
   package:
