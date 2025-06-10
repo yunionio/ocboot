@@ -190,3 +190,4 @@
         src: "{{ k3s_server_location }}"
         force: true
         state: link
+

@@ -74,6 +74,7 @@
   - name: construct create cluster use hyper image
     set_fact:
       use_hyper_image: true
+      edition: ee
     when:
     - has_cloudpack_image.rc == 0
 
