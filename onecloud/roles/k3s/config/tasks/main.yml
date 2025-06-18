@@ -29,7 +29,13 @@
       mode: 0600
   when: is_k3s_server
 
-# - name: Setup /etc/rancher/k3s/registries.yaml
-#   template:
-#     src: registries.yaml.j2
-#     dest: "/etc/rancher/k3s/registries.yaml"
+- name: Setup local registry whitelist
+  template:
+    src: registries.yaml.j2
+    dest: /etc/rancher/k3s/registries.yaml
+    mode: "u=rw,g=,o="
+  when:
+  - online_status == "offline"
+  - offline_data_path | length > 0
+  - docker_insecure_registries is defined
+  - docker_insecure_registries | length > 0

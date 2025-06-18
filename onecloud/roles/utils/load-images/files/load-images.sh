@@ -8,7 +8,12 @@ load_and_mv(){
     if [ ! -d $loaded_path ]; then
         mkdir -p $loaded_path
     fi
-    docker load -i $img && mv $img $loaded_path
+    if k3s --version > /dev/null 2>&1; then
+        xzcat $img | k3s ctr images import -
+    else
+        docker load -i $img
+    fi
+    mv $img $loaded_path
 }
 
 export -f load_and_mv
