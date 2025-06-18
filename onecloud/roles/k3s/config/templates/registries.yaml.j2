@@ -2,6 +2,9 @@ mirrors:
   docker.io:
     endpoint:
       - "https://registry.cn-beijing.aliyuncs.com"
+{% for registry in docker_insecure_registries %}
+      - "http://{{ registry }}"
+{% endfor %}
     rewrite:
       "^rancher/mirrored-library-traefik:(.*)": "yunionio/traefik:$1"
       "^rancher/mirrored-coredns-coredns:(.*)": "yunionio/coredns:$1"

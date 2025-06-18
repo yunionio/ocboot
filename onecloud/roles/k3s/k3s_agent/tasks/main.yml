@@ -15,9 +15,15 @@
     group: root
     mode: "u=rw,g=r,o=r"
 
-- name: Enable and check K3s service
+- name: Enable and check K3s Agent service
   ansible.builtin.systemd:
     name: k3s-agent
     daemon_reload: "{{ true if k3s_agent_service.changed else false }}"
     state: "{{ 'restarted' if k3s_agent_service.changed else 'started' }}"
     enabled: true
+
+- name: Disalbe k3s service
+  ansible.builtin.systemd:
+    name: k3s
+    state: stopped
+    enabled: false
