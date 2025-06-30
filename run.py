@@ -33,9 +33,38 @@ IPADDR_REG_PATTERN = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 IPADDR_REG = re.compile(IPADDR_REG_PATTERN)
 
 
-def match_ip4addr(string):
+def _match_ip4addr(string):
     global IPADDR_REG
     return IPADDR_REG.match(string) is not None
+
+
+def _match_ipv6addr(string):
+    # 判断字符串是否为合法 IPv6 地址
+    ipv6_pattern = re.compile(
+        r'^('
+        r'(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}'                  # 全写
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,7}:'                              # 以::结尾
+        r'|:(?::[A-Fa-f0-9]{1,4}){1,7}'                              # 以::开头
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,6}:[A-Fa-f0-9]{1,4}'              # 单::中间
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,5}(?::[A-Fa-f0-9]{1,4}){1,2}'
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,4}(?::[A-Fa-f0-9]{1,4}){1,3}'
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,3}(?::[A-Fa-f0-9]{1,4}){1,4}'
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,2}(?::[A-Fa-f0-9]{1,4}){1,5}'
+        r'|[A-Fa-f0-9]{1,4}:(?:(?::[A-Fa-f0-9]{1,4}){1,6})'
+        r'|:(?:(?::[A-Fa-f0-9]{1,4}){1,7}|:)'                        # :: 或 ::xxxx
+        r')'
+        r'(?:/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]))?'               # 可选前缀长度
+        r'$'
+    )
+    return ipv6_pattern.match(string) is not None
+
+
+def match_ipaddr(string):
+    if _match_ip4addr(string):
+        return (True, consts.IP_TYPE_IPV4)
+    if _match_ipv6addr(string):
+        return (True, consts.IP_TYPE_IPV6)
+    return (False, None)
 
 
 def versiontuple(v):
@@ -135,7 +164,7 @@ def install_ansible(mirror):
         raise Exception("Install ansible failed. ")
 
 
-def check_passless_ssh(ipaddr):
+def check_passless_ssh(ipaddr, ip_type):
     username = get_username()
     cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} uptime"
     print('cmd:', cmd)
@@ -178,8 +207,9 @@ def check_env(ipaddr=None, pip_mirror=None):
         return
     check_pip3()
     # check_ansible(pip_mirror)
-    if match_ip4addr(ipaddr):
-        check_passless_ssh(ipaddr)
+    match_ip, ip_type = match_ipaddr(ipaddr)
+    if match_ip:
+        check_passless_ssh(ipaddr, ip_type)
 
 
 def random_password(num):
@@ -330,7 +360,7 @@ def update_config(yaml_conf, produc_stack, runtime):
 
 
 def generate_config(
-    ipv4, produc_stack,
+    ipaddr, produc_stack,
     dns_list=[], runtime=consts.RUNTIME_QEMU,
     image_repository=None,
     region=consts.DEFAULT_REGION_NAME,
@@ -347,8 +377,9 @@ def generate_config(
     cur_path = os.path.abspath(os.path.dirname(__file__))
     if not config_dir:
         config_dir = cur_path
-    if not match_ip4addr(ipv4):
-        pr_red(f'invalid ipv4 {ipv4}!')
+    match_ip, ip_type = match_ipaddr(ipaddr)
+    if not match_ip:
+        pr_red(f'invalid ipaddr {ipaddr}!')
         exit(1)
 
     temp = os.path.join(config_dir, "config-allinone-current.yml")
@@ -367,7 +398,7 @@ def generate_config(
         pr_red("paring %s error: %s" % (temp, exc))
         raise Exception("paring %s error: %s" % (temp, exc))
 
-    if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipv4 and \
+    if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipaddr and \
             yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
         update_config(temp, produc_stack, runtime)
         pr_green(f"reuse conf: {temp}")
@@ -387,25 +418,25 @@ def generate_config(
             r = r.split('/')[0]
         yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['insecure_registries'] = [r]
 
-    interface = get_interface_by_ip(ipv4)
+    interface = get_interface_by_ip(ipaddr)
     username = get_username()
     db_password = random_password(12) if brand_new else yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get('db_password')
     assert db_password
     extra_db_dict = {
         'db_password': db_password,
         'user': username,
-        ocboot.KEY_HOSTNAME: ipv4,
+        ocboot.KEY_HOSTNAME: ipaddr,
     }
     enable_host = produc_stack in [ocboot.KEY_STACK_FULLSTACK, ocboot.KEY_STACK_EDGE, ocboot.KEY_STACK_LIGHT_EDGE]
     extra_pri_dict = {
-        'controlplane_host': ipv4,
-        'db_host': ipv4,
+        'controlplane_host': ipaddr,
+        'db_host': ipaddr,
         'db_password': db_password,
-        'host_networks': f'{interface}/br0/{ipv4}',
+        'host_networks': f'{interface}/br0/{ipaddr}',
         'user': username,
         ocboot.KEY_AS_HOST: enable_host,
         ocboot.KEY_AS_HOST_ON_VM: enable_host,
-        ocboot.KEY_HOSTNAME: ipv4,
+        ocboot.KEY_HOSTNAME: ipaddr,
         ocboot.KEY_ONECLOUD_VERSION: ver,
         ocboot.KEY_PRODUCT_VERSION: produc_stack,
         ocboot.KEY_REGION: region,
@@ -526,8 +557,9 @@ def main():
 
     stack = args.STACK[0]
     ip_conf = get_default_ip(args)
-    if match_ip4addr(ip_conf):
-        pr_green(f"choose local ip address: {ip_conf}")
+    match_ip, ip_type = match_ipaddr(ip_conf)
+    if match_ip:
+        pr_green(f"choose local {ip_type} address: {ip_conf}")
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
     stackDict = {
@@ -562,7 +594,8 @@ def main():
             install_packages(['python3-pip'])
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
-    if match_ip4addr(ip_conf):
+    match_ip, ip_type = match_ipaddr(ip_conf)
+    if match_ip:
         conf = generate_config(ip_conf, stackDict.get(stack),
                                user_dns, args.runtime,
                                args.image_repository,
