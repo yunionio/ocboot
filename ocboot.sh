@@ -72,10 +72,15 @@ if [[ "$1" == "run.py" ]]; then
     origin_args="$ROOT_DIR/$origin_args"
 fi
 
-buildah run --isolation chroot --user $(whoami) \
+buildah run --isolation chroot --user $(id -u):$(id -g) \
     -t "${buildah_extra_args[@]}" \
     --net=host \
+    -e "HOME=$HOME" \
+    -v "$(mktemp -d):$HOME/.ansible" \
     -v "$HOME/.ssh:$HOME/.ssh" \
+    -v "$HOME/.kube:$HOME/.kube" \
+    -v "/etc/passwd:/etc/passwd:ro" \
+    -v "/etc/group:/etc/group:ro" \
     -v "$(pwd):$ROOT_DIR" \
     -v "$(pwd)/airgap_assets/k3s-install.sh:/airgap_assets/k3s-install.sh:ro" \
     "$CONTAINER_NAME" $CMD $origin_args $cmd_extra_args
