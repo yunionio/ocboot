@@ -1,5 +1,7 @@
 #!/bin/bash
 
+shopt -s expand_aliases
+
 set -e
 
 DEFAULT_REPO=registry.cn-beijing.aliyuncs.com/yunionio
