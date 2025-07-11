@@ -24,6 +24,8 @@ supported_os=(
     "Debian GNU/Linux 11 aarch64"
     "openEuler 22.03 x86_64"
     "openEuler 22.03 aarch64"
+    "openEuler 24.03 x86_64"
+    "openEuler 24.03 aarch64"
     "OpenCloudOS 8.8 x86_64"
     "Rocky Linux 8.9 x86_64"
     "Ubuntu 20.04.* LTS x86_64"
