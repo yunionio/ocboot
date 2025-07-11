@@ -10,6 +10,8 @@ OCBOOT_IMAGE="$IMAGE_REPOSITORY/ocboot:$VERSION"
 CUR_DIR="$(pwd)"
 CONTAINER_NAME="buildah-ocboot"
 
+alias buildah="sudo buildah"
+
 ensure_buildah() {
     if ! [ -x "$(command -v buildah)" ]; then
         echo "Installing buildah ..."
@@ -76,6 +78,7 @@ buildah run --isolation chroot --user $(id -u):$(id -g) \
     -t "${buildah_extra_args[@]}" \
     --net=host \
     -e "HOME=$HOME" \
+    -v "$(mktemp -d):$HOME/.ansible" \
     -v "$HOME/.ssh:$HOME/.ssh" \
     -v "$HOME/.kube:$HOME/.kube" \
     -v "/etc/passwd:/etc/passwd:ro" \
