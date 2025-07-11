@@ -76,7 +76,6 @@ buildah run --isolation chroot --user $(id -u):$(id -g) \
     -t "${buildah_extra_args[@]}" \
     --net=host \
     -e "HOME=$HOME" \
-    -v "$(mktemp -d):$HOME/.ansible" \
     -v "$HOME/.ssh:$HOME/.ssh" \
     -v "$HOME/.kube:$HOME/.kube" \
     -v "/etc/passwd:/etc/passwd:ro" \
