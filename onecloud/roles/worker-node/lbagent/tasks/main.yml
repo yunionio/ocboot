@@ -2,13 +2,25 @@
   include_role:
     name: utils/disable-telegraf-service
 
+- name: "set lbagent_listen_interface for IPv6"
+  set_fact:
+    lbagent_listen_interface: "{{ ansible_default_ipv6.interface | default(ansible_all_ipv6_addresses | map('extract', hostvars[inventory_hostname], 'ansible_' + item) | selectattr('interface', 'defined') | map(attribute='interface') | first | default('eth0')) }}"
+  when: ip_type is defined and ip_type == 'ipv6'
+
+- name: "set lbagent_access_ip for IPv6"
+  set_fact:
+    lbagent_access_ip: "{{ node_ip | default(ansible_all_ipv6_addresses | difference(['::1']) | select('match', '^(?!fe80:).*') | first) }}"
+  when: ip_type is defined and ip_type == 'ipv6'
+
 - name: "set lbagent_listen_interface to {{ ansible_default_ipv4.interface }}"
   set_fact:
     lbagent_listen_interface: "{{ ansible_default_ipv4.interface }}"
+  when: ip_type is not defined or ip_type != 'ipv6'
 
 - name: "set lbagent_access_ip to {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
   set_fact:
     lbagent_access_ip: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+  when: ip_type is not defined or ip_type != 'ipv6'
 
 - name: ensure that the directory /etc/yunion/ exists.
   file:

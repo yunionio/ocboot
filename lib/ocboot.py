@@ -12,6 +12,23 @@ from . import consts
 from .color import RB as Red
 from .k3s import is_using_k3s
 
+# Import IPv6 support functions
+try:
+    import run
+    from run import match_ipaddr
+except ImportError:
+    # Fallback function if import fails
+    def match_ipaddr(ip_str):
+        import re
+        # Simple IPv4 regex
+        ipv4_pattern = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+        if re.match(ipv4_pattern, ip_str):
+            return (True, consts.IP_TYPE_IPV4)
+        # Simple IPv6 regex (basic check)
+        if ':' in ip_str:
+            return (True, consts.IP_TYPE_IPV6)
+        return (False, None)
+
 GROUP_MARIADB_NODE = "mariadb_node"
 GROUP_MARIADB_HA_NODES = "mariadb_ha_nodes"
 GROUP_CLICKHOUSE_NODE = "clickhouse_node"
@@ -113,6 +130,8 @@ class OcbootConfig(object):
         if self.master_config:
             self.master_config.set_primary_master_config(self.primary_master_config)
         self.worker_config = self._fetch_conf(WorkerConfig)
+        if self.worker_config:
+            self.worker_config.set_primary_master_config(self.primary_master_config)
         if self.mariadb_config and self.mariadb_ha_config:
             raise Exception("mariadb_node and mariadb_ha_nodes can't coexist in config")
 
@@ -508,10 +527,38 @@ class PrimaryMasterConfig(OnecloudConfig):
         self.operator_version = config.get(KEY_OPERATOR_VERSION, self.onecloud_version)
         self.restore_mode = config.get('restore_mode', False)
 
+        # 优先使用配置文件中设置的ip_type，如果没有设置则自动检测
+        config_ip_type = config.get('ip_type', None)
+        print(f"PrimaryMasterConfig config_ip_type is {config_ip_type}")
+        if config_ip_type:
+            # 使用配置文件中设置的ip_type
+            self.ip_type = config_ip_type
+        else:
+            # 自动检测IP类型
+            match_ip, ip_type = match_ipaddr(self.node.node_ip)
+            self.ip_type = ip_type if match_ip else consts.IP_TYPE_IPV4
+
+        # 支持双栈配置
+        if self.ip_type == consts.IP_TYPE_DUAL_STACK:
+            # 双栈配置：需要获取IPv4和IPv6地址
+            self.node_ip_v4 = config.get('node_ip_v4', None)
+            self.node_ip_v6 = config.get('node_ip_v6', None)
+            self.pod_network_cidr_v4 = config.get('pod_network_cidr_v4', '10.40.0.0/16')
+            self.service_cidr_v4 = config.get('service_cidr_v4', '10.96.0.0/12')
+            # IPIP配置选项
+            self.enable_ipip = config.get('enable_ipip', False)
+
         # set calico ip_autodetection_method only in primary master
         self.ip_autodetection_method = config.get('ip_autodetection_method', None)
         if not self.ip_autodetection_method:
-            self.ip_autodetection_method = "'can-reach=%s'" % self.node.node_ip
+            if self.ip_type == consts.IP_TYPE_IPV6:
+                # For IPv6, use interface-based detection to avoid syntax issues
+                self.ip_autodetection_method = "'first-found'"
+            elif self.ip_type == consts.IP_TYPE_DUAL_STACK:
+                # For dual-stack, use can-reach with primary IP to ensure correct interface selection
+                self.ip_autodetection_method = "'can-reach=%s'" % self.node.node_ip
+            else:
+                self.ip_autodetection_method = "'can-reach=%s'" % self.node.node_ip
 
         self.onecloud_user = config.get('onecloud_user', 'admin')
         self.onecloud_user_password = config.get('onecloud_user_password', 'admin@123')
@@ -521,8 +568,25 @@ class PrimaryMasterConfig(OnecloudConfig):
             self.image_repository = consts.REGISTRY_ALI_YUNIONIO
         self.enable_minio = config.get('enable_minio', False)
         self.offline_nodes = config.get('offline_nodes', '')
-        self.pod_network_cidr = config.get('pod_network_cidr', '10.40.0.0/16')
-        self.service_cidr = config.get('service_cidr', '10.96.0.0/12')
+
+        # Set default network CIDRs based on IP type
+        if self.ip_type == consts.IP_TYPE_IPV6:
+            # IPv6 default networks - k3s treats IPv6+IPv4 dual-stack as IPv4
+            # For pure IPv6, cluster-cidr must be smaller than node-cidr-mask-size (/64)
+            # Use /56 for cluster to allow multiple /64 node subnets
+            default_pod_cidr = config.get('pod_network_cidr', 'fd85:ee78:d8a6:8607::/56')
+            default_service_cidr = config.get('service_cidr', 'fd85:ee78:d8a6:8608::/112')
+        elif self.ip_type == consts.IP_TYPE_DUAL_STACK:
+            # Dual-stack networks
+            default_pod_cidr = config.get('pod_network_cidr', 'fd85:ee78:d8a6:8607::/56')
+            default_service_cidr = config.get('service_cidr', 'fd85:ee78:d8a6:8608::/112')
+        else:
+            # IPv4 default networks (also used for dual-stack as per k3s behavior)
+            default_pod_cidr = config.get('pod_network_cidr', '10.40.0.0/16')
+            default_service_cidr = config.get('service_cidr', '10.96.0.0/12')
+
+        self.pod_network_cidr = default_pod_cidr
+        self.service_cidr = default_service_cidr
         self.service_dns_domain = config.get('service_dns_domain', 'cluster.local')
         self.product_version = self.get_product_version(config)
         self.user_dns = config.get(KEY_USER_DNS, [])
@@ -560,6 +624,16 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['pod_network_cidr'] = self.pod_network_cidr
         vars['service_cidr'] = self.service_cidr
         vars['service_dns_domain'] = self.service_dns_domain
+        vars['ip_type'] = self.ip_type
+        
+        # 添加双栈配置变量
+        if self.ip_type == consts.IP_TYPE_DUAL_STACK:
+            vars['node_ip_v4'] = self.node_ip_v4
+            vars['node_ip_v6'] = self.node_ip_v6
+            vars['pod_network_cidr_v4'] = self.pod_network_cidr_v4
+            vars['service_cidr_v4'] = self.service_cidr_v4
+            vars['enable_ipip'] = self.enable_ipip
+
         if len(self.offline_nodes) > 0:
             vars['offline_nodes'] = ' '.join(self.offline_nodes)
         vars['product_version'] = self.product_version
@@ -627,6 +701,16 @@ class MasterConfig(OnecloudJointConfig):
         vars['service_cidr'] = pc.service_cidr
         vars['service_dns_domain'] = pc.service_dns_domain
         vars['image_repository'] = pc.image_repository
+        vars['ip_type'] = pc.ip_type
+        
+        # 添加双栈配置变量
+        if pc.ip_type == consts.IP_TYPE_DUAL_STACK:
+            vars['node_ip_v4'] = pc.node_ip_v4
+            vars['node_ip_v6'] = pc.node_ip_v6
+            vars['pod_network_cidr_v4'] = pc.pod_network_cidr_v4
+            vars['service_cidr_v4'] = pc.service_cidr_v4
+            vars['enable_ipip'] = pc.enable_ipip
+        
         return vars
 
     @classmethod
@@ -646,6 +730,41 @@ class WorkerConfig(OnecloudJointConfig):
         if self.as_host_on_vm is None:
             self.as_host_on_vm = False
         self.nodes = get_nodes(config, bastion_host)
+        self.primary_master_config = None
+
+    def set_primary_master_config(self, primary_master_config):
+        self.primary_master_config = primary_master_config
+
+    def ansible_vars(self):
+        vars = super(WorkerConfig, self).ansible_vars()
+
+        # Worker-specific: k3s agent token
+        vars[KEY_K3S_TOKEN] = VAL_K3S_TOKEN
+
+        if self.primary_master_config:
+            # Use exactly the same logic as MasterConfig
+            pc = self.primary_master_config
+            vars['pod_network_cidr'] = pc.pod_network_cidr
+            vars['service_cidr'] = pc.service_cidr
+            vars['service_dns_domain'] = pc.service_dns_domain
+            vars['image_repository'] = pc.image_repository
+            vars['ip_type'] = pc.ip_type
+            # Worker-specific: needed for Calico IP detection on worker nodes
+            vars['ip_autodetection_method'] = pc.ip_autodetection_method
+            
+            # 添加双栈配置变量
+            if pc.ip_type == consts.IP_TYPE_DUAL_STACK:
+                vars['node_ip_v4'] = pc.node_ip_v4
+                vars['node_ip_v6'] = pc.node_ip_v6
+                vars['pod_network_cidr_v4'] = pc.pod_network_cidr_v4
+                vars['service_cidr_v4'] = pc.service_cidr_v4
+                vars['enable_ipip'] = pc.enable_ipip
+
+        # Critical: API endpoint variables for kubernetes-services-endpoint ConfigMap
+        vars[KEY_K3S_API_ENDPOINT] = self.controlplane_host
+        vars[KEY_K3S_API_PORT] = self.controlplane_port
+
+        return vars
 
     @classmethod
     def get_group(cls):
