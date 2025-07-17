@@ -1,11 +1,39 @@
-- name: Run `ip -4 -brief address show`
+- name: Run `ip -6 -brief address show` for IPv6
+  shell: |
+    ip -6 -brief address show | grep {{ node_ip }}/ | awk '{print $1}'
+  register: NODE_INTERFACE_IPV6
+  when: ip_type is defined and ip_type == 'ipv6'
+  failed_when: false
+
+- name: Run `ip -4 -brief address show` for IPv4
   shell: |
     ip -4 -brief address show | grep {{ node_ip }}/ | awk '{print $1}'
-  register: NODE_INTERFACE
+  register: NODE_INTERFACE_IPV4
+  when: ip_type is not defined or ip_type != 'ipv6'
+  failed_when: false
 
-- name: Set node_interface_name to {{ NODE_INTERFACE.stdout }}
+- name: Set node_interface_name for IPv6
   set_fact:
-    node_interface_name: "{{ NODE_INTERFACE.stdout_lines[0] }}"
+    node_interface_name: "{{ NODE_INTERFACE_IPV6.stdout_lines[0] }}"
+  when:
+    - ip_type is defined and ip_type == 'ipv6'
+    - NODE_INTERFACE_IPV6 is defined
+    - NODE_INTERFACE_IPV6.stdout_lines is defined
+    - NODE_INTERFACE_IPV6.stdout_lines | length > 0
+
+- name: Set node_interface_name for IPv4
+  set_fact:
+    node_interface_name: "{{ NODE_INTERFACE_IPV4.stdout_lines[0] }}"
+  when: 
+    - ip_type is not defined or ip_type != 'ipv6'
+    - NODE_INTERFACE_IPV4 is defined
+    - NODE_INTERFACE_IPV4.stdout_lines is defined
+    - NODE_INTERFACE_IPV4.stdout_lines | length > 0
+
+- name: Set default node_interface_name if not found
+  set_fact:
+    node_interface_name: "eth0"
+  when: node_interface_name is not defined
 
 - block:
   - name: Find the physical interface on br0
@@ -16,4 +44,4 @@
   - name: Update node_interface_name when br0 is existing
     set_fact:
       node_interface_name: "{{ BR0_PHY_NIC.stdout_lines[0] }}"
-  when: node_interface_name == 'br0'
+  when: node_interface_name is defined and node_interface_name == 'br0'

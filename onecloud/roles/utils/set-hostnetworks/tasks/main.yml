@@ -4,8 +4,29 @@
     include_role:
       name: utils/fetch-node-interface
 
-  - name: Set host_networks to {{ node_interface_name }}/br0/{{ node_ip }}
+  - name: Set host_networks for single-stack
     set_fact:
       host_networks: "['{{ node_interface_name }}/br0/{{ node_ip }}']"
+    when: 
+      - ip_type is not defined or ip_type != 'dual-stack'
+      - node_ip is defined
+
+  - name: Set host_networks for dual-stack IPv4+IPv6
+    set_fact:
+      host_networks: "['{{ node_interface_name }}/br0/{{ node_ip }}/{{ node_ip_v6 }}']"
+    when: 
+      - ip_type is defined and ip_type == 'dual-stack'
+      - node_ip is defined
+      - node_ip_v6 is defined
+      - node_ip_v4 is defined and node_ip_v4 == node_ip
+
+  - name: Set host_networks for dual-stack IPv6+IPv4
+    set_fact:
+      host_networks: "['{{ node_interface_name }}/br0/{{ node_ip_v4 }}/{{ node_ip }}']"
+    when: 
+      - ip_type is defined and ip_type == 'dual-stack'
+      - node_ip is defined
+      - node_ip_v4 is defined
+      - node_ip_v6 is defined and node_ip_v6 == node_ip
 
   when: host_networks is undefined or host_networks == ''
