@@ -52,11 +52,13 @@ spec:
     port: {{ db_port }}
     username: "{{ db_user }}"
     password: "{{ db_password }}"
+{% if ch_password is defined and ch_password|length > 0 %}
   clickhouse:
     host: "{{ node_ip }}"
     password: "{{ ch_password }}"
     port: {{ ch_port }}
     username: default
+{% endif %}
   region: "{{ region }}"
   zone: "{{ zone }}"
   imageRepository: "{{ image_repository }}"

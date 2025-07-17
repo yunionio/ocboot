@@ -15,7 +15,7 @@ common_packages:
     - jq
     - kmod
     - nfs-utils
-    - openvswitch-2.12.4
+    - openvswitch
     - parallel
     - rsync
     - tcpdump
