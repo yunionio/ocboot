@@ -79,6 +79,7 @@ spec:
   glance:
     switchToS3: true
 {% endif %}
+  ipv6_cluster: {{ (ip_type is defined and ip_type == 'ipv6') | bool }}
   onecloudServiceOperator:
     disable: true
 ---

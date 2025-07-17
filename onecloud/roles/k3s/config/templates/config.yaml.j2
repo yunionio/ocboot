@@ -1,7 +1,19 @@
+{% if ip_type == 'ipv6' %}
+{% if node_ip | regex_search(':') %}
+node-ip: "{{ node_ip }}"
+{% else %}
 node-ip: {{ node_ip }}
+{% endif %}
+{% else %}
+node-ip: {{ node_ip }}
+{% endif %}
 pause-image: {{ image_repository }}/pause:3.1
 {% if high_availability_vip is defined %}
+{% if ip_type == 'ipv6' and high_availability_vip | regex_search(':') %}
+tls-san: "[{{ high_availability_vip }}]"
+{% else %}
 tls-san: {{ high_availability_vip }}
+{% endif %}
 {% endif %}
 {% if is_k3s_server %}
 flannel-backend: none
@@ -17,9 +29,16 @@ kube-apiserver-arg:
   - "enable-admission-plugins=DefaultTolerationSeconds"
   - "default-not-ready-toleration-seconds=10"
   - "default-unreachable-toleration-seconds=10"
+{% if ip_type == 'ipv6' %}
+  - "bind-address=::"
+  - "advertise-address={{ node_ip }}"
+{% endif %}
 kube-controller-manager-arg:
   - "node-monitor-period=4s"
   - "node-monitor-grace-period=16s"
+{% if ip_type == 'ipv6' %}
+  - "bind-address=::"
+{% endif %}
 {% endif %}
 node-label:
 {% if is_k3s_server %}
@@ -41,3 +60,6 @@ kubelet-arg:
 kube-proxy-arg:
   - proxy-mode=ipvs
   - ipvs-strict-arp=true
+{% if ip_type == 'ipv6' %}
+  - "bind-address=::"
+{% endif %}
