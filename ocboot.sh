@@ -76,6 +76,8 @@ if [[ "$1" == "run.py" ]]; then
     origin_args="$ROOT_DIR/$origin_args"
 fi
 
+mkdir -p "$HOME/.kube"
+
 buildah run --isolation chroot --user $(id -u):$(id -g) \
     -t "${buildah_extra_args[@]}" \
     --net=host \
