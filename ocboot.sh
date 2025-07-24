@@ -60,10 +60,11 @@ buildah_version_minor=$(echo "$buildah_version" | awk -F. '{print $2}')
 
 buildah_extra_args=()
 
-# buildah accept --env since 1.23
+# buildah accepts --env since 1.23
 echo "buildah version: $buildah_version"
 if [[ $buildah_version_major -eq 1 ]] && [[ "$buildah_version_minor" -gt 23 ]]; then
     buildah_extra_args+=(-e ANSIBLE_VERBOSITY="${ANSIBLE_VERBOSITY:-0}")
+    buildah_extra_args+=(-e HOME="$HOME")
 fi
 
 cmd_extra_args=""
@@ -81,7 +82,6 @@ mkdir -p "$HOME/.kube"
 buildah run --isolation chroot --user $(id -u):$(id -g) \
     -t "${buildah_extra_args[@]}" \
     --net=host \
-    -e "HOME=$HOME" \
     -v "$(mktemp -d):$HOME/.ansible" \
     -v "$HOME/.ssh:$HOME/.ssh" \
     -v "$HOME/.kube:$HOME/.kube" \
