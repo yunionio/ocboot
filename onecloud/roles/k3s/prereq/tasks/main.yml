@@ -18,7 +18,7 @@
     value: "1"
     state: present
     reload: true
-  when: ansible_all_ipv6_addresses
+  when: ip_type is defined and ip_type == 'ipv6' or ansible_all_ipv6_addresses
 
 - name: Populate service facts
   ansible.builtin.service_facts:
