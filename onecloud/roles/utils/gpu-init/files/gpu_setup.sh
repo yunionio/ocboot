@@ -163,9 +163,10 @@ grub_setup() {
     cmdline_param=$(_generate_kernel_cmdline)
 
     sed -i "s|GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"$cmdline_param\"|g" $grub_cfg
+
     # 删掉 rd.lvm.lv(含)之后，空格之前的所有字符
     # 以便解决重启后因未加载 lvm 驱动而卡住的问题
-    sed -i -e 's#rd.lvm.lv=[^ ]*##gi' $grub_cfg
+    # sed -i -e 's#rd.lvm.lv=[^ ]*##gi' $grub_cfg
 
     # 替换成带有 yn 后缀的内核，只对 centos
     if [[ "${distro}" != "centos" ]]; then
