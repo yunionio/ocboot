@@ -27,3 +27,4 @@
     name: k3s
     state: stopped
     enabled: false
+  ignore_errors: true
