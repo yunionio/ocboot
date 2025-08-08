@@ -19,6 +19,7 @@ common_packages:
     - parallel
     - rsync
     - tcpdump
+    - python3-libselinux
     - "{{ yunion_qemu_package }}"
 
 common_services:
