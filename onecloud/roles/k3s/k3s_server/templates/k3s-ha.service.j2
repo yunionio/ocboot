@@ -25,4 +25,8 @@ Restart=always
 RestartSec=5s
 ExecStartPre=-/sbin/modprobe br_netfilter
 ExecStartPre=-/sbin/modprobe overlay
-ExecStart=/usr/local/bin/k3s server --data-dir {{ k3s_server_location }} --server https://{{ api_endpoint }}:{{ api_port }} --token {{ token }} {{ extra_server_args }} 
+{% if ip_type == 'ipv6' and api_endpoint | regex_search(':') %}
+ExecStart=/usr/local/bin/k3s server --data-dir {{ k3s_server_location }} --server https://[{{ api_endpoint }}]:{{ api_port }} --token {{ token }} {{ extra_server_args | default('') }}
+{% else %}
+ExecStart=/usr/local/bin/k3s server --data-dir {{ k3s_server_location }} --server https://{{ api_endpoint }}:{{ api_port }} --token {{ token }} {{ extra_server_args | default('') }}
+{% endif %}

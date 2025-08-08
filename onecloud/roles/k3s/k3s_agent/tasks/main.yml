@@ -22,7 +22,7 @@
     state: "{{ 'restarted' if k3s_agent_service.changed else 'started' }}"
     enabled: true
 
-- name: Disalbe k3s service
+- name: Disable k3s service
   ansible.builtin.systemd:
     name: k3s
     state: stopped

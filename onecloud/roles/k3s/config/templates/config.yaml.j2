@@ -1,13 +1,54 @@
+{% if ip_type == 'dual-stack' %}
+{% if node_ip_v4 is defined and node_ip_v6 is defined %}
+{% if node_ip | regex_search(':') %}
+# 当主IP是IPv6时，IPv6地址在前
+node-ip: "{{ node_ip_v6 }},{{ node_ip_v4 }}"
+{% else %}
+# 当主IP是IPv4时，IPv4地址在前
+node-ip: "{{ node_ip_v4 }},{{ node_ip_v6 }}"
+{% endif %}
+{% else %}
+# 如果没有node_ip_v4和node_ip_v6，使用node_ip作为IPv6，ip_dual_conf作为IPv4
+{% if node_ip | regex_search(':') %}
+node-ip: "{{ node_ip }},{{ ip_dual_conf }}"
+{% else %}
+node-ip: "{{ ip_dual_conf }},{{ node_ip }}"
+{% endif %}
+{% endif %}
+{% elif ip_type == 'ipv6' %}
+{% if node_ip | regex_search(':') %}
+node-ip: "{{ node_ip }}"
+{% else %}
 node-ip: {{ node_ip }}
+{% endif %}
+{% else %}
+node-ip: {{ node_ip }}
+{% endif %}
 pause-image: {{ image_repository }}/pause:3.1
 {% if high_availability_vip is defined %}
+{% if ip_type == 'ipv6' and high_availability_vip | regex_search(':') %}
+tls-san: "[{{ high_availability_vip }}]"
+{% else %}
 tls-san: {{ high_availability_vip }}
+{% endif %}
 {% endif %}
 {% if is_k3s_server %}
 flannel-backend: none
 disable-network-policy: true
+{% if ip_type == 'dual-stack' %}
+{% if node_ip | regex_search(':') %}
+# 当主IP是IPv6时，使用IPv6 CIDR作为主要CIDR
+cluster-cidr: {{ pod_network_cidr }},{{ pod_network_cidr_v4 }}
+service-cidr: {{ service_cidr }},{{ service_cidr_v4 }}
+{% else %}
+# 当主IP是IPv4时，使用IPv4 CIDR作为主要CIDR
+cluster-cidr: {{ pod_network_cidr_v4 }},{{ pod_network_cidr }}
+service-cidr: {{ service_cidr_v4 }},{{ service_cidr }}
+{% endif %}
+{% else %}
 cluster-cidr: {{ pod_network_cidr }}
 service-cidr: {{ service_cidr }}
+{% endif %}
 cluster-domain: {{ service_dns_domain }}
 default-local-storage-path: /opt/k3s/storage
 # See:
@@ -17,9 +58,21 @@ kube-apiserver-arg:
   - "enable-admission-plugins=DefaultTolerationSeconds"
   - "default-not-ready-toleration-seconds=10"
   - "default-unreachable-toleration-seconds=10"
+{% if ip_type == 'ipv6' %}
+  - "bind-address=::"
+  - "advertise-address={{ node_ip }}"
+{% elif ip_type == 'dual-stack' %}
+  - "bind-address=0.0.0.0"
+  - "advertise-address={{ node_ip }}"
+{% endif %}
 kube-controller-manager-arg:
   - "node-monitor-period=4s"
   - "node-monitor-grace-period=16s"
+{% if ip_type == 'ipv6' %}
+  - "bind-address=::"
+{% elif ip_type == 'dual-stack' %}
+  - "bind-address=0.0.0.0"
+{% endif %}
 {% endif %}
 node-label:
 {% if is_k3s_server %}
@@ -41,3 +94,8 @@ kubelet-arg:
 kube-proxy-arg:
   - proxy-mode=ipvs
   - ipvs-strict-arp=true
+{% if ip_type == 'ipv6' %}
+  - "bind-address=::"
+{% elif ip_type == 'dual-stack' %}
+  - "bind-address=0.0.0.0"
+{% endif %}

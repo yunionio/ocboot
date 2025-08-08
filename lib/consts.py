@@ -18,3 +18,8 @@ EDITION_CE_SUPPORT = 'ce/support'
 EDITION_EE = 'ee'
 
 EDITIONS = [EDITION_CE, EDITION_CE_SUPPORT]
+
+
+IP_TYPE_IPV4 = "ipv4"
+IP_TYPE_IPV6 = "ipv6"
+IP_TYPE_DUAL_STACK = "dual-stack"

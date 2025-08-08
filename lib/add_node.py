@@ -27,7 +27,8 @@ class AddWorkerNodeService(AddNodeService):
                                 enable_host_on_vm=True,
                                 runtime=args.runtime,
                                 host_networks=args.host_networks,
-                                disk_paths=args.disk_paths)
+                                disk_paths=args.disk_paths,
+                                ip_dual_conf=getattr(args, 'ip_dual_conf', None))
         config.run()
 
 
