@@ -219,7 +219,15 @@ class OcbootConfig(object):
             raise Exception("Not found onecloud_user in config")
         if password is None:
             raise Exception("Not found onecloud_user_password in config")
-        return (frontend_ip, user, password)
+
+        # 处理IPv6地址：为URL显示添加方括号
+        from run import _match_ipv6addr
+        if _match_ipv6addr(frontend_ip):
+            display_ip = f"[{frontend_ip}]"
+        else:
+            display_ip = frontend_ip
+
+        return (display_ip, user, password)
 
     def is_using_ee(self):
         return self.primary_master_config.use_ee
@@ -625,7 +633,7 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars['service_cidr'] = self.service_cidr
         vars['service_dns_domain'] = self.service_dns_domain
         vars['ip_type'] = self.ip_type
-        
+
         # 添加双栈配置变量
         if self.ip_type == consts.IP_TYPE_DUAL_STACK:
             vars['node_ip_v4'] = self.node_ip_v4
@@ -702,7 +710,7 @@ class MasterConfig(OnecloudJointConfig):
         vars['service_dns_domain'] = pc.service_dns_domain
         vars['image_repository'] = pc.image_repository
         vars['ip_type'] = pc.ip_type
-        
+
         # 添加双栈配置变量
         if pc.ip_type == consts.IP_TYPE_DUAL_STACK:
             vars['node_ip_v4'] = pc.node_ip_v4
@@ -710,7 +718,7 @@ class MasterConfig(OnecloudJointConfig):
             vars['pod_network_cidr_v4'] = pc.pod_network_cidr_v4
             vars['service_cidr_v4'] = pc.service_cidr_v4
             vars['enable_ipip'] = pc.enable_ipip
-        
+
         return vars
 
     @classmethod
@@ -751,7 +759,7 @@ class WorkerConfig(OnecloudJointConfig):
             vars['ip_type'] = pc.ip_type
             # Worker-specific: needed for Calico IP detection on worker nodes
             vars['ip_autodetection_method'] = pc.ip_autodetection_method
-            
+
             # 添加双栈配置变量
             if pc.ip_type == consts.IP_TYPE_DUAL_STACK:
                 vars['node_ip_v4'] = pc.node_ip_v4

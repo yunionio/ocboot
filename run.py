@@ -74,7 +74,7 @@ def match_dual_stack_ipaddr(ip1_string, ip2_string):
     ip1_is_ipv6 = _match_ipv6addr(ip1_string) if ip1_string else False
     ip2_is_ipv4 = _match_ip4addr(ip2_string) if ip2_string else False
     ip2_is_ipv6 = _match_ipv6addr(ip2_string) if ip2_string else False
-    
+
     # 检查是否构成有效的双栈配置
     if (ip1_is_ipv4 and ip2_is_ipv6) or (ip1_is_ipv6 and ip2_is_ipv4):
         return (True, consts.IP_TYPE_DUAL_STACK)
@@ -397,7 +397,7 @@ def generate_config(
     cur_path = os.path.abspath(os.path.dirname(__file__))
     if not config_dir:
         config_dir = cur_path
-    
+
     # 使用传入的ip_type，如果没有则重新检测
     if ip_type is None:
         match_ip, ip_type = match_ipaddr(ipaddr)
@@ -470,7 +470,7 @@ def generate_config(
     if ip_type == consts.IP_TYPE_DUAL_STACK and ip_dual_conf:
         extra_pri_dict['ip_type'] = ip_type
         extra_pri_dict['enable_ipip'] = enable_ipip
-        
+
         # 确定哪个是IPv4，哪个是IPv6
         if _match_ip4addr(ipaddr):
             # 主IP是IPv4，ip_dual_conf是IPv6
@@ -619,7 +619,7 @@ def main():
 
     stack = args.STACK[0]
     ip_conf = get_default_ip(args)
-    
+
     # 检测IP类型，支持双栈配置
     if args.ip_dual_conf:
         # 双栈配置：检测两个IP地址
@@ -647,7 +647,7 @@ def main():
         else:
             pr_red(f"Invalid IP address: {ip_conf}")
             exit(1)
-    
+
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
     stackDict = {
@@ -682,13 +682,13 @@ def main():
             install_packages(['python3-pip'])
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
-    
+
     # 重新检测IP类型（因为上面的检测可能被覆盖）
     if args.ip_dual_conf:
         match_ip, ip_type = match_dual_stack_ipaddr(ip_conf, args.ip_dual_conf)
     else:
         match_ip, ip_type = match_ipaddr(ip_conf)
-    
+
     if match_ip:
         conf = generate_config(ip_conf, stackDict.get(stack),
                                user_dns, args.runtime,
