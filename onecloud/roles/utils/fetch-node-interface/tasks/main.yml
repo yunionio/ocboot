@@ -24,7 +24,7 @@
 - name: Set node_interface_name for IPv4
   set_fact:
     node_interface_name: "{{ NODE_INTERFACE_IPV4.stdout_lines[0] }}"
-  when: 
+  when:
     - ip_type is not defined or ip_type != 'ipv6'
     - NODE_INTERFACE_IPV4 is defined
     - NODE_INTERFACE_IPV4.stdout_lines is defined
