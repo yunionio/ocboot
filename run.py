@@ -33,9 +33,57 @@ IPADDR_REG_PATTERN = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
 IPADDR_REG = re.compile(IPADDR_REG_PATTERN)
 
 
-def match_ip4addr(string):
+def _match_ip4addr(string):
     global IPADDR_REG
     return IPADDR_REG.match(string) is not None
+
+
+def _match_ipv6addr(string):
+    # 判断字符串是否为合法 IPv6 地址
+    ipv6_pattern = re.compile(
+        r'^('
+        r'(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}'                  # 全写
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,7}:'                              # 以::结尾
+        r'|:(?::[A-Fa-f0-9]{1,4}){1,7}'                              # 以::开头
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,6}:[A-Fa-f0-9]{1,4}'              # 单::中间
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,5}(?::[A-Fa-f0-9]{1,4}){1,2}'
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,4}(?::[A-Fa-f0-9]{1,4}){1,3}'
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,3}(?::[A-Fa-f0-9]{1,4}){1,4}'
+        r'|(?:[A-Fa-f0-9]{1,4}:){1,2}(?::[A-Fa-f0-9]{1,4}){1,5}'
+        r'|[A-Fa-f0-9]{1,4}:(?:(?::[A-Fa-f0-9]{1,4}){1,6})'
+        r'|:(?:(?::[A-Fa-f0-9]{1,4}){1,7}|:)'                        # :: 或 ::xxxx
+        r')'
+        r'(?:/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]))?'               # 可选前缀长度
+        r'$'
+    )
+    return ipv6_pattern.match(string) is not None
+
+
+def match_ipaddr(string):
+    if _match_ip4addr(string):
+        return (True, consts.IP_TYPE_IPV4)
+    if _match_ipv6addr(string):
+        return (True, consts.IP_TYPE_IPV6)
+    return (False, None)
+
+
+def match_dual_stack_ipaddr(ip1_string, ip2_string):
+    """检测双栈IP地址配置"""
+    # 检测两个IP地址的类型
+    ip1_is_ipv4 = _match_ip4addr(ip1_string) if ip1_string else False
+    ip1_is_ipv6 = _match_ipv6addr(ip1_string) if ip1_string else False
+    ip2_is_ipv4 = _match_ip4addr(ip2_string) if ip2_string else False
+    ip2_is_ipv6 = _match_ipv6addr(ip2_string) if ip2_string else False
+
+    # 检查是否构成有效的双栈配置
+    if (ip1_is_ipv4 and ip2_is_ipv6) or (ip1_is_ipv6 and ip2_is_ipv4):
+        return (True, consts.IP_TYPE_DUAL_STACK)
+    elif ip1_is_ipv4 or ip2_is_ipv4:
+        return (True, consts.IP_TYPE_IPV4)
+    elif ip1_is_ipv6 or ip2_is_ipv6:
+        return (True, consts.IP_TYPE_IPV6)
+    else:
+        return (False, None)
 
 
 def versiontuple(v):
@@ -135,7 +183,7 @@ def install_ansible(mirror):
         raise Exception("Install ansible failed. ")
 
 
-def check_passless_ssh(ipaddr):
+def check_passless_ssh(ipaddr, ip_type):
     username = get_username()
     cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} uptime"
     print('cmd:', cmd)
@@ -178,8 +226,9 @@ def check_env(ipaddr=None, pip_mirror=None):
         return
     check_pip3()
     # check_ansible(pip_mirror)
-    if match_ip4addr(ipaddr):
-        check_passless_ssh(ipaddr)
+    match_ip, ip_type = match_ipaddr(ipaddr)
+    if match_ip:
+        check_passless_ssh(ipaddr, ip_type)
 
 
 def random_password(num):
@@ -330,11 +379,12 @@ def update_config(yaml_conf, produc_stack, runtime):
 
 
 def generate_config(
-    ipv4, produc_stack,
+    ipaddr, produc_stack,
     dns_list=[], runtime=consts.RUNTIME_QEMU,
     image_repository=None,
     region=consts.DEFAULT_REGION_NAME,
-    zone=consts.DEFAULT_ZONE_NAME):
+    zone=consts.DEFAULT_ZONE_NAME,
+    ip_dual_conf=None, ip_type=None, enable_ipip=False):
     global conf
     import os.path
     import os
@@ -347,9 +397,13 @@ def generate_config(
     cur_path = os.path.abspath(os.path.dirname(__file__))
     if not config_dir:
         config_dir = cur_path
-    if not match_ip4addr(ipv4):
-        pr_red(f'invalid ipv4 {ipv4}!')
-        exit(1)
+
+    # 使用传入的ip_type，如果没有则重新检测
+    if ip_type is None:
+        match_ip, ip_type = match_ipaddr(ipaddr)
+        if not match_ip:
+            pr_red(f'invalid ipaddr {ipaddr}!')
+            exit(1)
 
     temp = os.path.join(config_dir, "config-allinone-current.yml")
     verf = os.path.join(cur_path, "VERSION")
@@ -367,7 +421,7 @@ def generate_config(
         pr_red("paring %s error: %s" % (temp, exc))
         raise Exception("paring %s error: %s" % (temp, exc))
 
-    if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipv4 and \
+    if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipaddr and \
             yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
         update_config(temp, produc_stack, runtime)
         pr_green(f"reuse conf: {temp}")
@@ -387,30 +441,65 @@ def generate_config(
             r = r.split('/')[0]
         yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['insecure_registries'] = [r]
 
-    interface = get_interface_by_ip(ipv4)
+    interface = get_interface_by_ip(ipaddr)
     username = get_username()
     db_password = random_password(12) if brand_new else yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get('db_password')
     assert db_password
     extra_db_dict = {
         'db_password': db_password,
         'user': username,
-        ocboot.KEY_HOSTNAME: ipv4,
+        ocboot.KEY_HOSTNAME: ipaddr,
     }
     enable_host = produc_stack in [ocboot.KEY_STACK_FULLSTACK, ocboot.KEY_STACK_EDGE, ocboot.KEY_STACK_LIGHT_EDGE]
+    # 基础配置
     extra_pri_dict = {
-        'controlplane_host': ipv4,
-        'db_host': ipv4,
+        'controlplane_host': ipaddr,
+        'db_host': ipaddr,
         'db_password': db_password,
-        'host_networks': f'{interface}/br0/{ipv4}',
         'user': username,
         ocboot.KEY_AS_HOST: enable_host,
         ocboot.KEY_AS_HOST_ON_VM: enable_host,
-        ocboot.KEY_HOSTNAME: ipv4,
+        ocboot.KEY_HOSTNAME: ipaddr,
         ocboot.KEY_ONECLOUD_VERSION: ver,
         ocboot.KEY_PRODUCT_VERSION: produc_stack,
         ocboot.KEY_REGION: region,
         ocboot.KEY_ZONE: zone,
     }
+
+    # 添加双栈配置
+    if ip_type == consts.IP_TYPE_DUAL_STACK and ip_dual_conf:
+        extra_pri_dict['ip_type'] = ip_type
+        extra_pri_dict['enable_ipip'] = enable_ipip
+
+        # 确定哪个是IPv4，哪个是IPv6
+        if _match_ip4addr(ipaddr):
+            # 主IP是IPv4，ip_dual_conf是IPv6
+            extra_pri_dict['node_ip'] = ipaddr  # 主IP作为node_ip
+            extra_pri_dict['node_ip_v4'] = ipaddr
+            extra_pri_dict['node_ip_v6'] = ip_dual_conf
+            extra_pri_dict['pod_network_cidr_v4'] = '10.40.0.0/16'
+            extra_pri_dict['service_cidr_v4'] = '10.96.0.0/12'
+            extra_pri_dict['pod_network_cidr'] = 'fd85:ee78:d8a6:8607::/56'
+            extra_pri_dict['service_cidr'] = 'fd85:ee78:d8a6:8608::/112'
+            # 双栈host_networks格式：interface/br0/ipv4/ipv6
+            extra_pri_dict['host_networks'] = f'{interface}/br0/{ipaddr}/{ip_dual_conf}'
+        else:
+            # 主IP是IPv6，ip_dual_conf是IPv4
+            extra_pri_dict['node_ip'] = ipaddr  # 主IP作为node_ip
+            extra_pri_dict['node_ip_v4'] = ip_dual_conf
+            extra_pri_dict['node_ip_v6'] = ipaddr
+            extra_pri_dict['pod_network_cidr'] = 'fd85:ee78:d8a6:8607::/56'
+            extra_pri_dict['service_cidr'] = 'fd85:ee78:d8a6:8608::/112'
+            extra_pri_dict['pod_network_cidr_v4'] = '10.40.0.0/16'
+            extra_pri_dict['service_cidr_v4'] = '10.96.0.0/12'
+            # 双栈host_networks格式：interface/br0/ipv4/ipv6
+            extra_pri_dict['host_networks'] = f'{interface}/br0/{ip_dual_conf}/{ipaddr}'
+    else:
+        # 单栈配置
+        extra_pri_dict['ip_type'] = ip_type
+        if ip_type == consts.IP_TYPE_IPV4:
+            extra_pri_dict['enable_ipip'] = enable_ipip
+        extra_pri_dict['host_networks'] = f'{interface}/br0/{ipaddr}'
 
     if runtime == consts.RUNTIME_CONTAINERD:
         yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE].update({
@@ -441,6 +530,10 @@ def get_args():
                         choices=['full', 'cmp', 'virt', 'light-virt'])
     parser.add_argument('IP_CONF', metavar="ip_conf", type=str, nargs='?',
                         help="Input the target IPv4 or Config file")
+    parser.add_argument('--ip-dual-conf', type=str, dest='ip_dual_conf',
+                        help="Input the second IP address for dual-stack configuration (IPv6 if IP_CONF is IPv4, or IPv4 if IP_CONF is IPv6)")
+    parser.add_argument('--enable-ipip', action='store_true', dest='enable_ipip',
+                        help="Enable IPIP mode for IPv4 (default: VXLAN mode for both IPv4 single-stack and dual-stack)")
     parser.add_argument('--offline-data-path', nargs='?',
                         help="offline packages location")
     parser.add_argument('--dns', nargs='*', help='Space seperated DNS server(s), eg: --dns 1.1.1.1 8.8.8.8')
@@ -526,8 +619,35 @@ def main():
 
     stack = args.STACK[0]
     ip_conf = get_default_ip(args)
-    if match_ip4addr(ip_conf):
-        pr_green(f"choose local ip address: {ip_conf}")
+
+    # 检测IP类型，支持双栈配置
+    if args.ip_dual_conf:
+        # 双栈配置：检测两个IP地址
+        match_ip, ip_type = match_dual_stack_ipaddr(ip_conf, args.ip_dual_conf)
+        if match_ip:
+            if ip_type == consts.IP_TYPE_DUAL_STACK:
+                # 确定哪个是IPv4，哪个是IPv6
+                if _match_ip4addr(ip_conf):
+                    ipv4_addr = ip_conf
+                    ipv6_addr = args.ip_dual_conf
+                else:
+                    ipv4_addr = args.ip_dual_conf
+                    ipv6_addr = ip_conf
+                pr_green(f"choose dual-stack configuration: IPv4={ipv4_addr}, IPv6={ipv6_addr}")
+            else:
+                pr_green(f"choose {ip_type} address: {ip_conf}")
+        else:
+            pr_red(f"Invalid dual-stack configuration: {ip_conf}, {args.ip_dual_conf}")
+            exit(1)
+    else:
+        # 单栈配置：检测单个IP地址
+        match_ip, ip_type = match_ipaddr(ip_conf)
+        if match_ip:
+            pr_green(f"choose local {ip_type} address: {ip_conf}")
+        else:
+            pr_red(f"Invalid IP address: {ip_conf}")
+            exit(1)
+
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
     stackDict = {
@@ -562,11 +682,21 @@ def main():
             install_packages(['python3-pip'])
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
-    if match_ip4addr(ip_conf):
+
+    # 重新检测IP类型（因为上面的检测可能被覆盖）
+    if args.ip_dual_conf:
+        match_ip, ip_type = match_dual_stack_ipaddr(ip_conf, args.ip_dual_conf)
+    else:
+        match_ip, ip_type = match_ipaddr(ip_conf)
+
+    if match_ip:
         conf = generate_config(ip_conf, stackDict.get(stack),
                                user_dns, args.runtime,
                                args.image_repository,
-                               args.region, args.zone)
+                               args.region, args.zone,
+                               ip_dual_conf=args.ip_dual_conf,
+                               ip_type=ip_type,
+                               enable_ipip=args.enable_ipip)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
         conf = update_config(ip_conf, stackDict.get(stack), args.runtime)
     else:

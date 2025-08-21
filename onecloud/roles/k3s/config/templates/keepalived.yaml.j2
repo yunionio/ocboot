@@ -34,7 +34,11 @@ spec:
     - name: KEEPALIVED_INTERFACE
       value: "{{ node_interface_name }}"
     - name: CHECK_KUBE_CMD
+{% if ip_type == 'ipv6' and node_ip | regex_search(':') %}
+      value: "curl -k -XGET https://[{{ node_ip }}]:6443/healthz --cert /var/lib/rancher/k3s/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/k3s/server/tls/client-kube-apiserver.key --cacert /var/lib/rancher/k3s/server/tls/client-ca.crt"
+{% else %}
       value: "curl -k -XGET https://{{ node_ip }}:6443/healthz --cert /var/lib/rancher/k3s/server/tls/client-kube-apiserver.crt --key /var/lib/rancher/k3s/server/tls/client-kube-apiserver.key --cacert /var/lib/rancher/k3s/server/tls/client-ca.crt"
+{% endif %}
     image: {{ image_repository }}/keepalived:{{ keepalived_version_tag }}
     imagePullPolicy: IfNotPresent
     name: keepalived
