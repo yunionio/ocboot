@@ -2,30 +2,76 @@
 - set_fact: disable_resource_management=false
 - set_fact: use_hyper_image=false
 
-- name: Get default gateway
+- name: Get default gateway for IPv6
+  shell: "ip -6 route get 2001:4860:4860::8888 | head -n 1 | awk '{print $3}' 2>/dev/null || echo ''"
+  register: default_gateway_ret
+  when: ip_type is defined and ip_type == 'ipv6'
+
+- name: Get default gateway for IPv6 (dual-stack)
+  shell: "ip -6 route get 2001:4860:4860::8888 | head -n 1 | awk '{print $3}' 2>/dev/null || echo ''"
+  register: default_gateway_v6_ret
+  when: ip_type is defined and ip_type == 'dual-stack'
+
+- name: Get default gateway for IPv4 (dual-stack)
+  shell: "ip route get 1 | head -n 1 | awk '{print $3}'"
+  register: default_gateway_v4_ret
+  when: ip_type is defined and ip_type == 'dual-stack'
+
+- name: Get default ip by node ip by command for IPv6
+  shell: "ip -6 route get 2001:4860:4860::8888 | head -n 1 | awk '{print $7}' 2>/dev/null || echo ''"
+  register: default_ip_ret
+  when: ip_type is defined and ip_type == 'ipv6'
+
+- name: Get default gateway for IPv4
   shell: "ip route get 1 | head -n 1 | awk '{print $3}'"
   register: default_gateway_ret
+  when: ip_type is not defined or ip_type != 'ipv6'
 
-- name: Get default ip by node ip by command
+- name: Get default ip by node ip by command for IPv4
   shell: "ip route get 1 | head -n 1 | awk '{print $7}'"
   register: default_ip_ret
+  when: ip_type is not defined or ip_type != 'ipv6'
 
 - name: Parse default ip by node
   set_fact:
-    default_ip:  "{{ default_ip_ret.stdout }}"
+    default_ip: "{{ default_ip_ret.stdout if default_ip_ret is defined and default_ip_ret.stdout is defined else node_ip }}"
 
-- name: Default interface
+- name: Default interface for IPv6
   set_fact:
     default_interface: true
   when:
+  - ip_type is defined and ip_type == 'ipv6'
+  - node_ip is defined
+  - node_ip == default_ip
+  - node_ip | regex_search(':')
+
+- name: Default interface for IPv4
+  set_fact:
+    default_interface: true
+  when:
+  - ip_type is not defined or ip_type != 'ipv6'
   - node_ip is defined
   - node_ip == default_ip
   - node_ip is match('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')
 
 - name: Set default Gateway
   set_fact:
-    default_gateway: "{{ default_gateway_ret.stdout if default_interface else ''}}"
+    default_gateway: "{{ default_gateway_ret.stdout if default_interface and default_gateway_ret is defined and default_gateway_ret.stdout is defined else '' }}"
     default_ip: "{{ default_ip if default_interface else node_ip }}"
+
+- name: "Get default IPv6 address {{ default_ip }} prefix length"
+  shell: |
+    prefix_len="$(ip -6 route list | grep -w {{ default_ip }} | grep -E '/[0-9]+' | head -n 1 | awk '{print $1}' | cut -d '/' -f 2)"
+    if [[ "$prefix_len" =~ ^[0-9]+$ ]]; then
+      echo "$prefix_len"
+      exit 0
+    fi
+    # Default to /64 for IPv6 if not found
+    echo 64
+  register: default_masklen_ret
+  args:
+    executable: /bin/bash
+  when: ip_type is defined and ip_type == 'ipv6'
 
 - name: "Get default ip address {{ default_ip }} masklen"
   shell: |
@@ -51,10 +97,17 @@
   register: default_masklen_ret
   args:
     executable: /bin/bash
+  when: ip_type is not defined or ip_type != 'ipv6'
 
 - name: Set default ip masklen
   set_fact:
-    default_masklen: "{{ default_masklen_ret.stdout }}"
+    default_masklen: "{{ default_masklen_ret.stdout if default_masklen_ret is defined and default_masklen_ret.stdout is defined else '64' }}"
+
+- name: Set dual-stack gateways
+  set_fact:
+    default_gateway_v6: "{{ default_gateway_v6_ret.stdout if default_gateway_v6_ret is defined and default_gateway_v6_ret.stdout is defined else '' }}"
+    default_gateway_v4: "{{ default_gateway_v4_ret.stdout if default_gateway_v4_ret is defined and default_gateway_v4_ret.stdout is defined else '' }}"
+  when: ip_type is defined and ip_type == 'dual-stack'
 
 - name: include k8s cloud if needed
   include_tasks: "k8s_cloud.yml"
@@ -88,7 +141,7 @@
     disable_resource_management: true
   when:
   - is_kylin_based is defined
-  - is_kylin_based |default(alse)|bool == true
+  - is_kylin_based |default(false)|bool == true
 
 - name: Copy onecloud kubernetes manifests
   ansible.builtin.template:
@@ -263,14 +316,60 @@
   set_fact:
     admin_network_count: "{{ network_count_ret.stdout }}"
 
-- name: Set adm0 command
+- name: Set adm0 command for IPv4
   set_fact:
     adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} "
+  when:
+  - ip_type is not defined or ip_type != 'ipv6'
 
-- name: Update adm0 command
+- name: Update adm0 command for IPv4 with gateway
   set_fact:
     adm0_cmd: "{{ adm0_cmd }} --gateway {{ default_gateway }} "
   when:
+  - ip_type is not defined or ip_type != 'ipv6'
+  - default_gateway | length > 0
+
+- name: Set adm0 command for IPv6
+  set_fact:
+    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 --start-ip6 {{ default_ip }} --end-ip6 {{ default_ip }} --net-mask6 {{ default_masklen }} "
+  when:
+  - ip_type is defined and ip_type == 'ipv6'
+
+- name: Update adm0 command for IPv6 with gateway
+  set_fact:
+    adm0_cmd: "{{ adm0_cmd }} --gateway6 {{ default_gateway }} "
+  when:
+  - ip_type is defined and ip_type == 'ipv6'
+  - default_gateway | length > 0
+
+- name: Set adm0 command for dual-stack (IPv4 primary)
+  set_fact:
+    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} --start-ip6 {{ node_ip_v6 }} --end-ip6 {{ node_ip_v6 }} --net-mask6 64 "
+  when:
+  - ip_type is defined and ip_type == 'dual-stack'
+  - node_ip is defined and node_ip == node_ip_v4
+
+- name: Update adm0 command for dual-stack (IPv4 primary) with gateway
+  set_fact:
+    adm0_cmd: "{{ adm0_cmd }} --gateway {{ default_gateway }} --gateway6 {{ default_gateway_v6 | default('') }} "
+  when:
+  - ip_type is defined and ip_type == 'dual-stack'
+  - node_ip is defined and node_ip == node_ip_v4
+  - default_gateway | length > 0
+
+- name: Set adm0 command for dual-stack (IPv6 primary)
+  set_fact:
+    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 --start-ip6 {{ default_ip }} --end-ip6 {{ default_ip }} --net-mask6 {{ default_masklen }} --start-ip {{ node_ip_v4 }} --end-ip {{ node_ip_v4 }} --net-mask 24 "
+  when:
+  - ip_type is defined and ip_type == 'dual-stack'
+  - node_ip is defined and node_ip == node_ip_v6
+
+- name: Update adm0 command for dual-stack (IPv6 primary) with gateway
+  set_fact:
+    adm0_cmd: "{{ adm0_cmd }} --gateway6 {{ default_gateway }} --gateway {{ default_gateway_v4 | default('') }} "
+  when:
+  - ip_type is defined and ip_type == 'dual-stack'
+  - node_ip is defined and node_ip == node_ip_v6
   - default_gateway | length > 0
 
 - debug: var=adm0_cmd
