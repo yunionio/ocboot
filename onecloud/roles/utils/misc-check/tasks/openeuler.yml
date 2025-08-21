@@ -8,6 +8,6 @@
     that:
       - "distribution_major_version == '22' or distribution_major_version == '24'"
       - "distribution_version is version('22.03', '>=') or distribution_version is version('24.03', '>=')"
-      - "ansible_distribution_release == 'LTS-SP3' or ansible_distribution_release == 'LTS-SP1'"
+      - "((ansible_distribution_release == 'LTS-SP3' or ansible_distribution_release == 'LTS-SP1' or ansible_distribution_release == 'LTS-SP4') and ansible_distribution_version == '22.03') or (ansible_distribution_release == 'LTS-SP1' and ansible_distribution_version == '24.03')"
     success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is supported. "
     fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"
