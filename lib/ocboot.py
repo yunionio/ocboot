@@ -458,7 +458,17 @@ class OnecloudConfig(object):
         if self.high_availability:
             self.high_availability_vip = self.controlplane_host
             self.keepalived_password = base64.b64encode(self.high_availability_vip.encode('ascii'))[0:8].decode()
-            self.keepalived_router_id = int(self.high_availability_vip.replace('.', '')) % 255
+
+            # 计算 keepalived_router_id，支持 IPv4 和 IPv6
+            if ':' in self.high_availability_vip:
+                # IPv6 地址：使用哈希值计算 router_id
+                import hashlib
+                hash_value = hashlib.md5(self.high_availability_vip.encode()).hexdigest()
+                self.keepalived_router_id = int(hash_value[:8], 16) % 255
+            else:
+                # IPv4 地址：使用原来的逻辑
+                self.keepalived_router_id = int(self.high_availability_vip.replace('.', '')) % 255
+
             if self.keepalived_router_id == 0:
                 self.keepalived_router_id = 100
             self.keepalived_version_tag = config.get('keepalived_version_tag', default_keepalived_version_tag)
