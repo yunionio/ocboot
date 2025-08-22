@@ -106,8 +106,8 @@ data:
 ---
 # Source: calico/templates/kubernetes-services-endpoint.yaml
 # This ConfigMap is used to configure where Calico should connect to the Kubernetes API server
-# In IPv6 environments, we need to explicitly set this to avoid connectivity issues
-{% if ip_type == 'ipv6' or ip_type == 'dual-stack' %}
+# In high availability and IPv6 environments, we need to explicitly set this to avoid connectivity issues
+{% if high_availability_vip is defined or ip_type == 'ipv6' or ip_type == 'dual-stack' %}
 apiVersion: v1
 kind: ConfigMap
 metadata:
