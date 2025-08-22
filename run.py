@@ -644,9 +644,6 @@ def main():
         match_ip, ip_type = match_ipaddr(ip_conf)
         if match_ip:
             pr_green(f"choose local {ip_type} address: {ip_conf}")
-        else:
-            pr_red(f"Invalid IP address: {ip_conf}")
-            exit(1)
 
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
