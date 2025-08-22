@@ -26,11 +26,7 @@ node-ip: {{ node_ip }}
 {% endif %}
 pause-image: {{ image_repository }}/pause:3.1
 {% if high_availability_vip is defined %}
-{% if ip_type == 'ipv6' and high_availability_vip | regex_search(':') %}
-tls-san: "[{{ high_availability_vip }}]"
-{% else %}
 tls-san: {{ high_availability_vip }}
-{% endif %}
 {% endif %}
 {% if is_k3s_server %}
 flannel-backend: none
