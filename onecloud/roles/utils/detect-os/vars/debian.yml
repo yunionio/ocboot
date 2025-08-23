@@ -47,7 +47,6 @@ latest_packages:
     - ca-certificates
     - "yunion-climc={{ debian_latest_version_tag }}*"
     - "yunion-climc-ee={{ debian_latest_version_tag }}*"
-    - "yunion-ocadm={{ debian_latest_version_tag }}*"
 
 k8s_packages:
     - docker-ce
