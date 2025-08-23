@@ -41,7 +41,6 @@ common_packages:
   - yunion-climc-ee
   - yunion-executor
   - yunion-fetcherfs
-  - yunion-ocadm
   - "{{ yunion_qemu_package }}"
 
 common_services:
