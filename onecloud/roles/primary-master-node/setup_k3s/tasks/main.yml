@@ -54,7 +54,7 @@
       local img_name_version=$1
       k3s ctr images tag registry.cn-beijing.aliyuncs.com/$registry/$img_name_version \
         $insecure_registry/$registry/$img_name_version && \
-        k3s ctr images push $insecure_registry/$registry/$img_name_version
+        k3s ctr images push $insecure_registry/$registry/$img_name_version --plain-http
     }
     export -f push_and_tag
     for i in {{docker_insecure_registries | join(" ")}}
