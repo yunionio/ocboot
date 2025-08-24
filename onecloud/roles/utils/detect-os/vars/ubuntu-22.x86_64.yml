@@ -43,7 +43,6 @@ common_services:
     - yunion-executor
 
 latest_packages:
-    - "yunion-ocadm={{ onecloud_version_abbr }}*"
     - "yunion-climc={{ onecloud_version_abbr }}*"
     - "yunion-climc-ee={{ onecloud_version_abbr }}*"
     - ca-certificates
