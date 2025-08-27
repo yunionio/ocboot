@@ -20,6 +20,7 @@ common_packages:
     - rsync
     - tcpdump
     - python3-libselinux
+    - python3-netifaces
     - "{{ yunion_qemu_package }}"
 
 common_services:
