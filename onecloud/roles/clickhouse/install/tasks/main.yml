@@ -51,7 +51,7 @@
     lineinfile:
       path: /etc/clickhouse-server/config.xml
       insertafter: '<!-- Default values - try listen localhost on IPv4 and IPv6. -->'
-      line: '    <listen_host>0.0.0.0</listen_host>'
+      line: '    <listen_host>::</listen_host>'
       state: present
       backup: yes
 
