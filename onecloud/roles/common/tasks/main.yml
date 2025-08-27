@@ -1,7 +1,19 @@
 ---
-- name: checking ports
-  include_role:
-    name: utils/misc-check
+# - name: checking ports
+#   include_role:
+#     name: utils/misc-check
+
+- name: install private registry dns record to /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ hostvars[groups['primary_master_node'][0]]['node_ip'] }} private-registry.onecloud"
+    state: present
+  when:
+  - online_status is defined
+  - online_status == 'offline'
+  - groups['primary_master_node'] is defined
+  - groups['primary_master_node'] | length > 0
+
 # onecloud/roles/common/tasks/
 - name: Import OS Arch tasks Common 6
   include_tasks: "{{ item }}"
