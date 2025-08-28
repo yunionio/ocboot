@@ -8,5 +8,10 @@ mirrors:
     rewrite:
       "^rancher/mirrored-library-traefik:(.*)": "yunionio/traefik:$1"
       "^rancher/mirrored-coredns-coredns:(.*)": "yunionio/coredns:$1"
+{% if online_status == 'offline' %}
+  "private-registry.onecloud:5000":
+    endpoint:
+      - "http://private-registry.onecloud:5000"
+{% endif %}
 # set insecure_registries
 # configs:
