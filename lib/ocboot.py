@@ -427,7 +427,7 @@ class OnecloudConfig(object):
         self.high_availability_vip = None
         self.keepalived_version_tag = None
         self.keepalived_password = None
-        default_keepalived_version_tag = 'v2.0.28' if is_using_k3s() else 'v2.0.25'
+        default_keepalived_version_tag = 'v2.0.29' if is_using_k3s() else 'v2.0.25'
         if self.high_availability:
             self.high_availability_vip = self.controlplane_host
             self.keepalived_password = base64.b64encode(self.high_availability_vip.encode('ascii'))[0:8].decode()
