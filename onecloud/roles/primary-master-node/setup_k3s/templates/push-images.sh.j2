@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+version_file={{ offline_data_path }}/versions.json
+if ! [ -f "$version_file" ]; then
+    echo "[ERROR] version file $version_file is empty! "
+    exit 1
+fi
+
+imgs=( $(cat $version_file |jq  '.dockers |to_entries[] |.key +":"+ .value' | xargs) )
+echo imgs ${imgs[@]}
+
+registry=$(cat $version_file | jq .registry |xargs)
+if [ -z "$registry" ]; then
+    echo "[ERROR] registry is empty!"
+    exit 1
+fi
+echo registry $registry
+
+# restart k3s
+systemctl restart k3s
+
+push_and_tag(){
+    local img_name_version=$1
+    # k3s ctr images tag registry.cn-beijing.aliyuncs.com/$registry/$img_name_version \
+    #    $insecure_registry/$registry/$img_name_version
+    k3s ctr images push $insecure_registry/$registry/$img_name_version --plain-http
+}
+export -f push_and_tag
+
+for i in {{ docker_insecure_registries | join(" ") }}
+do
+    if [ -x /usr/bin/parallel ]; then
+        insecure_registry=$i registry=$registry parallel --will-cite push_and_tag ::: "${imgs[@]}"
+    else
+        for img in "${imgs[@]}"
+        do
+            insecure_registry=$i registry=$registry push_and_tag $img
+        done
+    fi
+done
