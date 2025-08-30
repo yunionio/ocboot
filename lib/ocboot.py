@@ -247,6 +247,7 @@ class Config(object):
 
     def __init__(self, config):
         self.config = config
+        print(self.config)
 
     def get_config(self, group):
         config = self.ensure_get(group)
@@ -254,6 +255,9 @@ class Config(object):
 
     def get(self, key, default):
         return self.config.get(key, default)
+
+    def __getattr__(self, item):
+        return self.config[item]
 
     def ensure_get(self, key, alter_key=None):
         val = self.get(key, None)
@@ -659,6 +663,8 @@ class PrimaryMasterConfig(OnecloudConfig):
             vars[KEY_USER_DNS] = self.user_dns
         vars[KEY_REGION] = self.region
         vars[KEY_ZONE] = self.zone
+
+        print("PrimaryMasterConfig", vars)
         return vars
 
     def get_nodes(self):
@@ -762,6 +768,10 @@ class WorkerConfig(OnecloudJointConfig):
         if self.primary_master_config:
             # Use exactly the same logic as MasterConfig
             pc = self.primary_master_config
+            print("WorkerConfig primary_master_config", pc)
+            for attr in dir(pc):
+                if not attr.startswith("__") and not callable(getattr(pc, attr)):
+                    print(f"pc.{attr} = {getattr(pc, attr)}")
             vars['pod_network_cidr'] = pc.pod_network_cidr
             vars['service_cidr'] = pc.service_cidr
             vars['service_dns_domain'] = pc.service_dns_domain
@@ -769,6 +779,9 @@ class WorkerConfig(OnecloudJointConfig):
             vars['ip_type'] = pc.ip_type
             # Worker-specific: needed for Calico IP detection on worker nodes
             vars['ip_autodetection_method'] = pc.ip_autodetection_method
+            vars['docker_insecure_registries'] = pc.docker_insecure_registries
+            vars['docker_registry_mirrors'] = pc.docker_registry_mirrors
+            vars['iso_install_mode'] = pc.iso_install_mode
 
             # 添加双栈配置变量
             if pc.ip_type == consts.IP_TYPE_DUAL_STACK:

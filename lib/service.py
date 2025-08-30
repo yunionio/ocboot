@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, ClickhouseConfig, NodeConfig, Config, get_ansible_global_vars_by_cluster
 from .cmd import run_ansible_playbook
-from .ansible import get_inventory_config
+from .ansible import get_inventory_config, get_primary_master_node
 from .parser import help_d, inject_add_hostagent_options, inject_primary_node_options, inject_ssh_options
 from .parser import inject_add_nodes_options
 from .parser import inject_auto_backup_options
@@ -228,8 +228,16 @@ class AddNodesConfig(object):
         if is_insecure:
             woker_config_dict['insecure_registries'] = [repo]
         self.worker_config = WorkerConfig(Config(woker_config_dict))
+
+        master_inventory = kwargs.get('master_inventory', None)
+        if master_inventory:
+            self.worker_config.set_primary_master_config(get_primary_master_node(master_inventory))
+
         self.image_repository = cluster.get_image_repository()
         self.is_using_k3s = cluster.is_using_k3s()
+
+        self.offline_data_path = kwargs.get('offline_data_path', None)
+        
         utils.pr_green(f"Get current cluster: {controlplane_host}, version: {self.current_version}, is_using_k3s: {self.is_using_k3s}")
 
     def run(self):
@@ -248,6 +256,10 @@ class AddNodesConfig(object):
     def get_vars(self):
         vars = get_ansible_global_vars(self.current_version, self.is_using_k3s)
         vars[KEY_IMAGE_REPOSITORY] = self.image_repository
+
+        if self.offline_data_path:
+            vars['offline_data_path'] = self.offline_data_path
+            
         return vars
 
 

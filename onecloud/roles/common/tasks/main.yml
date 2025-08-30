@@ -11,8 +11,8 @@
   when:
   - online_status is defined
   - online_status == 'offline'
-  - groups['primary_master_node'] is defined
-  - groups['primary_master_node'] | length > 0
+  - groups['primary_master_node'] is defined || groups['master_nodes'] is defined
+  - (groups['primary_master_node'] | length > 0) || (groups['master_nodes'] | length > 0)
 
 # onecloud/roles/common/tasks/
 - name: Import OS Arch tasks Common 6
