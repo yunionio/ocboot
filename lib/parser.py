@@ -65,6 +65,17 @@ def inject_add_nodes_options(parser):
                         default="22",
                         help=help_d("worker node host ssh port"))
 
+    # optional options
+    parser.add_argument("--master-inventory",
+                        dest="master_inventory",
+                        default="",
+                        help="ansible host_inventory file when deploy master nodes")
+
+    parser.add_argument("--offline-data-path",
+                        dest="offline_data_path",
+                        default="",
+                        help="offline rpm repo path for upgrade mode")
+
     # 双栈支持
     parser.add_argument('--ip-dual-conf', type=str, dest='ip_dual_conf',
                         help="Input the second IP address for dual-stack configuration (IPv6 if TARGET_NODE_HOSTS is IPv4, or IPv4 if TARGET_NODE_HOSTS is IPv6)")
