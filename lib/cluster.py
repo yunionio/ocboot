@@ -61,11 +61,14 @@ class OnecloudCluster(object):
         self.worker_nodes = None
         self._construct_nodes()
 
-    def get_primary_master_node_ip(self):
+    def get_cluster_controlplane_host(self):
         endpoint = self.get_spec().get('loadBalancerEndpoint')
         if endpoint:
             return endpoint
         return self.ssh_client.get_host()
+
+    def get_primary_master_node_ip(self):
+        return self.primary_master_node.get_ip()
 
     def get_metadata(self):
         return self.cluster.get_metadata()

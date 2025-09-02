@@ -74,6 +74,7 @@ KEY_ENABLE_CONTAINERD = "enable_containerd"
 KEY_HOST_NETWORKS = "host_networks"
 KEY_DISK_PATHS = "disk_paths"
 
+KEY_PRIMARY_MASTER_NODE_IP = "primary_master_node_ip"
 
 def load_config(config_file):
     import yaml
@@ -485,6 +486,7 @@ class OnecloudConfig(object):
         if isinstance(self.host_networks, str):
             self.host_networks = [self.host_networks]
         self.disk_paths = config.get(KEY_DISK_PATHS, None)
+        self.primary_master_node_ip = config.get(KEY_PRIMARY_MASTER_NODE_IP, None)
 
     def ansible_vars(self):
         vars = {
@@ -516,6 +518,8 @@ class OnecloudConfig(object):
             vars[KEY_HOST_NETWORKS] = self.host_networks
         if self.disk_paths:
             vars[KEY_DISK_PATHS] = self.disk_paths
+        if self.primary_master_node_ip:
+            vars[KEY_PRIMARY_MASTER_NODE_IP] = self.primary_master_node_ip
         return vars
 
 
