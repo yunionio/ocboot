@@ -3,16 +3,24 @@
 #   include_role:
 #     name: utils/misc-check
 
-- name: install private registry dns record to /etc/hosts
+# 这里设置 primary_master_node_ip ，如果 primary_master_node_ip 不存在，则使用 hostvars[groups['primary_master_node'][0]]['node_ip']
+- name: set primary_master_node_ip if not defined
+  set_fact:
+    primary_master_node_ip: "{{ default(hostvars[groups['primary_master_node'][0]]['node_ip']) }}"
+  when:
+  - primary_master_node_ip is not defined
+  - groups['primary_master_node'] is defined
+  - groups['primary_master_node'] | length > 0
+
+- name: set private registry dns record {{ primary_master_node_ip }} to /etc/hosts
   lineinfile:
     path: /etc/hosts
-    line: "{{ hostvars[groups['primary_master_node'][0]]['node_ip'] }} private-registry.onecloud"
+    line: "{{ primary_master_node_ip }} private-registry.onecloud"
     state: present
   when:
   - online_status is defined
   - online_status == 'offline'
-  - groups['primary_master_node'] is defined || groups['master_nodes'] is defined
-  - (groups['primary_master_node'] | length > 0) || (groups['master_nodes'] | length > 0)
+  - primary_master_node_ip is defined
 
 # onecloud/roles/common/tasks/
 - name: Import OS Arch tasks Common 6

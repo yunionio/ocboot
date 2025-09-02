@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 
-from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, ClickhouseConfig, NodeConfig, Config, get_ansible_global_vars_by_cluster
+from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, ClickhouseConfig, NodeConfig, Config, get_ansible_global_vars_by_cluster, KEY_PRIMARY_MASTER_NODE_IP
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config, get_primary_master_node
 from .parser import help_d, inject_add_hostagent_options, inject_primary_node_options, inject_ssh_options
@@ -204,7 +204,8 @@ class AddNodesConfig(object):
                 raise Exception(Red(f"Node {target_hostname}[{target_node}] already exists in cluster (By Hostname Check). "))
 
         self.current_version = cluster.get_current_version()
-        controlplane_host = cluster.get_primary_master_node_ip()
+        controlplane_host = cluster.get_cluster_controlplane_host()
+        primary_master_node_ip = cluster.get_primary_master_node_ip()
         nodes_conf = [{'hostname': target_node, 'user': ssh_user,
                        'port': ssh_port} for target_node in target_nodes]
         as_host = True
@@ -223,6 +224,7 @@ class AddNodesConfig(object):
             KEY_ENABLE_CONTAINERD: self.enable_containerd,
             KEY_HOST_NETWORKS: kwargs.get(KEY_HOST_NETWORKS, None),
             KEY_DISK_PATHS: kwargs.get(KEY_DISK_PATHS, None),
+            KEY_PRIMARY_MASTER_NODE_IP: primary_master_node_ip,
         }
         (repo, is_insecure) = cluster.get_repository()
         if is_insecure:
@@ -238,7 +240,7 @@ class AddNodesConfig(object):
 
         self.offline_data_path = kwargs.get('offline_data_path', None)
         
-        utils.pr_green(f"Get current cluster: {controlplane_host}, version: {self.current_version}, is_using_k3s: {self.is_using_k3s}")
+        utils.pr_green(f"Get current cluster: {controlplane_host}, primary_master_node_ip: {primary_master_node_ip}, version: {self.current_version}, is_using_k3s: {self.is_using_k3s}")
 
     def run(self):
         inventory_content = ansible.get_inventory_config(self.worker_config)
