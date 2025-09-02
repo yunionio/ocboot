@@ -35,42 +35,45 @@
   - online_status == "offline"
   - offline_data_path | length > 0
 
-- name: Tag and push images to local registry. It might take a few minutes...
-  shell: |
-    export version_file={{ offline_data_path }}/versions.json
-    if ! [ -f "$version_file" ]; then
-      echo "[ERROR] version file $version_file is empty! "
-      exit
-    fi
-    imgs=( $(cat $version_file |jq  '.dockers |to_entries[] |.key +":"+ .value' | xargs) )
-    echo imgs ${imgs[@]}
-
-    export registry=$(cat $version_file | jq .registry |xargs)
-    if [ -z "$registry" ]; then
-      echo "[ERROR] registry is empty!"
-      exit
-    fi
-    push_and_tag(){
-      local img_name_version=$1
-      k3s ctr images tag registry.cn-beijing.aliyuncs.com/$registry/$img_name_version \
-        $insecure_registry/$registry/$img_name_version && \
-        k3s ctr images push $insecure_registry/$registry/$img_name_version --plain-http
-    }
-    export -f push_and_tag
-    for i in {{docker_insecure_registries | join(" ")}}
-    do
-      insecure_registry=$i parallel push_and_tag ::: "${imgs[@]}"
-    done
-  args:
-    executable: /bin/bash
-  become: yes
-  ignore_errors: yes
+- name: Copy push-images.sh to /tmp/push-images.sh
+  template:
+    src: push-images.sh.j2
+    dest: /tmp/push-images.sh
   when:
   - docker_insecure_registries is defined
   - docker_insecure_registries | length > 0
   - online_status == "offline"
   - offline_data_path is defined
   - offline_data_path | length > 0
+
+- name: Make push-images.sh executable
+  file:
+    path: /tmp/push-images.sh
+    mode: '0755'
+  when:
+  - docker_insecure_registries is defined
+  - docker_insecure_registries | length > 0
+  - online_status == "offline"
+  - offline_data_path is defined
+  - offline_data_path | length > 0
+
+- name: Push images to local registry. It might take a few minutes...
+  shell:
+    cmd: /tmp/push-images.sh
+  args:
+    executable: /bin/bash
+  when:
+  - docker_insecure_registries is defined
+  - docker_insecure_registries | length > 0
+  - online_status == "offline"
+  - offline_data_path is defined
+  - offline_data_path | length > 0
+  retries: 5
+  register: push_images_result
+  delay: 30
+  ignore_errors: true
+  become: yes
+  until: push_images_result.rc == 0
 
 - name: Copy calico.yaml to /tmp/calico.yaml
   template:
