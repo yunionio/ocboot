@@ -94,6 +94,12 @@
 #         - 10.42.0.0/16  # Pods
 #         - 10.43.0.0/16  # Services
 
+- name: Disable nm-cloud-setup.service for k3s service
+  ansible.builtin.systemd:
+    name: nm-cloud-setup.service
+    state: stopped
+    enabled: false
+
 - name: Add br_netfilter to /etc/modules-load.d/
   ansible.builtin.copy:
     content: "br_netfilter"

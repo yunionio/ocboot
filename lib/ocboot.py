@@ -248,7 +248,6 @@ class Config(object):
 
     def __init__(self, config):
         self.config = config
-        print(self.config)
 
     def get_config(self, group):
         config = self.ensure_get(group)
@@ -668,7 +667,6 @@ class PrimaryMasterConfig(OnecloudConfig):
         vars[KEY_REGION] = self.region
         vars[KEY_ZONE] = self.zone
 
-        print("PrimaryMasterConfig", vars)
         return vars
 
     def get_nodes(self):
@@ -783,9 +781,6 @@ class WorkerConfig(OnecloudJointConfig):
             vars['ip_type'] = pc.ip_type
             # Worker-specific: needed for Calico IP detection on worker nodes
             vars['ip_autodetection_method'] = pc.ip_autodetection_method
-            vars['docker_insecure_registries'] = pc.docker_insecure_registries
-            vars['docker_registry_mirrors'] = pc.docker_registry_mirrors
-            vars['iso_install_mode'] = pc.iso_install_mode
 
             # 添加双栈配置变量
             if pc.ip_type == consts.IP_TYPE_DUAL_STACK:
