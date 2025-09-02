@@ -65,6 +65,16 @@ def inject_add_nodes_options(parser):
                         default="22",
                         help=help_d("worker node host ssh port"))
 
+    parser.add_argument("--offline-data-path",
+                        dest="offline_data_path",
+                        default="",
+                        help="offline rpm repo path for upgrade mode")
+
+    parser.add_argument("--ip-type",
+                        dest="ip_type",
+                        default="",
+                        choices=[consts.IP_TYPE_IPV4, consts.IP_TYPE_IPV6, consts.IP_TYPE_DUAL_STACK],
+                        help="ip type of target nodes")
     # 双栈支持
     parser.add_argument('--ip-dual-conf', type=str, dest='ip_dual_conf',
                         help="Input the second IP address for dual-stack configuration (IPv6 if TARGET_NODE_HOSTS is IPv4, or IPv4 if TARGET_NODE_HOSTS is IPv6)")
