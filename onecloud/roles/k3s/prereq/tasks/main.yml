@@ -99,6 +99,7 @@
     name: nm-cloud-setup.service
     state: stopped
     enabled: false
+  ignore_errors: true
 
 - name: Add br_netfilter to /etc/modules-load.d/
   ansible.builtin.copy:

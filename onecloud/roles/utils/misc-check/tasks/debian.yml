@@ -1,10 +1,10 @@
 - name: set os var
   set_fact:
-    max_allowed_debian_version_before: '12'
+    max_allowed_debian_version_before: '13'
 
 - name: reset os var for k3s
   set_fact:
-    max_allowed_debian_version_before: '13'
+    max_allowed_debian_version_before: '14'
   when:
   - env_k8s_or_k3s | default('') == 'k3s'
 

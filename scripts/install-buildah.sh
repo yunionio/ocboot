@@ -22,6 +22,10 @@ supported_os=(
     "CentOS Stream 8 x86_64"
     "Debian GNU/Linux 11 x86_64"
     "Debian GNU/Linux 11 aarch64"
+    "Debian GNU/Linux 12 x86_64"
+    "Debian GNU/Linux 12 aarch64"
+    "Debian GNU/Linux 13 x86_64"
+    "Debian GNU/Linux 13 aarch64"
     "openEuler 22.03 x86_64"
     "openEuler 22.03 aarch64"
     "openEuler 24.03 x86_64"
@@ -29,11 +33,23 @@ supported_os=(
     "OpenCloudOS 8.8 x86_64"
     "Rocky Linux 8.9 x86_64"
     "Ubuntu 20.04.* LTS x86_64"
+    "Ubuntu 20.04.* LTS aarch64"
     "Ubuntu 22.04.* LTS x86_64"
     "Ubuntu 22.04.* LTS aarch64"
     "Ubuntu 22.04 LTS x86_64"
     "Ubuntu 22.04 LTS aarch64"
+    "Ubuntu 24.04.* LTS x86_64"
+    "Ubuntu 24.04.* LTS aarch64"
+    "Ubuntu 25.04 x86_64"
+    "Ubuntu 25.04 aarch64"
+    "Ubuntu 25.04.* x86_64"
+    "Ubuntu 25.04.* aarch64"
     "ctyunos 2.*.* x86_64"
+)
+
+ubuntu_20_os=(
+    "Ubuntu 20.04.* LTS x86_64"
+    "Ubuntu 20.04.* LTS aarch64"
 )
 
 is_supported() {
@@ -49,6 +65,17 @@ is_supported() {
 
 is_openeuler() {
     grep -qw 'openEuler' /etc/os-release
+}
+
+is_ubuntu_20() {
+    local s
+    s="$(get_name_version)"
+    for i in "${ubuntu_20_os[@]}"; do
+        if echo "$s" | grep "$i"; then
+            return 0
+        fi
+    done
+    return 1
 }
 
 ensure_buildah_on_openeuler() {
@@ -77,7 +104,12 @@ ensure_buildah() {
     hash yum &>/dev/null && installer=yum
     hash dnf &>/dev/null && installer=dnf
     hash apt &>/dev/null && installer=apt
-    hash git &>/dev/null || $installer install -y git
+    #hash git &>/dev/null || $installer install -y git
+
+	if is_ubuntu_20; then
+		./scripts/install-buildah-ubuntu20.sh
+		return
+	fi
 
     if is_openeuler; then
         ensure_buildah_on_openeuler
