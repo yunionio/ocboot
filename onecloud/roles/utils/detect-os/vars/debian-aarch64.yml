@@ -1,41 +1,31 @@
 is_debian_based: true
-is_debian_based_x86: true
-debian_based_arch: amd64
+is_debian_based_aarch64: true
+debian_based_arch: arm64
 
 common_packages:
   - apt-transport-https
   - bash-completion
   - bridge-utils
   - ceph-common
-  - chntpw
   - conntrack
   - conntrackd
   - cron
   - curl
   - dkms
-  - git
-  - glusterfs-common
   - gnupg-agent
   - gnupg2
   - ipset
   - ipvsadm
   - jq
-  - libusb-1.0-0
-  - libusbredirparser1
-  - librbd1
-  - libspice-server1
   - nfs-common
-  - ntp
+  - chrony
   - openvswitch-switch
   - ovmf
   - parallel
   - python3-selinux
-  - software-properties-common
-  - usbutils
-  - wget
+  - python3-setuptools
   - "{{ yunion_qemu_package }}"
   - yunion-executor
-  - yunion-fetcherfs
 
 common_services:
     - ntp
