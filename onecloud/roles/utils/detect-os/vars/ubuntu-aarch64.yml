@@ -1,7 +1,7 @@
 is_debian_based: true
 is_ubuntu_based: true
-is_ubuntu_based_x86: true
-debian_based_arch: amd64
+is_ubuntu_based_aarch64: true
+debian_based_arch: arm64
 
 common_packages:
   - apt-transport-https
@@ -19,7 +19,7 @@ common_packages:
   - ipvsadm
   - jq
   - nfs-common
-  - ntp
+  - chrony
   - openvswitch-switch
   - ovmf
   - parallel
@@ -28,7 +28,7 @@ common_packages:
   - "{{ yunion_qemu_package }}"
 
 common_services:
-    - ntp
+    - chrony
     - yunion-executor
 
 latest_packages:

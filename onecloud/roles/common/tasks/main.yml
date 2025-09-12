@@ -8,6 +8,8 @@
   set_fact:
     primary_master_node_ip: "{{ default(hostvars[groups['primary_master_node'][0]]['node_ip']) }}"
   when:
+  - online_status is defined
+  - online_status == 'offline'
   - primary_master_node_ip is not defined
   - groups['primary_master_node'] is defined
   - groups['primary_master_node'] | length > 0
