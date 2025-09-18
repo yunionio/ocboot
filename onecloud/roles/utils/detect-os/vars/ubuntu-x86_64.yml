@@ -19,7 +19,7 @@ common_packages:
   - ipvsadm
   - jq
   - nfs-common
-  - ntp
+  - chrony
   - openvswitch-switch
   - ovmf
   - parallel
@@ -28,7 +28,7 @@ common_packages:
   - "{{ yunion_qemu_package }}"
 
 common_services:
-    - ntp
+    - chrony
     - yunion-executor
 
 latest_packages:

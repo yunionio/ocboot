@@ -1,6 +1,5 @@
 is_debian_based: true
-is_ubuntu_based: true
-is_ubuntu_based_x86: true
+is_debian_based_x86: true
 debian_based_arch: amd64
 
 common_packages:
@@ -19,24 +18,25 @@ common_packages:
   - ipvsadm
   - jq
   - nfs-common
-  - ntp
+  - chrony
   - openvswitch-switch
   - ovmf
   - parallel
   - python3-selinux
-  - software-properties-common
+  - python3-setuptools
   - "{{ yunion_qemu_package }}"
+  - yunion-executor
 
 common_services:
     - ntp
     - yunion-executor
 
+debian_latest_version_tag: "{% if onecloud_version | regex_search('^master') %}20{% else %}{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('') }}{% endif %}"
+
 latest_packages:
-    - "yunion-climc={{ onecloud_version_abbr }}*"
-    - "yunion-climc-ee={{ onecloud_version_abbr }}*"
     - ca-certificates
-    - yunion-executor
-    - yunion-fetcherfs
+    - "yunion-climc={{ debian_latest_version_tag }}*"
+    - "yunion-climc-ee={{ debian_latest_version_tag }}*"
 
 k8s_packages:
     - docker-ce
