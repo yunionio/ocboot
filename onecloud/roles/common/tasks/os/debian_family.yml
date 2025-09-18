@@ -1,18 +1,50 @@
-- name: init apt cache for {{ansible_distribution}}
+- name: download SHA1 gpg public key for {{ansible_distribution}}
   get_url:
     url: https://iso.yunion.cn/apt/yunion.gpg-key.asc
     dest: /tmp/yunion.gpg-key.asc
     validate_certs: no
   become: true
+  when:
+    - ansible_distribution in ["Debian", "Ubuntu"]
+    - ansible_distribution_major_version in ["10", "11", "12", "20", "22", "24"]
+
+- name: download SHA512 gpg public key for {{ansible_distribution}}
+  get_url:
+    url: https://iso.yunion.cn/apt/yunion2.gpg-key.asc
+    dest: /tmp/yunion2.gpg-key.asc
+    validate_certs: no
+  become: true
+  when:
+    - ansible_distribution in ["Debian", "Ubuntu"]
+    - ansible_distribution_major_version in ["13", "25"]
+
+- name: import SHA1 {{ansible_distribution}} sig key
+  shell: |
+    apt-key add /tmp/yunion.gpg-key.asc
+    rm -fr /tmp/yunion.gpg-key.asc
+  become: true
+  args:
+    executable: /bin/bash
+  when:
+    - ansible_distribution in ["Debian", "Ubuntu"]
+    - ansible_distribution_major_version in ["10", "11", "12", "20", "22", "24"]
+
+- name: import SHA512 {{ansible_distribution}} sig key
+  shell: |
+    mv /tmp/yunion2.gpg-key.asc /etc/apt/keyrings/yunion2.gpg-key.asc
+  become: true
+  args:
+    executable: /bin/bash
+  when:
+    - ansible_distribution in ["Debian", "Ubuntu"]
+    - ansible_distribution_major_version in ["13", "25"]
 
 # https://iso.yunion.cn/debian/10/3.9/x86_64/
 - name: apply {{ansible_distribution}} sig key
   shell: |
-    apt-key add /tmp/yunion.gpg-key.asc
     curl "https://iso.yunion.cn/apt/{{ansible_distribution | lower}}-{{ ansible_distribution_major_version }}/base/cloudpods-base.sources" -o /etc/apt/sources.list.d/cloudpods-base.sources
     curl "https://iso.yunion.cn/apt/{{ansible_distribution | lower}}-{{ ansible_distribution_major_version }}/updates/cloudpods-updates.sources" -o /etc/apt/sources.list.d/cloudpods-updates.sources
     apt-get update -y
-    rm -fr /tmp/yunion.gpg-key.asc
   become: true
   args:
     executable: /bin/bash
@@ -21,7 +53,9 @@
   include_tasks: utils/unified_cgroup_hierarchy.yml
   when:
     - ansible_distribution in ["Debian", "Ubuntu"]
-    - ansible_distribution_major_version in ["11", "12", "13", "22", "24"]
+    - ansible_distribution_major_version in ["11", "12", "13", "22", "24", "25"]
+    - onecloud_version is defined
+    - onecloud_version is version('v3.10', '<=')
 
 - name: install common packages via loop for Debian Family
   package:

@@ -8,25 +8,16 @@ common_packages:
   - bash-completion
   - bridge-utils
   - ceph-common
-  - chntpw
   - conntrack
   - conntrackd
   - cron
   - curl
   - dkms
-  - git
-  - glusterfs-common
   - gnupg-agent
   - gnupg2
   - ipset
   - ipvsadm
   - jq
-  - libusb-1.0-0
-  - libusbredirparser1
-  - librbd1
-  - libspice-server1
-  - libiscsi7
-  - libcapstone4
   - nfs-common
   - ntp
   - openvswitch-switch
@@ -34,8 +25,6 @@ common_packages:
   - parallel
   - python3-selinux
   - software-properties-common
-  - usbutils
-  - wget
   - "{{ yunion_qemu_package }}"
 
 common_services:
