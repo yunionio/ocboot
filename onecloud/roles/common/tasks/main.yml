@@ -25,7 +25,7 @@
   - primary_master_node_ip is defined
 
 # onecloud/roles/common/tasks/
-- name: Import OS Arch tasks Common 6
+- name: "Import OS Arch tasks Common 6 ({{ ansible_distribution }} {{ ansible_distribution_major_version }} {{ ansible_architecture }})"
   include_tasks: "{{ item }}"
   with_first_found:
   - files:

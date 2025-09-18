@@ -1,6 +1,6 @@
 ---
 - name: Include RedHat General Repo Init
-  include_tasks: openeuler-repo.yml
+  include_tasks: redhat-general-repo.yml
 
 - name: Include RedHat Family Common Tasks
   include_tasks: redhat.yml
