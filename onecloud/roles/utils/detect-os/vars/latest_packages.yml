@@ -4,5 +4,4 @@ latest_packages:
     - "yunion-climc-{{ onecloud_version_abbr }}[.-]*"
     - "yunion-climc-ee-{{ onecloud_version_abbr }}[.-]*"
     - yunion-executor
-    - yunion-fetcherfs
     - yunion-ovmfrpm

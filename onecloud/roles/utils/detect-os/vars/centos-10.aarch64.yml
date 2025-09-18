@@ -7,7 +7,7 @@ is_centos: true
 preinstall_packages:
     - epel-release
     - centos-release-nfv-openvswitch
-    - centos-release-ceph-reef
+    - centos-release-ceph-squid
 
 common_packages:
     - bash-completion
@@ -19,7 +19,7 @@ common_packages:
     - jq
     - kmod
     - nfs-utils
-    - openvswitch2.15
+    - openvswitch3.4
     - parallel
     - rsync
     - tcpdump
