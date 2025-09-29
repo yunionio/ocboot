@@ -6,7 +6,7 @@
 # 这里设置 primary_master_node_ip ，如果 primary_master_node_ip 不存在，则使用 hostvars[groups['primary_master_node'][0]]['node_ip']
 - name: set primary_master_node_ip if not defined
   set_fact:
-    primary_master_node_ip: "{{ default(hostvars[groups['primary_master_node'][0]]['node_ip']) }}"
+    primary_master_node_ip: "{{ hostvars[groups['primary_master_node'][0]]['node_ip'] }}"
   when:
   - online_status is defined
   - online_status == 'offline'
