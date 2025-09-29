@@ -6,8 +6,6 @@
 - name: Assert {{ ansible_distribution }} {{ ansible_distribution_version }} conditions
   assert:
     that:
-      - "distribution_major_version == '22'"
-      - "distribution_version is version('22.03', '>=')"
-      - "ansible_distribution_release == 'LTS-SP3'"
+      - "(ansible_distribution_release in ('LTS-SP1', 'LTS-SP3', 'LTS-SP4') and ansible_distribution_version == '22.03') or (ansible_distribution_release in ('LTS-SP1', 'LTS-SP2') and ansible_distribution_version == '24.03')"
     success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is supported. "
     fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"
