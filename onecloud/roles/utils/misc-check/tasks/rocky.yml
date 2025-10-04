@@ -1,7 +1,7 @@
 - name: Assert {{ ansible_distribution }} {{ ansible_distribution_version }} conditions
   assert:
     that:
-      - "ansible_distribution_version == '8.9'"
-      - "ansible_architecture == 'x86_64'"
+      - "ansible_distribution_major_version in ('8', '9', '10')"
+      - "ansible_architecture in ('x86_64', 'aarch64')"
     success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is supported. "
     fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} {{ ansible_architecture }} is not supported by {{ onecloud_version }}"

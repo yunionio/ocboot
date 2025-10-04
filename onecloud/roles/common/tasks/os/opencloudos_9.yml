@@ -1,0 +1,35 @@
+---
+- block:
+  - name: Write /etc/systemd/resolved.conf
+    become: true
+    template:
+      src: etc_systemd_resolved.conf.j2
+      dest: /etc/systemd/resolved.conf
+      owner: root
+      group: root
+      mode: 0644
+    when:
+    - "ansible_distribution_version == '9.2'"
+
+  - name: Restart systemd-resolved
+    become: true
+    service:
+      name: systemd-resolved
+      state: restarted
+    when:
+    - "ansible_distribution_version == '9.2'"
+
+  - name: Link /etc/resolv.conf to /run/systemd/resolve/resolve.conf
+    become: true
+    shell: |
+      ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+    args:
+      executable: /bin/bash
+    when:
+    - "ansible_distribution_version == '9.2'"
+
+- name: Include RedHat General Repo Init
+  include_tasks: redhat-general-repo.yml
+
+- name: Include RedHat Family Common Tasks
+  include_tasks: redhat.yml

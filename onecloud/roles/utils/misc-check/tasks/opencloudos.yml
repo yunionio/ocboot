@@ -1,9 +1,9 @@
 - name: Check If Os Version Is Supported
   assert:
     that:
-    - "ansible_distribution_version is version('8.8', '==')"
+    - "ansible_distribution_major_version in ('8', '9')"
     - "onecloud_version is defined"
     - "onecloud_version is version('v3.10', '>=')"
-    - "ansible_architecture == 'x86_64'"
+    - "ansible_architecture in ('x86_64', 'aarch64')"
     fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"
 

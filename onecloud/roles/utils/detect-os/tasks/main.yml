@@ -95,7 +95,7 @@
 
 - debug: var=onecloud_version_abbr
 
-- name: gather os specific variables
+- name: gather os specific variables "{{ ansible_distribution }} {{ ansible_distribution_major_version }} {{ ansible_architecture }}"
   include_vars: "{{ item }}"
   with_first_found:
     - files:

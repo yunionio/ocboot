@@ -15,9 +15,9 @@
     is_supported: true
   when:
     - ansible_distribution == 'AlmaLinux'
-    - ansible_distribution_version == '8.9'
+    - "ansible_distribution_major_version in ('8', '9', '10')"
     - onecloud_version is defined
-    - ansible_architecture == 'x86_64'
+    - "ansible_architecture in ('x86_64', 'aarch64')"
 
 - debug: var=is_supported
 
