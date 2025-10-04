@@ -4,75 +4,27 @@ is_centos_based: true
 is_centos_x86: true
 is_centos: true
 
+preinstall_packages:
+    - epel-release
+    - centos-release-nfv-openvswitch
+    - centos-release-ceph-reef
+
 common_packages:
-    - autogen-libopts
     - bash-completion
-    - boost-iostreams
-    - boost-random
-    - boost-system
-    - boost-thread
     - bridge-utils
-    - celt051
     - ceph-common
     - conntrack-tools
     - curl
     - fuse
-    - fuse-devel
-    - fuse-libs
-    - gssproxy
-    - htop
-    - ipset
-    - ipvsadm
     - jq
-    - keyutils
     - kmod
-    - kmod-openvswitch
-    - libaio
-    - libbasicobjects
-    - libcollection
-    - libini_config
-    - libjpeg-turbo
-    - libnfsidmap
-    - libogg
-    - libpath_utils
-    - libpcap
-    - librados2
-    - librbd1
-    - libref_array
-    - libselinux-python3
-    - libtirpc
-    - libusb
-    - libusbx
-    - libverto-libevent
-    - lm_sensors-libs
-    - lvm2
-    - nc
-    - net-tools
     - nfs-utils
-    - nmap-ncat
-    - ntp
-    - ntpdate
-    - oniguruma
-    - openvswitch
+    - openvswitch2.15
     - parallel
-    - pciutils
-    - pixman
-    - python3-pip
-    - quota
-    - quota-nls
-    - rpcbind
     - rsync
-    - socat
-    - spice
-    - spice-protocol
-    - sysstat
-    - tcp_wrappers
     - tcpdump
-    - unbound
-    - unbound-libs
-    - usbredir
-    - usbutils
-    - wget
+    - python3-libselinux
+    - python3-pip
     - "{{ yunion_qemu_package }}"
 
 k8s_packages:
@@ -86,6 +38,6 @@ k8s_packages:
     - kubernetes-cni
 
 common_services:
-    - ntpd
+    - chrony
     - yunion-executor
 

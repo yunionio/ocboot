@@ -1,9 +1,9 @@
-- name: Online repo
+- name: Online RPM repo
   shell: |
     cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
     [yunion-repo-base]
-    name=Packages for Yunion Multi-Cloud Platform -
-    baseurl=https://iso.yunion.cn/{{ ansible_distribution| replace(' ','') | lower }}/{{ ansible_distribution_version }}/base/{{ ansible_architecture }}
+    name=Packages for Yunion Cloud Platform
+    baseurl=https://iso.yunion.cn/rpm/{{ ansible_architecture }}
     sslverify=0
     failovermethod=priority
     enabled=1
@@ -11,7 +11,7 @@
     priority=1
 
     [yunion-repo-updates]
-    name=Yunion Bin Packages for Yunion Multi-Cloud Platform -
+    name=Updated Packages for Yunion Cloud Platform
     baseurl=https://iso.yunion.cn/rpm-updates/{{ansible_architecture}}
     sslverify=0
     failovermethod=priority
@@ -33,3 +33,52 @@
   when:
   - online_status is defined
   - online_status == 'offline'
+
+- name: Install Preinstall Packages Via Loop
+  package:
+    name: "{{ package_item }}"
+    disablerepo: ["*nfv*", "*ceph*"]
+    enablerepo: ["baseos"]
+  retries: 3
+  delay: 3
+  with_items:
+  - "{{ preinstall_packages }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ '%02d'|format(item_index + 1) }}/{{ preinstall_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  become: yes
+  tags:
+  - package
+  when:
+  - preinstall_packages is defined
+  - online_status == 'online'
+
+- name: Install additional repos
+  shell: |
+    REPO_NAME="yunion-repo-extra-{{ item_index }}"
+    REPO_FILE="/etc/yum.repos.d/yunion-extra.repo"
+    touch $REPO_FILE
+    if ! grep -q $REPO_NAME $REPO_FILE; then
+    cat >> $REPO_FILE <<EOF_MISC
+    [yunion-repo-extra-{{ item_index }}]
+    name=Extra Packages {{ item_index }} for Yunion Cloud Platform
+    baseurl={{ import_repo }}
+    sslverify=0
+    failovermethod=priority
+    enabled=1
+    gpgcheck=0
+    priority=1
+
+    EOF_MISC
+    fi
+  with_items:
+  - "{{ imported_repos }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ '%02d'|format(item_index + 1) }}/{{ imported_repos|length }}] {{ import_repo }}"
+    loop_var: import_repo
+  become: yes
+  when:
+  - imported_repos is defined
+  - online_status == 'online'

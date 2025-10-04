@@ -1,7 +1,7 @@
 ---
 is_redhat_based: true
 is_centos_based: true
-is_centos_aarch64: true
+is_centos_x86: true
 is_centos: true
 
 preinstall_packages:
@@ -19,7 +19,7 @@ common_packages:
     - jq
     - kmod
     - nfs-utils
-    - openvswitch2.15
+    - openvswitch
     - parallel
     - rsync
     - tcpdump
@@ -40,3 +40,4 @@ k8s_packages:
 common_services:
     - chrony
     - yunion-executor
+

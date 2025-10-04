@@ -2,30 +2,38 @@
 is_redhat_based: true
 is_centos_based: true
 is_centos_aarch64: true
-is_centos: true
 
 preinstall_packages:
     - epel-release
-    - centos-release-nfv-openvswitch
-    - centos-release-ceph-reef
+
+imported_repos:
+    - https://mirror.stream.centos.org/SIGs/8-stream/nfv/{{ ansible_architecture }}/openvswitch-2/
+    - https://mirror.stream.centos.org/SIGs/8/storage/{{ ansible_architecture }}/ceph-pacific/
 
 common_packages:
     - bash-completion
     - bridge-utils
     - ceph-common
+    - chrony
     - conntrack-tools
     - curl
     - fuse
     - jq
     - kmod
+    - lvm2
     - nfs-utils
     - openvswitch2.15
     - parallel
     - rsync
+    - pciutils
     - tcpdump
     - python3-libselinux
     - python3-pip
     - "{{ yunion_qemu_package }}"
+
+common_services:
+    - chronyd
+    - yunion-executor
 
 k8s_packages:
     - container-selinux
@@ -36,7 +44,3 @@ k8s_packages:
     - kubectl-1.15.12-0
     - kubelet-1.15.12-0
     - kubernetes-cni
-
-common_services:
-    - chrony
-    - yunion-executor

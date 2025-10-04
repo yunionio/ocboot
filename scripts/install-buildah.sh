@@ -15,11 +15,23 @@ get_name_version() {
 }
 
 supported_os=(
-    "AlmaLinux 8.9 x86_64"
-    "Anolis OS 8.8 x86_64"
+    "AlmaLinux 8.* x86_64"
+    "AlmaLinux 8.* aarch64"
+    "AlmaLinux 9.* x86_64"
+    "AlmaLinux 9.* aarch64"
+    "AlmaLinux 10.* x86_64"
+    "AlmaLinux 10.* aarch64"
+    "Anolis OS 8.* x86_64"
+    "Anolis OS 8.* aarch64"
     "CentOS Linux 7 x86_64"
     "CentOS Linux 7 aarch64"
     "CentOS Stream 8 x86_64"
+    "CentOS Stream 8 aarch64"
+    "CentOS Stream 9 x86_64"
+    "CentOS Stream 9 aarch64"
+    "CentOS Stream 9 x86_64"
+    "CentOS Stream 10 aarch64"
+    "CentOS Stream 10 x86_64"
     "Debian GNU/Linux 11 x86_64"
     "Debian GNU/Linux 11 aarch64"
     "Debian GNU/Linux 12 x86_64"
@@ -30,8 +42,16 @@ supported_os=(
     "openEuler 22.03 aarch64"
     "openEuler 24.03 x86_64"
     "openEuler 24.03 aarch64"
-    "OpenCloudOS 8.8 x86_64"
-    "Rocky Linux 8.9 x86_64"
+    "OpenCloudOS 8.* x86_64"
+    "OpenCloudOS 8.* aarch64"
+    "OpenCloudOS 9.* x86_64"
+    "OpenCloudOS 9.* aarch64"
+    "Rocky Linux 8.* x86_64"
+    "Rocky Linux 8.* aarch64"
+    "Rocky Linux 9.* x86_64"
+    "Rocky Linux 9.* aarch64"
+    "Rocky Linux 10.* x86_64"
+    "Rocky Linux 10.* aarch64"
     "Ubuntu 20.04.* LTS x86_64"
     "Ubuntu 20.04.* LTS aarch64"
     "Ubuntu 22.04.* LTS x86_64"
@@ -50,6 +70,13 @@ supported_os=(
 ubuntu_20_os=(
     "Ubuntu 20.04.* LTS x86_64"
     "Ubuntu 20.04.* LTS aarch64"
+)
+
+centos_obsolete_os=(
+    "CentOS Linux 7 x86_64"
+    "CentOS Linux 7 aarch64"
+    "CentOS Stream 8 x86_64"
+    "CentOS Stream 8 aarch64"
 )
 
 is_supported() {
@@ -71,6 +98,17 @@ is_ubuntu_20() {
     local s
     s="$(get_name_version)"
     for i in "${ubuntu_20_os[@]}"; do
+        if echo "$s" | grep "$i"; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+is_centos_obsolete() {
+    local s
+    s="$(get_name_version)"
+    for i in "${centos_obsolete_os[@]}"; do
         if echo "$s" | grep "$i"; then
             return 0
         fi
@@ -115,6 +153,12 @@ ensure_buildah() {
         ensure_buildah_on_openeuler
         return
     fi
+
+	if is_centos_obsolete; then
+        sed -i 's/^mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+        sed -i 's/^#baseurl/baseurl/g' /etc/yum.repos.d/CentOS-*
+        sed -i 's/mirror.centos.org/vault.centos.org/g' /etc/yum.repos.d/CentOS-*
+	fi
 
     if hash buildah &>/dev/null; then
         return
