@@ -5,7 +5,8 @@
     fi
     mkdir -p /opt/cloud/contrib/
     if [ ! -f /opt/cloud/contrib/OVMF.fd ]; then
-      ln -s /usr/share/ovmf/OVMF.fd /opt/cloud/contrib/OVMF.fd
+      cp -f /usr/share/ovmf/OVMF.fd /opt/cloud/contrib/OVMF.fd
+      truncate -s 64M /opt/cloud/contrib/OVMF.fd
     fi
   become: true
   args:
