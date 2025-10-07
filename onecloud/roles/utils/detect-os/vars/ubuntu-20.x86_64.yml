@@ -21,11 +21,11 @@ common_packages:
   - nfs-common
   - ntp
   - openvswitch-switch
-  - ovmf
   - parallel
   - python3-selinux
   - software-properties-common
   - "{{ yunion_qemu_package }}"
+  - yunion-ovmfrpm
 
 common_services:
     - ntp

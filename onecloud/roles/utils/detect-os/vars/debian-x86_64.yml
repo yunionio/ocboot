@@ -20,12 +20,12 @@ common_packages:
   - nfs-common
   - chrony
   - openvswitch-switch
-  - ovmf
   - parallel
   - python3-selinux
   - python3-setuptools
   - "{{ yunion_qemu_package }}"
   - yunion-executor
+  - yunion-ovmfrpm
 
 common_services:
     - ntp
