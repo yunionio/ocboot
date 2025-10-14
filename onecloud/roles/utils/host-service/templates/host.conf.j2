@@ -4,15 +4,15 @@ admin_project: system
 admin_project_domain: default
 agent_temp_limit: 10
 agent_temp_path: /opt/cloud/workspace/disks/agent_tmp
-allow_router_vms: true
-allow_switch_vms: true
+allow_router_vms: false
+allow_switch_vms: false
 auth_token_cache_size: 2048
 auto_merge_backing_template: false
 auto_merge_delay_seconds: 900
-bandwidth_limit: 50
-block_io_scheduler: cfq
+bandwidth_limit: 500
+block_io_scheduler: none
 bridge_driver: openvswitch
-bw_download_bandwidth: 10
+bw_download_bandwidth: 500
 calculate_quota_usage_interval_seconds: 900
 check_system_services: true
 chntpw_path: /usr/local/bin/chntpw.static
@@ -32,6 +32,7 @@ dhcp_lease_time: 100663296
 dhcp_renewal_time: 67108864
 dhcp_server_port: 67
 disable_gpu: false
+disable_usb: true
 disable_kvm: false
 disable_probe_kubelet: true
 disable_set_cgroup: false
@@ -55,7 +56,7 @@ etcd_use_tls: false
 executor_socket_path: /var/run/onecloud/exec.sock
 fetcherfs_path: /opt/yunion/fetchclient/bin/fetcherfs
 health_driver: etcd
-help: false
+hostname: {{ ansible_hostname }}
 host_cpu_passthrough: true
 host_health_timeout: 30
 host_lease_timeout: 10
@@ -102,7 +103,7 @@ recycle_diskfile_keep_days: 28
 report_interval: 60
 request_worker_count: 8
 sdn_allow_conntrack_invalid: false
-sdn_enable_eip_man: true
+sdn_enable_eip_man: false
 sdn_enable_guest_man: true
 sdn_pid_file: /var/run/onecloud/sdnagent.pid
 sdn_socket_path: /var/run/onecloud/sdnagent.sock
@@ -115,8 +116,6 @@ start_host_ignore_sys_error: false
 sync_storage_info_duration_second: 60
 temp_path: /opt/yunion/tmp
 tenant_cache_expire_seconds: 900
-time_zone: Asia/Shanghai
 tunnel_padding_bytes: 0
 use_boot_vga: false
-version: false
 windows_default_admin_user: true
