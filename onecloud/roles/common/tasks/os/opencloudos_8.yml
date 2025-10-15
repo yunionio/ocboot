@@ -4,3 +4,8 @@
 
 - name: Include RedHat Family Common Tasks
   include_tasks: redhat.yml
+
+- name: Comment out OVS_USER_ID
+  shell: |
+    sed -i 's/^OVS_USER_ID=/# OVS_USER_ID=/g' /etc/sysconfig/openvswitch
+  become: true
