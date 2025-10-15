@@ -123,7 +123,7 @@
 
 - name: Append K8s packages if needed
   set_fact:
-    common_packages: "{{ common_packages + k8s_packages }}"
+    common_packages: "{{ common_packages + k8s_packages + ['yunion-ocadm'] }}"
   when:
   - k8s_packages is defined
   - k8s_or_k3s | default('k8s') == 'k8s'
