@@ -48,27 +48,36 @@
   register: hugepagesz
   changed_when: false
   check_mode: true
+  when:
+  - ansible_architecture == 'x86_64'
 
 - name: Check /proc/cmdline for huge pages configuration
   command: "grep -w 'default_hugepagesz=1G' /proc/cmdline"
   register: default_hugepagesz
   changed_when: false
   check_mode: true
+  when:
+  - ansible_architecture == 'x86_64'
 
 - name: Check if oc-hugetlb-gigantic-pages.service is active
   shell:
     cmd: systemctl is-active oc-hugetlb-gigantic-pages
   register: hugepage_service_status
   failed_when: false
+  when:
+  - ansible_architecture == 'x86_64'
 
 - name: set default fact to_init_hugetlb
   set_fact:
     hugetlb_is_ready: false
+  when:
+  - ansible_architecture == 'x86_64'
 
 - name: Set hugetlb fact if conditions are met
   set_fact:
     hugetlb_is_ready: true
   when:
+  - ansible_architecture == 'x86_64'
   - hugepagesz.rc == 0
   - default_hugepagesz.rc == 0
   - hugepage_service_status.rc == 0
@@ -77,6 +86,7 @@
 - name: Setup hugepage
   include_tasks: 'hugetlb.yml'
   when:
+  - ansible_architecture == 'x86_64'
   - hugetlb_is_ready == false
 
 - name: SSH Reboot system if not cloud kernel, it should take a few minutes...
@@ -107,6 +117,7 @@
     connect_timeout: 900 # 15 mins
   become: yes
   when:
+  - ansible_architecture == 'x86_64'
   - hugetlb_is_ready == false
   - is_controller_node is not defined or is_controller_node|default(false)|bool == false
   - ansible_connection == "ssh"
@@ -115,6 +126,7 @@
   command: reboot
   become: yes
   when:
+  - ansible_architecture == 'x86_64'
   - hugetlb_is_ready == false
   - is_controller_node is not defined or is_controller_node|default(false)|bool == false
   - ansible_connection == "local"
