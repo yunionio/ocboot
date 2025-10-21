@@ -31,7 +31,7 @@ operator:
     repository: "registry.cn-beijing.aliyuncs.com/yunion/onecloud-operator"
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v3.11.11"
+    tag: "v3.11.12"
 
   imagePullSecrets: []
 
@@ -87,7 +87,7 @@ cluster:
       - key: node-role.kubernetes.io/controlplane
         effect: NoSchedule
   # Overrides the image tag whose default is the chart appVersion.
-  version: "v3.11.11"
+  version: "v3.11.12"
   # productVersion choose from:
   # - CMP
   # - FullStack
