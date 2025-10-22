@@ -1,41 +1,8 @@
-- name: Create directory for ocnet cni conf
-  file:
-    path: "{{ dir_item }}"
-    state: directory
-    mode: '0755'
-  with_items:
-  - /etc/yunion/cni/net.d
-  - /etc/yunion/containerd/
-  loop_control:
-    loop_var: dir_item
-
-- name: Copy yunion-containerd config file
-  ansible.builtin.copy:
-    content: "{{ lookup('file', 'config.toml') }}"
-    dest: /etc/yunion/containerd/config.toml
-    mode: '0644'
-  notify: enable yunion-containerd
-
-- name: Copy yunion-containerd.service file
-  ansible.builtin.copy:
-    content: "{{ lookup('file', 'yunion-containerd.service') }}"
-    dest: /usr/lib/systemd/system/yunion-containerd.service
-    mode: '0644'
-  notify: enable yunion-containerd
-
 - name: Enable and start yunion-containerd service
   ansible.builtin.systemd:
     name: yunion-containerd
     enabled: yes
     state: started
-
-- name: Copy ocnet-cni.conflist file
-  ansible.builtin.copy:
-    # content: "{{ lookup('file', '10-ocnet-cni.conflist') }}"
-    src: 10-ocnet-cni.conflist
-    dest: /etc/yunion/cni/net.d/10-ocnet-cni.conflist
-    mode: '0644'
-  notify: restart yunion-containerd
 
 - name: Check crictl version
   shell: |
