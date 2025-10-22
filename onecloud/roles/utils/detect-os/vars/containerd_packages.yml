@@ -1,0 +1,6 @@
+---
+containerd_packages:
+    - yunion-runc
+    - yunion-crictl
+    - yunion-ocnet-cni
+    - yunion-containerd

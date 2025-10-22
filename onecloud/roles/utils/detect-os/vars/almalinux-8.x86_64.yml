@@ -2,6 +2,7 @@
 is_redhat_based: true
 is_centos_based: true
 is_centos_x86: true
+centos_version: 8
 
 preinstall_packages:
     - epel-release
