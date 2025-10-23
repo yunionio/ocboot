@@ -46,6 +46,28 @@ class AddWorkerNodeService(AddNodeService):
             else:
                 raise ValueError("ip type is not set and cannot be determined from primary master host")
 
+        # 处理双栈配置
+        kwargs = {
+            'runtime': args.runtime,
+            'host_networks': args.host_networks,
+            'disk_paths': args.disk_paths,
+            'ip_dual_conf': getattr(args, 'ip_dual_conf', None),
+            'ip_type': args.ip_type,
+            'offline_data_path': args.offline_data_path,
+        }
+
+        # 如果是双栈配置，需要处理IPv4和IPv6地址
+        if args.ip_type == consts.IP_TYPE_DUAL_STACK and hasattr(args, 'ip_dual_conf') and args.ip_dual_conf:
+            # 确定哪个是IPv4，哪个是IPv6
+            if is_ipv4(args.target_node_hosts[0]):
+                # 主IP是IPv4，ip_dual_conf是IPv6
+                kwargs['node_ip_v4'] = args.target_node_hosts[0]
+                kwargs['node_ip_v6'] = args.ip_dual_conf
+            else:
+                # 主IP是IPv6，ip_dual_conf是IPv4
+                kwargs['node_ip_v4'] = args.ip_dual_conf
+                kwargs['node_ip_v6'] = args.target_node_hosts[0]
+
         config = AddNodesConfig(cluster,
                                 args.target_node_hosts,
                                 args.ssh_user,
@@ -53,13 +75,7 @@ class AddWorkerNodeService(AddNodeService):
                                 args.ssh_port,
                                 args.ssh_node_port,
                                 enable_host_on_vm=True,
-                                runtime=args.runtime,
-                                host_networks=args.host_networks,
-                                disk_paths=args.disk_paths,
-                                ip_dual_conf=getattr(args, 'ip_dual_conf', None),
-                                ip_type=args.ip_type,
-                                offline_data_path=args.offline_data_path,
-                                )
+                                **kwargs)
         config.run()
 
 
