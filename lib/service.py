@@ -236,7 +236,11 @@ class AddNodesConfig(object):
 
         self.offline_data_path = kwargs.get('offline_data_path', None)
         self.ip_type = kwargs.get('ip_type', None)
-        
+
+        self.ip_dual_conf = kwargs.get("ip_dual_conf", None)
+        self.node_ip_v4 = kwargs.get("node_ip_v4", None)
+        self.node_ip_v6 = kwargs.get("node_ip_v6", None)
+
         utils.pr_green(f"Get current cluster: {controlplane_host}, primary_master_node_ip: {primary_master_node_ip}, version: {self.current_version}, is_using_k3s: {self.is_using_k3s}")
 
     def run(self):
@@ -263,6 +267,12 @@ class AddNodesConfig(object):
             vars[KEY_IMAGE_REPOSITORY] = 'private-registry.onecloud:5000/yunion'
         if self.ip_type:
             vars['ip_type'] = self.ip_type
+
+        if self.node_ip_v4:
+            vars['node_ip_v4'] = self.node_ip_v4
+        if self.node_ip_v6:
+            vars['node_ip_v6'] = self.node_ip_v6
+
         return vars
 
 
