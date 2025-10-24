@@ -4,5 +4,10 @@
 #   set_fact:
 #     common_packages: "{{ ['libcapstone4'] + common_packages }}"
 
+- name: use aliyun apt mirror
+  shell: |
+    sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
+  become: true
+
 - name: Include Debian Family Common Tasks
   include_tasks: debian_10.yml
