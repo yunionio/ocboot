@@ -31,13 +31,6 @@ common_services:
     - chrony
     - yunion-executor
 
-latest_packages:
-    - "yunion-climc={{ onecloud_version_abbr }}*"
-    - "yunion-climc-ee={{ onecloud_version_abbr }}*"
-    - ca-certificates
-    - yunion-executor
-    - yunion-fetcherfs
-
 k8s_packages:
     - docker-ce
     - kubeadm=1.15.12-00

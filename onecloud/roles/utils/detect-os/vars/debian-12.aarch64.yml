@@ -1,6 +1,6 @@
 is_debian_based: true
-is_debian_based_x86: true
-debian_based_arch: amd64
+is_debian_based_aarch64: true
+debian_based_arch: arm64
 
 common_packages:
   - apt-transport-https
@@ -28,15 +28,8 @@ common_packages:
   - yunion-ovmfrpm
 
 common_services:
-    - ntp
+    - chrony
     - yunion-executor
-
-debian_latest_version_tag: "{% if onecloud_version | regex_search('^master') %}20{% else %}{{ onecloud_version | regex_replace('[^0-9.]+') | regex_findall('^[0-9]+\\.[0-9]+') | join('') }}{% endif %}"
-
-latest_packages:
-    - ca-certificates
-    - "yunion-climc={{ debian_latest_version_tag }}*"
-    - "yunion-climc-ee={{ debian_latest_version_tag }}*"
 
 k8s_packages:
     - docker-ce
