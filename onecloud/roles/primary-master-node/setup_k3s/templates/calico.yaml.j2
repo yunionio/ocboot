@@ -5153,8 +5153,6 @@ spec:
               value: "false"
             - name: FELIX_ROUTEREFRESHINTERVAL
               value: "90s"
-            - name: FELIX_DEVICEROUTESOURCEADDRESS
-              value: "{{ node_ip_v4 if node_ip_v4 is defined else node_ip }}"
 {% endif %}
             - name: FELIX_HEALTHENABLED
               value: "true"
