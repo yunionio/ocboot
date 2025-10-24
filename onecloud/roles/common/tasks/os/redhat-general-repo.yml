@@ -3,7 +3,7 @@
     cat > /etc/yum.repos.d/yunion.repo <<EOF_MISC
     [yunion-repo-base]
     name=Packages for Yunion Cloud Platform
-    baseurl=https://iso.yunion.cn/rpm/{{ ansible_architecture }}
+    baseurl=https://iso.yunion.cn/rpm/{{ centos_version }}/{{ ansible_architecture }}
     sslverify=0
     failovermethod=priority
     enabled=1
