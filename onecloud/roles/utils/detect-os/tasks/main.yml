@@ -121,12 +121,24 @@
   when:
   - latest_packages is not defined
 
+- name: gather var for containerd packages
+  include_vars: "../vars/containerd_packages.yml"
+  when:
+  - 'enable_containerd|default(false) == true'
+
 - name: Append K8s packages if needed
   set_fact:
     common_packages: "{{ common_packages + k8s_packages + ['yunion-ocadm'] }}"
   when:
   - k8s_packages is defined
   - k8s_or_k3s | default('k8s') == 'k8s'
+
+- name: Append containerd packages if needed
+  set_fact:
+    common_packages: "{{ common_packages + containerd_packages }}"
+  when:
+  - containerd_packages is defined
+  - 'enable_containerd|default(false) == true'
 
 - name: Update latest packages for CE
   set_fact:
