@@ -19,7 +19,7 @@ common_packages:
   - ipvsadm
   - jq
   - nfs-common
-  - ntp
+  - chrony
   - openvswitch-switch
   - parallel
   - python3-selinux
@@ -28,15 +28,8 @@ common_packages:
   - yunion-ovmfrpm
 
 common_services:
-    - ntp
+    - chrony
     - yunion-executor
-
-latest_packages:
-    - "yunion-climc={{ onecloud_version_abbr }}*"
-    - "yunion-climc-ee={{ onecloud_version_abbr }}*"
-    - ca-certificates
-    - yunion-executor
-    - yunion-fetcherfs
 
 k8s_packages:
     - docker-ce
