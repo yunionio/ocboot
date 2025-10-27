@@ -1,6 +1,5 @@
 is_debian_based: true
-is_ubuntu_based: true
-is_ubuntu_based_x86: true
+is_debian_based_x86: true
 debian_based_arch: amd64
 
 common_packages:
@@ -23,8 +22,9 @@ common_packages:
   - openvswitch-switch
   - parallel
   - python3-selinux
-  - software-properties-common
+  - python3-setuptools
   - "{{ yunion_qemu_package }}"
+  - yunion-executor
   - yunion-ovmfrpm
 
 common_services:
