@@ -1,4 +1,4 @@
-# FROM: https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+# FROM: https://raw.githubusercontent.com/projectcalico/calico/v3.27.5/manifests/calico.yaml
 ---
 # Source: calico/templates/calico-kube-controllers.yaml
 # This manifest creates a Pod Disruption Budget for Controller to allow K8s Cluster Autoscaler to evict
@@ -1118,6 +1118,13 @@ spec:
                   Loose]'
                 pattern: ^(?i)(Disabled|Strict|Loose)?$
                 type: string
+              bpfExcludeCIDRsFromNAT:
+                description: BPFExcludeCIDRsFromNAT is a list of CIDRs that are to
+                  be excluded from NAT resolution so that host can handle them. A
+                  typical usecase is node local DNS cache.
+                items:
+                  type: string
+                type: array
               bpfExtToServiceConnmark:
                 description: 'BPFExtToServiceConnmark in BPF mode, control a 32bit
                   mark that is set on connections from an external client to a local
@@ -4831,7 +4838,7 @@ spec:
         # It can be deleted if this is a fresh installation, or if you have already
         # upgraded to use calico-ipam.
         - name: upgrade-ipam
-          image: {{ image_repository }}/calico-cni:v3.27.0
+          image: {{ image_repository }}/calico-cni:v3.27.5
           imagePullPolicy: IfNotPresent
           command: ["/opt/cni/bin/calico-ipam", "-upgrade"]
           envFrom:
@@ -4859,7 +4866,7 @@ spec:
         # This container installs the CNI binaries
         # and CNI network config file on each node.
         - name: install-cni
-          image: {{ image_repository }}/calico-cni:v3.27.0
+          image: {{ image_repository }}/calico-cni:v3.27.5
           imagePullPolicy: IfNotPresent
           command: ["/opt/cni/bin/install"]
           envFrom:
@@ -4902,7 +4909,7 @@ spec:
         # i.e. bpf at /sys/fs/bpf and cgroup2 at /run/calico/cgroup. Calico-node initialisation is executed
         # in best effort fashion, i.e. no failure for errors, to not disrupt pod creation in iptable mode.
         - name: "mount-bpffs"
-          image: {{ image_repository }}/calico-node:v3.27.0
+          image: {{ image_repository }}/calico-node:v3.27.5
           imagePullPolicy: IfNotPresent
           command: ["calico-node", "-init", "-best-effort"]
           volumeMounts:
@@ -4928,7 +4935,7 @@ spec:
         # container programs network policy and routes on each
         # host.
         - name: calico-node
-          image: {{ image_repository }}/calico-node:v3.27.0
+          image: {{ image_repository }}/calico-node:v3.27.5
           imagePullPolicy: IfNotPresent
           envFrom:
           - configMapRef:
@@ -5231,9 +5238,11 @@ spec:
         - name: var-run-calico
           hostPath:
             path: /var/run/calico
+            type: DirectoryOrCreate
         - name: var-lib-calico
           hostPath:
             path: /var/lib/calico
+            type: DirectoryOrCreate
         - name: xtables-lock
           hostPath:
             path: /run/xtables.lock
@@ -5254,6 +5263,7 @@ spec:
         - name: cni-bin-dir
           hostPath:
             path: /opt/cni/bin
+            type: DirectoryOrCreate
         - name: cni-net-dir
           hostPath:
             path: /etc/cni/net.d
@@ -5320,7 +5330,7 @@ spec:
       priorityClassName: system-cluster-critical
       containers:
         - name: calico-kube-controllers
-          image: {{ image_repository }}/calico-kube-controllers:v3.27.0
+          image: {{ image_repository }}/calico-kube-controllers:v3.27.5
           imagePullPolicy: IfNotPresent
           env:
             # Choose which controllers to run.
