@@ -4,6 +4,7 @@ is_centos_based: true
 is_centos_x86: true
 is_centos: true
 centos_version: 8
+is_centos_7_x86: true
 
 preinstall_packages:
     - epel-release

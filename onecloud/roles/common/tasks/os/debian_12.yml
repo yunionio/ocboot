@@ -4,9 +4,10 @@
 #   set_fact:
 #     common_packages: "{{ ['libcapstone4'] + common_packages }}"
 
-- name: use aliyun apt mirror
+- name: use debian apt mirror
   shell: |
-    sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
+    sed -i 's|deb.debian.org|{{ debian_mirror | default('mirrors.aliyun.com') }}|g' /etc/apt/mirrors/debian.list
+    sed -i 's|deb.debian.org|{{ debian_mirror | default('mirrors.aliyun.com') }}|g' /etc/apt/mirrors/debian-security.list
   become: true
 
 - name: Include Debian Family Common Tasks

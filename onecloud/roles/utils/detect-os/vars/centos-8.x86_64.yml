@@ -39,6 +39,6 @@ k8s_packages:
     - kubernetes-cni
 
 common_services:
-    - chrony
+    - chronyd
     - yunion-executor
 
