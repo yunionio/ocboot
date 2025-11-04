@@ -1,0 +1,27 @@
+- name: Install Cloud Kernel
+  yum:
+    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
+    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
+    name:
+      - kernel-5.4.199-200.yn20221212.el7
+  become: yes
+
+- name: SSH Reboot system if not cloud kernel, it should take a few minutes...
+  reboot:
+    reboot_timeout:  900 # 15 mins
+    connect_timeout: 900 # 15 mins
+    msg: "rebooting host to enable cloud kernel ... please wait... "
+    test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
+  become: yes
+  when:
+    - is_yunion_kernel_running.rc != 0
+    - is_controller_node is not defined or is_controller_node|default(false)|bool == false
+    - ansible_connection == "ssh"
+
+- name: Local Reboot system if not cloud kernel, it should take a few minutes...
+  command: reboot
+  become: yes
+  when:
+    - is_yunion_kernel_running.rc != 0
+    - is_controller_node is not defined or is_controller_node|default(false)|bool == false
+    - ansible_connection == "local"

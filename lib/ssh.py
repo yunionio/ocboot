@@ -25,7 +25,10 @@ class SSHClient(object):
         return self.host
 
     def get_hostname(self):
-        return self.exec_command('hostname').strip()
+        try:
+            return self.exec_command('hostnamectl hostname').strip()
+        except:
+            return self.exec_command('hostname').strip()
 
     def get_user(self):
         return self.user

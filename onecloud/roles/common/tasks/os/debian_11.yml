@@ -7,7 +7,8 @@
 - name: remove bullseye-backports from sources.list
   shell: |
     sed -i '/bullseye-backports/s/^/#/' /etc/apt/sources.list
-    sed -i 's|http://deb.debian.org|https://mirrors.aliyun.com|g' /etc/apt/sources.list
+    sed -i 's|http://deb.debian.org|https://{{ debian_mirror | default('mirrors.aliyun.com') }}|g' /etc/apt/sources.list
+    sed -i 's|http://security.debian.org|https://{{ debian_mirror | default('mirrors.aliyun.com') }}|g' /etc/apt/sources.list
   become: true
 
 - name: Include Debian Family Common Tasks
