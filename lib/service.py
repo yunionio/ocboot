@@ -53,7 +53,7 @@ class Service(BaseService):
                              args.ssh_user,
                              args.ssh_private_file,
                              args.ssh_port)
-        config.run(self.action)
+        return config.run(self.action)
 
 
 class NodesConfig(object):
@@ -111,7 +111,7 @@ class PrimaryMasterService(BaseService):
             args.ssh_private_file,
             args.ssh_port,
         )
-        config.run(self.action, vars=vars)
+        return config.run(self.action, vars=vars)
 
 
 class AddNodeBaseService(BaseService):
@@ -146,7 +146,7 @@ class AddNodeService(AddNodeBaseService):
                                 args.ssh_port,
                                 args.ssh_node_port,
                                 args.enable_host_on_vm)
-        config.run()
+        return config.run()
 
 
 class AddLBAgentService(AddNodeBaseService):
@@ -171,7 +171,7 @@ class AddLBAgentService(AddNodeBaseService):
                                 args.ssh_port,
                                 args.ssh_node_port,
                                 False, True)
-        config.run()
+        return config.run()
 
 
 class AddNodesConfig(object):
@@ -255,6 +255,7 @@ class AddNodesConfig(object):
             './onecloud/add-node.yml',
             vars=self.get_vars(),
         )
+        return return_code
 
     def get_vars(self):
         vars = get_ansible_global_vars(self.current_version, self.is_using_k3s)
@@ -330,7 +331,7 @@ class AutoBackupService(Service):
                                   args.max_backups,
                                   args.max_disk_percentage,
                                   )
-        config.run(self.action)
+        return config.run(self.action)
 
 
 class ClickhouseServiceConfig(object):
@@ -400,4 +401,4 @@ class ClickhouseService(BaseService):
         print(f'found cluster {cluster.get_current_version()}')
         config = ClickhouseServiceConfig(cluster,
             args.primary_master_host, args.ch_password, args.ch_port, args.offline_data_path, args.ssh_user, args.ssh_port)
-        config.run()
+        return config.run()
