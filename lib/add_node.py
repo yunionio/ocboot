@@ -24,7 +24,7 @@ class AddWorkerNodeService(AddNodeService):
                                 args.ssh_port,
                                 args.ssh_node_port,
                                 enable_host_on_vm=True)
-        config.run()
+        return config.run()
 
 
 def add_command(subparsers):
