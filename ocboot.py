@@ -37,8 +37,9 @@ def main():
     args = parser.parse_args()
     if not args.subcmd:
         parser.print_help()
+        return 1
     else:
-        args.func(args)
+        return args.func(args)
 
 
 if __name__ == "__main__":
