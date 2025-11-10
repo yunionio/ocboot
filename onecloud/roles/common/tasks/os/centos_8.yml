@@ -1,8 +1,15 @@
 ---
+- name: enable CentOS 8 Stream Vault repo
+  shell: |
+    sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+    sed -i 's/#baseurl/baseurl/g' /etc/yum.repos.d/CentOS-*
+    sed -i 's/mirror.centos.org/vault.centos.org/g' /etc/yum.repos.d/CentOS-*
+  become: true
+
 - name: Include RedHat General Repo Init
   include_tasks: redhat-general-repo.yml
 
-- name: enable CentOS 8 Stream Vault repo
+- name: enable CentOS 8 Stream Vault repo (once again)
   shell: |
     sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
     sed -i 's/#baseurl/baseurl/g' /etc/yum.repos.d/CentOS-*
