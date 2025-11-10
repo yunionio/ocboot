@@ -4,3 +4,8 @@ systemd_dir: "/etc/systemd/system"
 api_port: 6443
 kubeconfig: ~/.kube/config.new
 user_kubectl: true
+# Extra environment variables to add to k3s service
+extra_service_envs:
+  # set signed certificate expiration days to 3650 days
+  # https://github.com/rancher/dynamiclistener/blob/v0.7.0/cert/cert.go#L118
+  - CATTLE_NEW_SIGNED_CERT_EXPIRATION_DAYS=3650
