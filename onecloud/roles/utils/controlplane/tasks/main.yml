@@ -17,3 +17,19 @@
     job: "/opt/yunion/bin/ocadm alpha certs renew all"
     cron_file: yunion_ocadm_renew_certs
   become: true
+
+- name: Check if k3s.service.env file exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/k3s.service.env
+  register: k3s_service_env_file
+  become: true
+
+- name: Add CATTLE_NEW_SIGNED_CERT_EXPIRATION_DAYS to k3s.service.env if not set
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/system/k3s.service.env
+    line: "CATTLE_NEW_SIGNED_CERT_EXPIRATION_DAYS=3650"
+    regexp: "^CATTLE_NEW_SIGNED_CERT_EXPIRATION_DAYS="
+    state: present
+    create: false
+  when: k3s_service_env_file.stat.exists
+  become: true
