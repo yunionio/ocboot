@@ -47,7 +47,7 @@
         mode: 0644
 
     - name: Add service environment variables
-      when: extra_service_envs is defined
+      when: extra_service_envs is defined and extra_service_envs | length > 0
       ansible.builtin.lineinfile:
         path: "{{ systemd_dir }}/k3s.service.env"
         line: "{{ item }}"
