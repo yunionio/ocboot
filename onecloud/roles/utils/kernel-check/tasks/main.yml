@@ -38,7 +38,7 @@
   failed_when: false
 
 - name: install customized kernel
-  include_tasks: "{{ ansible_distribution | lower }}-{{ ansible_architecture }}.yml"
+  include_tasks: "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version |lower }}-{{ ansible_architecture }}.yml"
   when:
   - nbd_ok|default(false)|bool == false
   - is_yunion_kernel_installed.rc != 0
@@ -88,28 +88,6 @@
   when:
   - ansible_architecture == 'x86_64'
   - hugetlb_is_ready == false
-
-- name: SSH Reboot system if not cloud kernel, it should take a few minutes...
-  reboot:
-    reboot_timeout:  900 # 15 mins
-    connect_timeout: 900 # 15 mins
-    msg: "rebooting host to enable cloud kernel ... please wait... "
-    test_command: "uname -r | grep -qE '{{ kernel_regex }}'   "
-  become: yes
-  when:
-    - is_centos_x86 | default(false) | bool  == true
-    - is_yunion_kernel_running.rc != 0
-    - is_controller_node is not defined or is_controller_node|default(false)|bool == false
-    - ansible_connection == "ssh"
-
-- name: Local Reboot system if not cloud kernel, it should take a few minutes...
-  command: reboot
-  become: yes
-  when:
-    - is_centos_x86 | default(false) | bool  == true
-    - is_yunion_kernel_running.rc != 0
-    - is_controller_node is not defined or is_controller_node|default(false)|bool == false
-    - ansible_connection == "local"
 
 - name: SSH Reboot system if hugetlb conf is updated
   reboot:
