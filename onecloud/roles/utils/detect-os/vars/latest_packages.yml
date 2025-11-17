@@ -1,7 +1,7 @@
 ---
 latest_packages:
     - ca-certificates
-    - yunion-climc
-    - yunion-climc-ee
-    - yunion-executor
-    - yunion-ovmfrpm
+    #- yunion-climc
+    #- yunion-climc-ee
+    #- yunion-executor
+    #- yunion-ovmfrpm
