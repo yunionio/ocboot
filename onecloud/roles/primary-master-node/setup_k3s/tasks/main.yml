@@ -75,10 +75,34 @@
   become: yes
   until: push_images_result.rc == 0
 
+- name: Get k3s version
+  ansible.builtin.command: /usr/local/bin/k3s --version
+  register: k3s_version_cmd
+  changed_when: false
+
+- name: Set k3s kubernetes semver for calico template selection
+  ansible.builtin.set_fact:
+    k3s_k8s_semver: "{{ k3s_version_cmd.stdout | regex_search('[0-9]+\\.[0-9]+\\.[0-9]+') | default('0.0.0', true) }}"
+
+- name: Select calico template by k3s version
+  ansible.builtin.set_fact:
+    calico_manifest_template: "{{ 'calico-v3.29.7.yaml.j2' if k3s_k8s_semver is version('1.31.1', '>=') else 'calico.yaml.j2' }}"
+
+- name: Select traefik image tag by k3s version
+  ansible.builtin.set_fact:
+    treafik_version: "{{ '2.11.30' if k3s_k8s_semver is version('1.31.1', '>=') else '2.10.5' }}"
+
 - name: Copy calico.yaml to /tmp/calico.yaml
-  template:
-    src: calico.yaml.j2
+  ansible.builtin.template:
+    src: "{{ calico_manifest_template }}"
+    dest: /tmp/calico.yaml
+
+- name: Install calico manifest for k3s from /tmp/calico.yaml
+  ansible.builtin.copy:
+    src: /tmp/calico.yaml
     dest: /var/lib/rancher/k3s/server/manifests/calico.yaml
+    remote_src: true
+  become: yes
 
 - name: Update traefik component configuration
   copy:
@@ -86,6 +110,6 @@
     dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
 
 - name: Copy traefik daemonset yaml to /var/lib/rancher/k3s/server/manifests/traefik-ds.yaml
-  copy:
-    src: traefik-ds.yaml
+  ansible.builtin.template:
+    src: "{{ role_path }}/files/traefik-ds.yaml"
     dest: /var/lib/rancher/k3s/server/manifests/traefik-ds.yaml
