@@ -13,6 +13,7 @@ def GET_AIRGAP_DIR():
 
 
 VERSION_V1_28_5_K3S_1 = "v1.28.5+k3s1"
+VERSION_V1_31_1_K3S = "v1.31.1+k3s-34f8fa8d"
 
 '''
 from:
@@ -26,6 +27,9 @@ SHA256_CHECK_SUM = {
         'k3s-airgap-images-amd64.tar.zst': 'e259a812e77219f8436938d7ee871945549956defe12bd210ca206597198cd67',
         'k3s-arm64': 'ce46081904d461175f152493814d2f2ac1d5e40992d6b2b2b819eb6532c413f9',
         'k3s-airgap-images-arm64.tar.zst': '896a80cdfa8131efba625775c60c79a5525ef22b6d5a6c87560afed50b8a630b'
+    },
+    VERSION_V1_31_1_K3S: {
+        'k3s-riscv64': '56c6b770bc972158e75a8ca5e0c985c86a5df9f5fea73a29a356e414d00a36bc',
     }
 }
 

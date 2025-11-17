@@ -12,10 +12,11 @@ update-pciids:
 .PHONY: test
 
 REGISTRY ?= "registry.cn-beijing.aliyuncs.com/yunionio"
-VERSION ?= v4-k3s.4
+VERSION ?= v4-k3s.4-rc1
+platform ?= linux/arm64,linux/amd64,linux/riscv64
 
 image:
-	docker buildx build --platform linux/arm64,linux/amd64 --push \
+	docker buildx build --platform $(platform) --push \
 		-t $(REGISTRY)/ocboot:$(VERSION) -f ./Dockerfile .
 
 generate-docker-compose-manifests:
