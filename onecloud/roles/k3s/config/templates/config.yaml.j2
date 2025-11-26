@@ -87,6 +87,8 @@ kubelet-arg:
   - "pod-max-pids=1024"
   - "serialize-image-pulls=false"
   - "node-status-update-frequency=4s"
+  - "image-gc-high-threshold=95"
+  - "image-gc-low-threshold=90"
 kube-proxy-arg:
   - proxy-mode=ipvs
   - ipvs-strict-arp=true
