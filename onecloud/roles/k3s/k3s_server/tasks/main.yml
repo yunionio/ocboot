@@ -24,6 +24,7 @@
     name: k3s/config
   vars:
     is_k3s_server: True
+    k3s_arch: "{{ ansible_architecture }}"
 
 - name: Init first server node
   when: inventory_hostname == groups['primary_master_node'][0]

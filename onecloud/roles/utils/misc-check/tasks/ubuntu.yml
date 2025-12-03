@@ -5,6 +5,6 @@
       - "ansible_distribution_version is version('20.04', '>=')"
       - "onecloud_version is defined"
       - "onecloud_version is version('v3.10', '>=')"
-      - "ansible_architecture in ('x86_64', 'aarch64')"
+      - "ansible_architecture in ('x86_64', 'aarch64', 'riscv64')"
     success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is supported. "
     fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"

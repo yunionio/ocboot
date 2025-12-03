@@ -34,10 +34,19 @@
         group: root
         mode: 0755
 
-    - name: Distribute K3s x86_64 binary
+    - name: Distribute K3s arm64 binary
       when: ansible_architecture == 'aarch64'
       ansible.builtin.copy:
         src: "{{ airgap_dir }}/k3s-arm64"
+        dest: /usr/local/bin/k3s
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Distribute K3s riscv64 binary
+      when: ansible_architecture == 'riscv64'
+      ansible.builtin.copy:
+        src: "{{ airgap_dir }}/k3s-riscv64"
         dest: /usr/local/bin/k3s
         owner: root
         group: root
@@ -88,6 +97,15 @@
       ansible.builtin.copy:
         src: "{{ airgap_dir }}/k3s-airgap-images-arm64.tar.zst"
         dest: /var/lib/rancher/k3s/agent/images/k3s-airgap-images-arm64.tar.zst
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Distribute K3s riscv64 images
+      when: ansible_architecture == 'riscv64'
+      ansible.builtin.copy:
+        src: "{{ airgap_dir }}/k3s-airgap-images-riscv64.tar.zst"
+        dest: /var/lib/rancher/k3s/agent/images/k3s-airgap-images-riscv64.tar.zst
         owner: root
         group: root
         mode: 0755
