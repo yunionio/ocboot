@@ -313,7 +313,6 @@ class ClickhouseService(BaseService):
                             metavar='OFFLINE_DATA_PATH',
                             help="offline ISO mount point, e.g., /mnt")
         parser.add_argument("--ch-password", dest="ch_password",
-                            default="your-clickhouse-password",
                             help=help_d("clickhouse password"))
         parser.add_argument("--ch-port", dest="ch_port",
                             default=9000, type=int,
@@ -321,6 +320,9 @@ class ClickhouseService(BaseService):
 
     def do_action(self, args):
         # config = 
+        if args.ch_password is None:
+            args.ch_password = utils.generage_random_string(12)
+            print(f'generated clickhouse password: {args.ch_password}')
         cluster = construct_cluster(
             args.primary_master_host,
             args.ssh_user,

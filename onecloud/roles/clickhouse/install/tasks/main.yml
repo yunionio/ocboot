@@ -4,7 +4,23 @@
 
 - block:
   - name: Import OS Specific tasks
-    include_tasks: "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
+    include_tasks: "{{ item }}"
+    with_first_found:
+    - files:
+      - "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
+      - defaults.yml
+      paths:
+        - os
+
+  - name: Ensure clickhouse-server installed
+    package:
+      name: clickhouse-server
+      state: present
+
+  - name: Ensure clickhouse-client installed
+    package:
+      name: clickhouse-client
+      state: present
 
   - name: Ensure group "clickhouse" exists
     ansible.builtin.group:
