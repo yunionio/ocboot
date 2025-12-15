@@ -10,7 +10,6 @@ auth_token_cache_size: 2048
 auto_merge_backing_template: false
 auto_merge_delay_seconds: 900
 bandwidth_limit: 500
-block_io_scheduler: none
 bridge_driver: openvswitch
 bw_download_bandwidth: 500
 calculate_quota_usage_interval_seconds: 900
@@ -64,7 +63,7 @@ host_type: hypervisor
 {% if host_enable_hugepage %}
 hugepages_option: native
 {% else %}
-hugepages_option: transparent
+hugepages_option: disable
 {% endif %}
 ignore_nonrunning_guests: true
 image_cache_path: /opt/cloud/workspace/disks/image_cache

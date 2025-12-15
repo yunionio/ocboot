@@ -107,3 +107,11 @@ def is_valid_dns(dns):
         return True
     except socket.gaierror:
         return False
+
+def generage_random_string(N=12):
+    import random
+    import string
+    return ''.join(
+        random.choice(string.ascii_uppercase + string.digits)
+        for _ in range(N))
+
