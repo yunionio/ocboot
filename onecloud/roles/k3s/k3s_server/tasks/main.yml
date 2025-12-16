@@ -25,6 +25,17 @@
   vars:
     is_k3s_server: True
 
+- name: Detect user shell
+  shell:
+    getent passwd "{{ ansible_user }}" | cut -d: -f7 | rev | cut -d/ -f1 | rev
+  register: user_shell
+  changed_when: false
+  failed_when: false
+
+- name: Set detected shell with bash default
+  set_fact:
+    detected_shell: "{{ ('zsh' if (user_shell.stdout | default('')).strip() == 'zsh' else 'bash') }}"
+
 - name: Init first server node
   when: inventory_hostname == groups['primary_master_node'][0]
   block:
@@ -65,11 +76,13 @@
     #   ansible.builtin.pause:
     #     seconds: 10
     #
-    - name: Add K3s autocomplete to user bashrc
+    - name: Add K3s autocomplete to user shell config
       ansible.builtin.lineinfile:
-        path: "~{{ ansible_user }}/.bashrc"
-        regexp: '\.\s+<\(/usr/local/bin/k3s completion bash\)'
-        line: ". <(/usr/local/bin/k3s completion bash)  # Added by k3s-ansible"
+        path: "~{{ ansible_user }}/.{{ detected_shell }}rc"
+        regexp: '\.\s+<\(/usr/local/bin/k3s completion (bash|zsh)\)'
+        line: ". <(/usr/local/bin/k3s completion {{ detected_shell }})  # Added by k3s-ansible"
+        create: yes
+      when: detected_shell is defined
 
     # - name: Change server to API endpoint instead of localhost
     #   ansible.builtin.command: >-
@@ -183,13 +196,17 @@
 
     - name: Configure default KUBECONFIG for user
       ansible.builtin.lineinfile:
-        path: ~{{ ansible_user }}/.bashrc
+        path: "~{{ ansible_user }}/.{{ detected_shell }}rc"
         regexp: 'export KUBECONFIG=~/.kube/config'
         line: 'export KUBECONFIG=~/.kube/config # Added by k3s-ansible'
         state: present
+        create: yes
+      when: detected_shell is defined
 
     - name: Configure kubectl autocomplete
       ansible.builtin.lineinfile:
-        path: ~{{ ansible_user }}/.bashrc
-        regexp: '\.\s+<\(kubectl completion bash\)'
-        line: ". <({{ K3S_CMDLINE_PREFIX }} kubectl completion bash)  # Added by k3s-ansible"
+        path: "~{{ ansible_user }}/.{{ detected_shell }}rc"
+        regexp: '\.\s+<\(kubectl completion (bash|zsh)\)'
+        line: ". <({{ K3S_CMDLINE_PREFIX }} kubectl completion {{ detected_shell }})  # Added by k3s-ansible"
+        create: yes
+      when: detected_shell is defined

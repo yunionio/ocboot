@@ -9,19 +9,23 @@ centos_version: 10
 common_packages:
     - bash-completion
     - bridge-utils
-    - ceph-common
     - conntrack-tools
     - curl
     - fuse
     - jq
     - kmod
     - nfs-utils
-    - openvswitch
     - parallel
     - rsync
     - tcpdump
     - python3-libselinux
     - "{{ yunion_qemu_package }}"
+
+ceph_packages:
+    - ceph-common
+
+ovs_packages:
+    - openvswitch
 
 common_services:
   #  - ntpd # openeuler seems using different ntp

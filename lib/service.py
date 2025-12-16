@@ -12,6 +12,7 @@ from .parser import inject_auto_backup_options
 from .parser import inject_ssh_hosts_options
 from . import utils
 from . import ansible
+from . import consts
 from .cluster import construct_cluster
 from .ocboot import WorkerConfig, Config
 from .ocboot import get_ansible_global_vars
@@ -164,13 +165,40 @@ class AddLBAgentService(AddNodeBaseService):
             args.ssh_private_file,
             args.ssh_port)
 
+        if args.ip_type == '':
+            if utils.is_ipv4(args.primary_master_host):
+                args.ip_type = consts.IP_TYPE_IPV4
+            elif utils.is_ipv6(args.primary_master_host):
+                args.ip_type = consts.IP_TYPE_IPV6
+            else:
+                raise ValueError("ip type is not set and cannot be determined from primary master host")
+
+        # 处理双栈配置
+        kwargs = {
+            'ip_dual_conf': getattr(args, 'ip_dual_conf', None),
+            'ip_type': args.ip_type,
+            'offline_data_path': args.offline_data_path,
+        }
+
+        # 如果是双栈配置，需要处理IPv4和IPv6地址
+        if args.ip_type == consts.IP_TYPE_DUAL_STACK and hasattr(args, 'ip_dual_conf') and args.ip_dual_conf:
+            # 确定哪个是IPv4，哪个是IPv6
+            if utils.is_ipv4(args.target_node_hosts[0]):
+                # 主IP是IPv4，ip_dual_conf是IPv6
+                kwargs['node_ip_v4'] = args.target_node_hosts[0]
+                kwargs['node_ip_v6'] = args.ip_dual_conf
+            else:
+                # 主IP是IPv6，ip_dual_conf是IPv4
+                kwargs['node_ip_v4'] = args.ip_dual_conf
+                kwargs['node_ip_v6'] = args.target_node_hosts[0]
+
         config = AddNodesConfig(cluster,
                                 args.target_node_hosts,
                                 args.ssh_user,
                                 args.ssh_private_file,
                                 args.ssh_port,
                                 args.ssh_node_port,
-                                False, True)
+                                enable_host_on_vm=False, enable_lbagent=True, **kwargs)
         return config.run()
 
 

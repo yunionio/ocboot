@@ -1,0 +1,7 @@
+- name: Assert {{ ansible_distribution }} {{ ansible_distribution_version }} conditions
+  assert:
+    that:
+      - "onecloud_version is defined"
+      - "onecloud_version is version('v4.0', '>=')"
+    success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is supported. "
+    fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} {{ ansible_architecture }} is not supported by {{ onecloud_version }}"
