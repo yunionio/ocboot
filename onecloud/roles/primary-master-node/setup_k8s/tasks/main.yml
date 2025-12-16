@@ -55,7 +55,7 @@
     for i in {{docker_insecure_registries | join(" ")}}
     do
       docker load -i $i
-      insecure_registry=$i parallel push_and_tag ::: "${imgs[@]}"
+      insecure_registry=$i parallel --jobs $(nproc) push_and_tag ::: "${imgs[@]}"
     done
   args:
     executable: /bin/bash
