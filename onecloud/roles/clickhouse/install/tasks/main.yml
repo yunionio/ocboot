@@ -4,7 +4,23 @@
 
 - block:
   - name: Import OS Specific tasks
-    include_tasks: "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
+    include_tasks: "{{ item }}"
+    with_first_found:
+    - files:
+      - "{{ ansible_distribution | lower |replace(' ', '_')}}.yml"
+      - defaults.yml
+      paths:
+        - os
+
+  - name: Ensure clickhouse-server installed
+    package:
+      name: clickhouse-server
+      state: present
+
+  - name: Ensure clickhouse-client installed
+    package:
+      name: clickhouse-client
+      state: present
 
   - name: Ensure group "clickhouse" exists
     ansible.builtin.group:
@@ -50,7 +66,7 @@
   - name: Allow remote hosts connect to clickhouse (config.xml)
     lineinfile:
       path: /etc/clickhouse-server/config.xml
-      insertafter: '<!-- Default values - try listen localhost on IPv4 and IPv6. -->'
+      insertafter: '<!-- <listen_host>::</listen_host> -->'
       line: '    <listen_host>::</listen_host>'
       state: present
       backup: yes
@@ -157,4 +173,3 @@
   when:
   - offline_data_path is defined
   - offline_data_path | length > 0
-  - (is_centos_x86 | default(false) | bool == true) or (is_openeuler_x86 | default(false) | bool == true)
