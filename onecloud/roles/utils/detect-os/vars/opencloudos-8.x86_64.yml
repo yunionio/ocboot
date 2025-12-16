@@ -7,13 +7,12 @@ centos_version: 8
 preinstall_packages:
     - epel-release
 
-imported_repos:
+ceph_imported_repos:
     - https://mirror.stream.centos.org/SIGs/8/storage/{{ ansible_architecture }}/ceph-pacific/
 
 common_packages:
     - bash-completion
     - bridge-utils
-    - ceph-common
     - chrony
     - conntrack-tools
     - curl
@@ -22,7 +21,6 @@ common_packages:
     - kmod
     - lvm2
     - nfs-utils
-    - openvswitch
     - parallel
     - rsync
     - pciutils
@@ -30,6 +28,12 @@ common_packages:
     - python3-libselinux
     - python3-pip
     - "{{ yunion_qemu_package }}"
+
+ceph_packages:
+    - ceph-common
+
+ovs_packages:
+    - openvswitch
 
 common_services:
     - chronyd

@@ -34,6 +34,22 @@
   - online_status is defined
   - online_status == 'offline'
 
+- name: Append ovs_preinstall_packages to preinstall_packages if ovs_preinstall_packages is defined
+  set_fact:
+    preinstall_packages: "{{ preinstall_packages + ovs_preinstall_packages }}"
+  when:
+  - ovs_preinstall_packages is defined
+  - preinstall_packages is defined
+  - onecloud_version is version('v4.0', '<')
+
+- name: Append ceph_preinstall_packages to preinstall_packages if ceph_preinstall_packages is defined
+  set_fact:
+    preinstall_packages: "{{ preinstall_packages + ceph_preinstall_packages }}"
+  when:
+  - ceph_preinstall_packages is defined
+  - preinstall_packages is defined
+  - onecloud_version is version('v4.0', '<')
+
 - name: Install Preinstall Packages Via Loop
   package:
     name: "{{ package_item }}"
@@ -54,7 +70,23 @@
   - preinstall_packages is defined
   - online_status == 'online'
 
-- name: Install additional repos
+- name: Append ovs_imported_repos to imported_repos if ovs_imported_repos is defined
+  set_fact:
+    imported_repos: "{{ imported_repos + ovs_imported_repos }}"
+  when:
+  - ovs_imported_repos is defined
+  - imported_repos is defined
+  - onecloud_version is version('v4.0', '<')
+
+- name: Append ceph_imported_repos to imported_repos if ceph_imported_repos is defined
+  set_fact:
+    imported_repos: "{{ imported_repos + ceph_imported_repos }}"
+  when:
+  - ceph_imported_repos is defined
+  - imported_repos is defined
+  - onecloud_version is version('v4.0', '<')
+
+- name: Import additional repos
   shell: |
     REPO_NAME="yunion-repo-extra-{{ item_index }}"
     REPO_FILE="/etc/yum.repos.d/yunion-extra.repo"

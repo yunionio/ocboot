@@ -7,7 +7,6 @@ centos_version: 9
 common_packages:
     - bash-completion
     - bridge-utils
-    - ceph-common
     - chrony
     - conntrack-tools
     - curl
@@ -16,7 +15,6 @@ common_packages:
     - kmod
     - lvm2
     - nfs-utils
-    - openvswitch
     - parallel
     - rsync
     - pciutils
@@ -24,6 +22,12 @@ common_packages:
     - python3-libselinux
     - python3-pip
     - "{{ yunion_qemu_package }}"
+
+ceph_packages:
+    - ceph-common
+
+ovs_packages:
+    - openvswitch
 
 common_services:
     - chronyd

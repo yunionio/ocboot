@@ -8,26 +8,34 @@ is_centos_7_x86: true
 
 preinstall_packages:
     - epel-release
+
+ovs_preinstall_packages:
     - centos-release-nfv-openvswitch
+
+ceph_preinstall_packages:
     - centos-release-ceph-reef
 
 common_packages:
     - bash-completion
     - bridge-utils
-    - ceph-common
     - conntrack-tools
     - curl
     - fuse
     - jq
     - kmod
     - nfs-utils
-    - openvswitch
     - parallel
     - rsync
     - tcpdump
     - python3-libselinux
     - python3-pip
     - "{{ yunion_qemu_package }}"
+
+ceph_packages:
+    - ceph-common
+
+ovs_packages:
+    - openvswitch
 
 k8s_packages:
     - container-selinux

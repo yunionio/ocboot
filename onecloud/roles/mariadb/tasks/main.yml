@@ -94,6 +94,13 @@
     name: /etc/my.cnf.d
     state: directory
 
+- name: initialize mariadb database
+  shell:
+    mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+  become: true
+  when:
+  - manual_db_init | default(false) == true
+
 - name: enable and start mariadb
   systemd:
     name: mariadb

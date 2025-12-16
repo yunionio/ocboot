@@ -1,0 +1,22 @@
+#!/bin/bash
+
+IMG={{ insecure_registry | default('registry.cn-beijing.aliyuncs.com') }}/{{ registry | default('yunionio') }}/ceph:v16.2.14
+
+{% if k8s_or_k3s | default('k3s') == 'k3s' %}
+k3s ctr images list name==$IMG -q | grep $IMG > /dev/null
+if [ $? -ne 0 ]; then
+    k3s ctr images pull $IMG
+fi
+
+k3s ctr run --rm --net-host -t \
+    --mount type=bind,src=/tmp,dst=/tmp,options=rbind \
+    $IMG \
+    ceph-common \
+    /usr/bin/$(basename $0) $@
+{% else %}
+docker run --rm --network host \
+    -v /tmp:/tmp \
+    $IMG \
+    /usr/bin/$(basename $0) $@
+{% endif %}
+
