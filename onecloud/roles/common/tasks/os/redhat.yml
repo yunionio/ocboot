@@ -14,6 +14,22 @@
   - extra_packages is defined
   - common_packages is defined
 
+- name: Append ovs_packages to common_packages if ovs_packages is defined
+  set_fact:
+    common_packages: "{{ common_packages + ovs_packages }}"
+  when:
+  - ovs_packages is defined
+  - common_packages is defined
+  - onecloud_version is version('v4.0', '<')
+
+- name: Append ceph_packages to common_packages if ceph_packages is defined
+  set_fact:
+    common_packages: "{{ common_packages + ceph_packages }}"
+  when:
+  - ceph_packages is defined
+  - common_packages is defined
+  - onecloud_version is version('v4.0', '<')
+
 - name: Install Common Packages Via Loop
   package:
     name: "{{ package_item }}"

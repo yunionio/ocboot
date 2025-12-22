@@ -65,6 +65,8 @@ supported_os=(
     "Ubuntu 25.04.* x86_64"
     "Ubuntu 25.04.* aarch64"
     "ctyunos 2.*.* x86_64"
+    "Arch Linux x86_64"
+    "Arch Linux aarch64"
 )
 
 ubuntu_20_os=(
@@ -142,6 +144,7 @@ ensure_buildah() {
     hash yum &>/dev/null && installer=yum
     hash dnf &>/dev/null && installer=dnf
     hash apt &>/dev/null && installer=apt
+    hash pacman &>/dev/null && installer=pacman
     #hash git &>/dev/null || $installer install -y git
 
 	if is_ubuntu_20; then
@@ -165,8 +168,12 @@ ensure_buildah() {
     fi
     if [[ "$installer" == "apt" ]]; then
         apt update -y
+        $installer install -y buildah
+    elif [[ "$installer" == "pacman" ]]; then
+        pacman -Sy --noconfirm buildah
+    else
+        $installer install -y buildah
     fi
-    $installer install -y buildah
 }
 
 main() {

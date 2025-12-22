@@ -1,0 +1,44 @@
+---
+- name: install ceph scripts
+  template:
+    src: ceph.sh.j2
+    dest: /opt/yunion/bin/ceph.sh
+    mode: '0755'
+
+- name: install openvswitch scripts
+  template:
+    src: ovs.sh.j2
+    dest: /opt/yunion/bin/ovs.sh
+    mode: '0755'
+
+- name: install ceph
+  file:
+    src: /opt/yunion/bin/ceph.sh
+    dest: /usr/local/bin/ceph
+    state: link
+    force: yes
+  become: true
+
+- name: install ovs-vsctl
+  file:
+    src: /opt/yunion/bin/ovs.sh
+    dest: /usr/local/bin/ovs-vsctl
+    state: link
+    force: yes
+  become: true
+
+- name: install ovs-ofctl
+  file:
+    src: /opt/yunion/bin/ovs.sh
+    dest: /usr/local/bin/ovs-ofctl
+    state: link
+    force: yes
+  become: true
+
+- name: install ovs-appctl
+  file:
+    src: /opt/yunion/bin/ovs.sh
+    dest: /usr/local/bin/ovs-appctl
+    state: link
+    force: yes
+  become: true

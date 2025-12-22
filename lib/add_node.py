@@ -7,22 +7,7 @@ from . import consts
 from .service import AddNodeService, AddNodesConfig
 from .cluster import construct_cluster
 from .parser import inject_add_nodes_runtime_options
-
-
-def is_ipv4(addr):
-    try:
-        socket.inet_pton(socket.AF_INET, addr)
-        return True
-    except (OSError, AttributeError, socket.error):
-        return False
-
-
-def is_ipv6(addr):
-    try:
-        socket.inet_pton(socket.AF_INET6, addr)
-        return True
-    except (OSError, AttributeError, socket.error):
-        return False
+from .utils import is_ipv4, is_ipv6
 
 
 class AddWorkerNodeService(AddNodeService):

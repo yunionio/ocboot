@@ -6,7 +6,6 @@ common_packages:
   - apt-transport-https
   - bash-completion
   - bridge-utils
-  - ceph-common
   - conntrack
   - conntrackd
   - cron
@@ -19,13 +18,18 @@ common_packages:
   - jq
   - nfs-common
   - chrony
-  - openvswitch-switch
   - parallel
   - python3-selinux
   - python3-setuptools
   - "{{ yunion_qemu_package }}"
   - yunion-executor
   - yunion-ovmfrpm
+
+ceph_packages:
+    - ceph-common
+
+ovs_packages:
+    - openvswitch-switch
 
 common_services:
     - chrony

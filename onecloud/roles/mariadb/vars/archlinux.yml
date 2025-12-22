@@ -1,0 +1,9 @@
+packages:
+  - mariadb
+
+pips:
+  - PyMySQL
+
+login_unix_socket: /var/lib/mysql/mysql.sock
+
+manual_db_init: true

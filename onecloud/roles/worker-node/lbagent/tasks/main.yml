@@ -44,6 +44,7 @@
   - openvswitch
   when:
   - ansible_os_family != 'Debian'
+  - onecloud_version is version('v4.0', '<')
 
 - name: add label onecloud.yunion.io/lbagent=enable to {{ k8s_controlplane_host }}
   shell: |

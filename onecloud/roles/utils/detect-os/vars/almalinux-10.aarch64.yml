@@ -7,14 +7,15 @@ centos_version: 10
 preinstall_packages:
     - epel-release
 
-imported_repos:
+ovs_imported_repos:
     - https://mirror.stream.centos.org/SIGs/10-stream/nfv/{{ ansible_architecture }}/openvswitch-2/
+
+ceph_imported_repos:
     - https://mirror.stream.centos.org/SIGs/10-stream/storage/{{ ansible_architecture }}/ceph-squid/
 
 common_packages:
     - bash-completion
     - bridge-utils
-    - ceph-common
     - chrony
     - conntrack-tools
     - curl
@@ -23,7 +24,6 @@ common_packages:
     - kmod
     - lvm2
     - nfs-utils
-    - openvswitch3.4
     - parallel
     - rsync
     - pciutils
@@ -32,6 +32,12 @@ common_packages:
     - python3-pip
     - kernel-modules-extra-{{ ansible_kernel }}
     - "{{ yunion_qemu_package }}"
+
+ceph_packages:
+    - ceph-common
+
+ovs_packages:
+    - openvswitch3.4
 
 common_services:
     - chronyd
