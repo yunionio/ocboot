@@ -115,3 +115,16 @@ def generage_random_string(N=12):
         random.choice(string.ascii_uppercase + string.digits)
         for _ in range(N))
 
+def is_ipv4(addr):
+    try:
+        socket.inet_pton(socket.AF_INET, addr)
+        return True
+    except (OSError, AttributeError, socket.error):
+        return False
+
+def is_ipv6(addr):
+    try:
+        socket.inet_pton(socket.AF_INET6, addr)
+        return True
+    except (OSError, AttributeError, socket.error):
+        return False

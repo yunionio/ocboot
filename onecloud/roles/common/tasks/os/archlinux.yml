@@ -1,0 +1,56 @@
+- name: Online pacman repo
+  ansible.builtin.blockinfile:
+    path: /etc/pacman.conf
+    block: |
+      [yunion]
+      SigLevel = Optional TrustAll
+      Server = https://iso.yunion.cn/archlinux/$repo/$arch/
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - yunion repo"
+    insertafter: EOF
+    create: true
+    mode: '0600'
+  become: yes
+  when:
+  - online_status is defined
+  - online_status == 'online'
+
+- name: ensure pacman repo synchronized
+  shell: |
+    pacman -Syy
+  become: true
+
+- name: Install Common Packages Via Loop
+  package:
+    name: "{{ package_item }}"
+  retries: 3
+  delay: 3
+  with_items:
+  - "{{ common_packages }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ '%02d'|format(item_index + 1) }}/{{ common_packages|length }}] {{ package_item }}"
+    loop_var: package_item
+  become: yes
+  tags:
+  - package
+
+- name: Install Latest Packages Via Loop {{ onecloud_version_abbr }}
+  package:
+    name: "{{ package_item }}"
+    state: latest
+  with_items:
+  - "{{ latest_packages }}"
+  become: yes
+  retries: 6
+  delay: 10
+  register: latest_pkg_result
+  until: latest_pkg_result.rc == 0
+  ignore_errors: yes
+  when:
+  - latest_packages is defined
+  loop_control:
+    index_var: item_index
+    label: "[{{ item_index + 1 }}/{{ latest_packages | length }}] {{ package_item | regex_replace('\\[.*|[*]', '') }}"
+    loop_var: package_item
+  tags:
+  - package

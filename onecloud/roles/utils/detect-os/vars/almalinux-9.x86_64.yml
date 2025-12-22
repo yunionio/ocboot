@@ -6,13 +6,16 @@ centos_version: 9
 
 preinstall_packages:
     - epel-release
+
+ovs_preinstall_packages:
     - centos-release-nfv-openvswitch
+
+ceph_preinstall_packages:
     - centos-release-ceph-pacific
 
 common_packages:
     - bash-completion
     - bridge-utils
-    - ceph-common
     - chrony
     - conntrack-tools
     - curl
@@ -21,7 +24,6 @@ common_packages:
     - kmod
     - lvm2
     - nfs-utils
-    - openvswitch2.15
     - parallel
     - rsync
     - pciutils
@@ -29,6 +31,12 @@ common_packages:
     - python3-libselinux
     - python3-pip
     - "{{ yunion_qemu_package }}"
+
+ceph_packages:
+    - ceph-common
+
+ovs_packages:
+    - openvswitch2.15
 
 common_services:
     - chronyd
