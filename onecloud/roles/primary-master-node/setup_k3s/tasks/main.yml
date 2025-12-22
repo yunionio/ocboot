@@ -79,6 +79,8 @@
   template:
     src: calico.yaml.j2
     dest: /var/lib/rancher/k3s/server/manifests/calico.yaml
+  when:
+  - is_ubuntu_based_riscv64 is not defined
 
 - name: Update traefik component configuration
   copy:
