@@ -1,0 +1,4 @@
+---
+win11_packages:
+    - yunion-secbootovmf
+    - yunion-swtpm
