@@ -124,7 +124,15 @@
 - name: gather var for containerd packages
   include_vars: "../vars/containerd_packages.yml"
   when:
+  - containerd_packages is not defined
   - 'enable_containerd|default(false) == true'
+
+- name: gather var for win11 packages
+  include_vars: "../vars/win11_packages.yml"
+  when:
+  - win11_packages is not defined
+  - ansible_architecture == 'x86_64'
+  - onecloud_version is version('v4.0', '>=')
 
 - name: Append K8s packages if needed
   set_fact:
