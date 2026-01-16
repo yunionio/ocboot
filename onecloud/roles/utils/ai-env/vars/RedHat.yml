@@ -1,0 +1,7 @@
+# RedHat/CentOS/OpenEuler 系统变量
+kernel_package: kernel
+kernel_headers_package: kernel-headers
+kernel_devel_package: kernel-devel
+
+# 包管理器
+package_manager: yum

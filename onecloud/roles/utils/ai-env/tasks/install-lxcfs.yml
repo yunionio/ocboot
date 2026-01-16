@@ -1,0 +1,12 @@
+- name: Install lxcfs
+  package:
+    name: lxcfs
+    state: present
+  become: true
+
+- name: Enable and start lxcfs service
+  systemd:
+    name: lxcfs
+    state: started
+    enabled: true
+  become: true
