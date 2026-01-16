@@ -1,0 +1,22 @@
+- name: Create container device configuration file
+  template:
+    src: host_container_device.yml.j2
+    dest: /etc/yunion/host_container_device.yml
+    mode: '0644'
+  become: true
+
+- name: Update PCI IDs
+  shell: update-pciids
+  become: true
+  args:
+    executable: /bin/bash
+
+- name: Update host configuration
+  lineinfile:
+    path: /etc/yunion/host.conf
+    line: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - "lxcfs_path: /var/lib/lxc/lxcfs"
+    - "container_device_config_file: /etc/yunion/host_container_device.yml"

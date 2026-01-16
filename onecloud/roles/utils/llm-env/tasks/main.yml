@@ -1,0 +1,35 @@
+- name: Run pre-tasks
+  include_tasks: pre-tasks.yml
+
+- name: Gather OS specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Check local installation files
+  include_tasks: check-local-files.yml
+  when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
+
+- name: Install NVIDIA driver (if installer path provided)
+  include_tasks: install-nvidia-driver.yml
+  when: nvidia_driver_installer_path is defined
+
+- name: Install CUDA (if installer path provided)
+  include_tasks: install-cuda.yml
+  when: cuda_installer_path is defined
+
+- name: Configure GRUB
+  include_tasks: configure-grub.yml
+
+- name: Install Container Toolkit
+  include_tasks: install-container-toolkit.yml
+
+- name: Configure containerd
+  include_tasks: configure-containerd.yml
+
+- name: Install lxcfs
+  include_tasks: install-lxcfs.yml
+
+- name: Configure host
+  include_tasks: configure-host.yml
+
+- name: Run post-tasks
+  include_tasks: post-tasks.yml

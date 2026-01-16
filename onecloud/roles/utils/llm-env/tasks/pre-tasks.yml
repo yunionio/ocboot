@@ -1,0 +1,4 @@
+- name: Check if running on supported OS
+  fail:
+    msg: "Unsupported operating system: {{ ansible_os_family }}"
+  when: ansible_os_family not in ['RedHat', 'Debian']
