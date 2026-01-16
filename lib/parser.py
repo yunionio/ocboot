@@ -107,6 +107,23 @@ def inject_add_nodes_runtime_options(parser):
                         help="select runtime type when adding node. default: qemu")
 
 
+def inject_ai_nvidia_options(parser):
+    """添加 ai 相关的 NVIDIA 参数（run.py ai 与 add-node --enable-ai-env 共用）"""
+    parser.add_argument("--nvidia-driver-installer-path",
+                        dest="nvidia_driver_installer_path",
+                        required=False,
+                        help="Full path to NVIDIA driver installer (e.g., /root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run). If not provided, assumes NVIDIA driver is already installed")
+    parser.add_argument("--cuda-installer-path",
+                        dest="cuda_installer_path",
+                        required=False,
+                        help="Full path to CUDA installer (e.g., /root/nvidia/cuda_12.8.1_570.124.06_linux.run). If not provided, assumes CUDA is already installed")
+    parser.add_argument("--gpu-device-virtual-number",
+                        dest="gpu_device_virtual_number",
+                        type=int,
+                        default=2,
+                        help=help_d("Virtual number for NVIDIA GPU share device (default: 2)"))
+
+
 def inject_auto_backup_options(parser):
     parser.add_argument(
         '--backup-path', help="backup path, default: /opt/yunion/backup", default="/opt/yunion/backup")

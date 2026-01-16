@@ -1,0 +1,33 @@
+- name: Check if NVIDIA Container Toolkit is already installed
+  shell: nvidia-ctk --version
+  register: toolkit_check
+  ignore_errors: true
+  failed_when: false
+
+- name: Set Container Toolkit installation flag
+  set_fact:
+    container_toolkit_installed: "{{ toolkit_check.rc == 0 }}"
+
+- block:
+  - name: Add NVIDIA Container Toolkit repository
+    copy:
+      src: nvidia-container-toolkit.repo
+      dest: /etc/yum.repos.d/nvidia-container-toolkit.repo
+      mode: '0644'
+    become: true
+
+  - name: Enable NVIDIA Container Toolkit experimental repository
+    shell: sudo yum-config-manager --enable nvidia-container-toolkit-experimental
+    become: true
+    args:
+      executable: /bin/bash
+
+  - name: Install NVIDIA Container Toolkit
+    package:
+      name: nvidia-container-toolkit-1.17.8-1
+      state: present
+    become: true
+
+  - debug: msg="NVIDIA Container Toolkit installed successfully"
+
+  when: not container_toolkit_installed | default(false)

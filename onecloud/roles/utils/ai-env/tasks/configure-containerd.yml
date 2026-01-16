@@ -1,0 +1,23 @@
+- name: Copy containerd config
+  template:
+    src: containerd_config.toml.j2
+    dest: /etc/yunion/containerd/config.toml
+    mode: '0644'
+  become: true
+
+- name: Configure containerd runtime for NVIDIA
+  shell: |
+    nvidia-ctk runtime configure --runtime=containerd --config /etc/yunion/containerd/config.toml
+  become: true
+  args:
+    executable: /bin/bash
+  register: runtime_config_result
+
+- debug: var=runtime_config_result.stdout_lines
+
+- name: Restart yunion-containerd service
+  systemd:
+    name: yunion-containerd.service
+    state: restarted
+    enabled: true
+  become: true

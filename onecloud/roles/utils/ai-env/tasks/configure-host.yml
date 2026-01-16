@@ -1,0 +1,36 @@
+- name: Discover NVIDIA renderD devices (vendor 0x10de)
+  shell: |
+    for d in /sys/class/drm/renderD*; do
+      [ -e "$d/device/vendor" ] && grep -qi "10de" "$d/device/vendor" 2>/dev/null && basename "$d"
+    done | sort -V
+  register: nvidia_render_discovery
+  changed_when: false
+  become: true
+
+- name: Set NVIDIA render device paths for template
+  set_fact:
+    nvidia_render_devices: "{{ nvidia_render_discovery.stdout_lines | default([]) | map('regex_replace', '^', '/dev/dri/') | list }}"
+  become: true
+
+- name: Create container device configuration file
+  template:
+    src: host_container_device.yml.j2
+    dest: /etc/yunion/host_container_device.yml
+    mode: '0644'
+  become: true
+
+- name: Update PCI IDs
+  shell: update-pciids
+  become: true
+  args:
+    executable: /bin/bash
+
+- name: Update host configuration
+  lineinfile:
+    path: /etc/yunion/host.conf
+    line: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - "lxcfs_path: /var/lib/lxc/lxcfs"
+    - "container_device_config_file: /etc/yunion/host_container_device.yml"
