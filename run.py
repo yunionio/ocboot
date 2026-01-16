@@ -13,7 +13,7 @@ import subprocess
 
 from lib import install
 from lib import cmd
-from lib.parser import inject_add_hostagent_options, inject_add_nodes_runtime_options
+from lib.parser import inject_add_hostagent_options, inject_add_nodes_runtime_options, help_d, inject_ssh_options
 from lib.utils import init_local_user_path
 from lib.utils import pr_red, pr_green
 from lib.utils import regex_search
@@ -522,40 +522,74 @@ def generate_config(
 parser = None
 
 
-def get_args():
-    global parser
-    parser = argparse.ArgumentParser()
-    parser.add_argument('STACK', metavar="stack", type=str, nargs=1,
-                        help="Choose the product type from ['full', 'cmp', 'virt', 'light-virt']",
-                        choices=['full', 'cmp', 'virt', 'light-virt'])
-    parser.add_argument('IP_CONF', metavar="ip_conf", type=str, nargs='?',
-                        help="Input the target IPv4 or Config file")
+def inject_common_options(parser):
+    """添加 run.py 中所有命令共用的参数"""
     parser.add_argument('--ip-dual-conf', type=str, dest='ip_dual_conf',
-                        help="Input the second IP address for dual-stack configuration (IPv6 if IP_CONF is IPv4, or IPv4 if IP_CONF is IPv6)")
+                       help="Input the second IP address for dual-stack configuration (IPv6 if IP_CONF is IPv4, or IPv4 if IP_CONF is IPv6)")
     parser.add_argument('--enable-ipip', action='store_true', dest='enable_ipip',
-                        help="Enable IPIP mode for IPv4 (default: VXLAN mode for both IPv4 single-stack and dual-stack)")
+                       help="Enable IPIP mode for IPv4 (default: VXLAN mode for both IPv4 single-stack and dual-stack)")
     parser.add_argument('--offline-data-path', nargs='?',
-                        help="offline packages location")
+                       help="offline packages location")
     parser.add_argument('--dns', nargs='*', help='Space seperated DNS server(s), eg: --dns 1.1.1.1 8.8.8.8')
     pip_mirror_help = "specify pip mirror to install python packages smoothly"
     pip_mirror_suggest = "https://mirrors.aliyun.com/pypi/simple/"
     parser.add_argument('--pip-mirror', '-m', type=str, dest='pip_mirror',
-                        help=f"{pip_mirror_help}, e.g.: {pip_mirror_suggest}")
+                       help=f"{pip_mirror_help}, e.g.: {pip_mirror_suggest}")
     parser.add_argument('--k8s-v115', action='store_true', default=False,
-                        help="Using old k8s v1.15 rather than k3s to manage the cluster. Default: False (using k3s)")
+                       help="Using old k8s v1.15 rather than k3s to manage the cluster. Default: False (using k3s)")
     parser.add_argument('--image-repository', '-i', type=str, dest='image_repository',
-                        default=consts.REGISTRY_ALI_YUNIONIO,
-                        help=f"Image repository for container images, e.g.: docker.io/yunion. Default: {consts.REGISTRY_ALI_YUNIONIO}")
-
+                       default=consts.REGISTRY_ALI_YUNIONIO,
+                       help=f"Image repository for container images, e.g.: docker.io/yunion. Default: {consts.REGISTRY_ALI_YUNIONIO}")
     parser.add_argument('--region', type=str, dest='region',
-                        default=consts.DEFAULT_REGION_NAME,
-                        help=f"Default region name: {consts.DEFAULT_REGION_NAME}")
+                       default=consts.DEFAULT_REGION_NAME,
+                       help=f"Default region name: {consts.DEFAULT_REGION_NAME}")
     parser.add_argument('--zone', type=str, dest='zone',
-                        default=consts.DEFAULT_ZONE_NAME,
-                        help=f"Default zone name: {consts.DEFAULT_ZONE_NAME}")
+                       default=consts.DEFAULT_ZONE_NAME,
+                       help=f"Default zone name: {consts.DEFAULT_ZONE_NAME}")
 
+
+def inject_llm_nvidia_options(parser):
+    """添加 llm 命令专用的 NVIDIA 相关参数"""
+    parser.add_argument("--nvidia-driver-installer-path",
+                       dest="nvidia_driver_installer_path",
+                       required=False,
+                       help="Full path to NVIDIA driver installer (e.g., /root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run). If not provided, assumes NVIDIA driver is already installed")
+    parser.add_argument("--cuda-installer-path",
+                       dest="cuda_installer_path",
+                       required=False,
+                       help="Full path to CUDA installer (e.g., /root/nvidia/cuda_12.8.1_570.124.06_linux.run). If not provided, assumes CUDA is already installed")
+    parser.add_argument("--nvidia-driver-tar-file-path",
+                       dest="nvidia_driver_tar_file_path",
+                       default="/root/nvidia/nvidia-driver-vol.tar.gz",
+                       help=help_d("Full path to NVIDIA driver tar file"))
+    parser.add_argument("--gpu-device-count",
+                       dest="gpu_device_count",
+                       type=int,
+                       default=8,
+                       help=help_d("Number of GPU devices"))
+
+
+def get_args():
+    global parser
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('STACK', metavar="stack", type=str, nargs=1,
+                        help="Choose the product type from ['full', 'cmp', 'virt', 'light-virt', 'llm']",
+                        choices=['full', 'cmp', 'virt', 'light-virt', 'llm'])
+    parser.add_argument('IP_CONF', metavar="ip_conf", type=str, nargs='?',
+                       help="Input the target IPv4 or Config file")
+    
+    # 添加共用参数
+    inject_common_options(parser)
+    
+    # 添加 hostagent 和 runtime 选项
     inject_add_hostagent_options(parser)
     inject_add_nodes_runtime_options(parser)
+    
+    # 如果是 llm stack，添加 NVIDIA 相关参数
+    # 注意：这里需要在解析后才能判断，所以参数总是添加，但只在 llm 模式下必需
+    inject_llm_nvidia_options(parser)
+    
     return parser.parse_args()
 
 
@@ -621,29 +655,7 @@ def main():
     ip_conf = get_default_ip(args)
 
     # 检测IP类型，支持双栈配置
-    if args.ip_dual_conf:
-        # 双栈配置：检测两个IP地址
-        match_ip, ip_type = match_dual_stack_ipaddr(ip_conf, args.ip_dual_conf)
-        if match_ip:
-            if ip_type == consts.IP_TYPE_DUAL_STACK:
-                # 确定哪个是IPv4，哪个是IPv6
-                if _match_ip4addr(ip_conf):
-                    ipv4_addr = ip_conf
-                    ipv6_addr = args.ip_dual_conf
-                else:
-                    ipv4_addr = args.ip_dual_conf
-                    ipv6_addr = ip_conf
-                pr_green(f"choose dual-stack configuration: IPv4={ipv4_addr}, IPv6={ipv6_addr}")
-            else:
-                pr_green(f"choose {ip_type} address: {ip_conf}")
-        else:
-            pr_red(f"Invalid dual-stack configuration: {ip_conf}, {args.ip_dual_conf}")
-            exit(1)
-    else:
-        # 单栈配置：检测单个IP地址
-        match_ip, ip_type = match_ipaddr(ip_conf)
-        if match_ip:
-            pr_green(f"choose local {ip_type} address: {ip_conf}")
+    detect_and_display_ip_type(ip_conf, args.ip_dual_conf)
 
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
@@ -652,22 +664,112 @@ def main():
         'cmp': ocboot.KEY_STACK_CMP,
         'virt': ocboot.KEY_STACK_EDGE,
         'light-virt': ocboot.KEY_STACK_LIGHT_EDGE,
+        'llm': ocboot.KEY_STACK_FULLSTACK,  # llm 使用 full stack
     }
 
+    # 设置共同环境
+    setup_common_environment(args)
+
+    # 重新检测IP类型（因为上面的检测可能被覆盖）
+    if args.ip_dual_conf:
+        match_ip, ip_type = match_dual_stack_ipaddr(ip_conf, args.ip_dual_conf)
+    else:
+        match_ip, ip_type = match_ipaddr(ip_conf)
+
+    # 处理 llm 模式
+    is_llm_mode = (stack == 'llm')
+    if is_llm_mode:
+        # llm 模式自动使用 containerd runtime
+        runtime = consts.RUNTIME_CONTAINERD
+        pr_green("LLM mode: Using containerd runtime and full stack")
+    else:
+        # 普通模式：使用用户指定的 runtime
+        runtime = args.runtime
+
+    # 生成配置文件
+    if match_ip:
+        conf = generate_config(ip_conf, stackDict.get(stack),
+                               user_dns, runtime,
+                               args.image_repository,
+                               args.region, args.zone,
+                               ip_dual_conf=args.ip_dual_conf,
+                               ip_type=ip_type,
+                               enable_ipip=args.enable_ipip)
+    elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
+        conf = update_config(ip_conf, stackDict.get(stack), runtime)
+    else:
+        pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
+        exit()
+    
+    check_env(ip_conf, pip_mirror=args.pip_mirror)
+    
+    # 如果是 llm 模式，设置 enable_llm_env，并根据是否提供参数决定是否传递 NVIDIA 变量
+    extra_vars = None
+    if is_llm_mode:
+        extra_vars = {
+            'enable_llm_env': True,
+            'gpu_device_count': args.gpu_device_count,
+        }
+        
+        # 只有在提供了 NVIDIA 相关参数时才添加这些变量
+        if args.nvidia_driver_installer_path:
+            extra_vars['nvidia_driver_installer_path'] = args.nvidia_driver_installer_path
+        if args.cuda_installer_path:
+            extra_vars['cuda_installer_path'] = args.cuda_installer_path
+        if args.nvidia_driver_tar_file_path:
+            extra_vars['nvidia_driver_tar_file_path'] = args.nvidia_driver_tar_file_path
+        
+        if args.nvidia_driver_installer_path and args.cuda_installer_path:
+            pr_green("Starting allinone installation with containerd runtime and LLM environment setup (including NVIDIA driver installation)...")
+        else:
+            pr_green("Starting allinone installation with containerd runtime and LLM environment setup (assuming NVIDIA drivers are already installed)...")
+    else:
+        pr_green(f"Starting installation with {stack} stack...")
+    
+    return install.start(conf, extra_vars=extra_vars)
+
+
+def detect_and_display_ip_type(ip_conf, ip_dual_conf=None):
+    """检测并显示 IP 地址类型"""
+    if ip_dual_conf:
+        match_ip, ip_type = match_dual_stack_ipaddr(ip_conf, ip_dual_conf)
+        if match_ip:
+            if ip_type == consts.IP_TYPE_DUAL_STACK:
+                if _match_ip4addr(ip_conf):
+                    ipv4_addr = ip_conf
+                    ipv6_addr = ip_dual_conf
+                else:
+                    ipv4_addr = ip_dual_conf
+                    ipv6_addr = ip_conf
+                pr_green(f"choose dual-stack configuration: IPv4={ipv4_addr}, IPv6={ipv6_addr}")
+            else:
+                pr_green(f"choose {ip_type} address: {ip_conf}")
+        else:
+            pr_red(f"Invalid dual-stack configuration: {ip_conf}, {ip_dual_conf}")
+            exit(1)
+        return match_ip, ip_type
+    else:
+        match_ip, ip_type = match_ipaddr(ip_conf)
+        if match_ip:
+            pr_green(f"choose local {ip_type} address: {ip_conf}")
+        return match_ip, ip_type
+
+
+def setup_common_environment(args):
+    """设置共同的环境变量和处理离线数据路径"""
+    # 设置环境变量
     if not args.k8s_v115:
         os.environ[consts.ENV_K3S] = consts.ENV_VAL_TRUE
     else:
         os.environ[consts.ENV_K8S_V115] = consts.ENV_VAL_TRUE
-
-    # 1. try to get offline data path from optional args
-    # 2. if not exist, try to get from os env
-    # 3. if got one, save to env for later use.
+    
+    # 处理离线数据路径
     offline_data_path = None
     if args.offline_data_path and os.path.isdir(args.offline_data_path):
         offline_data_path = os.path.realpath(args.offline_data_path)
     elif os.environ.get('OFFLINE_DATA_PATH') and os.path.isdir(os.environ.get('OFFLINE_DATA_PATH')):
         offline_data_path = os.path.realpath(os.environ.get('OFFLINE_DATA_PATH'))
-
+    
     if offline_data_path:
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
@@ -680,27 +782,7 @@ def main():
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
 
-    # 重新检测IP类型（因为上面的检测可能被覆盖）
-    if args.ip_dual_conf:
-        match_ip, ip_type = match_dual_stack_ipaddr(ip_conf, args.ip_dual_conf)
-    else:
-        match_ip, ip_type = match_ipaddr(ip_conf)
 
-    if match_ip:
-        conf = generate_config(ip_conf, stackDict.get(stack),
-                               user_dns, args.runtime,
-                               args.image_repository,
-                               args.region, args.zone,
-                               ip_dual_conf=args.ip_dual_conf,
-                               ip_type=ip_type,
-                               enable_ipip=args.enable_ipip)
-    elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
-        conf = update_config(ip_conf, stackDict.get(stack), args.runtime)
-    else:
-        pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
-        exit()
-    check_env(ip_conf, pip_mirror=args.pip_mirror)
-    return install.start(conf)
 
 
 if __name__ == "__main__":

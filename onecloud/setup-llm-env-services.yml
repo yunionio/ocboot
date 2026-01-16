@@ -1,0 +1,19 @@
+---
+- name: Setup LLM Environment Services
+  hosts: all
+  become: true
+  
+  vars:
+    # NVIDIA 驱动和 CUDA 安装包完整路径（从命令行参数传入）
+    # nvidia_driver_installer_path: "/root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run"
+    # cuda_installer_path: "/root/nvidia/cuda_12.8.1_570.124.06_linux.run"
+    # nvidia_driver_tar_file_path: "/root/nvidia/nvidia-driver-vol.tar.gz"
+
+    # Volume 路径
+    nvidia_driver_volume_path: "/var/lib/docker/volumes/nvidia-driver-vol"
+    
+    # GPU 设备数量（从命令行参数传入，默认值在 vars/main.yml 中）
+    # gpu_device_count: 8
+  
+  roles:
+    - { role: utils/llm-env }

@@ -1,0 +1,7 @@
+# Debian/Ubuntu 系统变量
+kernel_package: linux-image-generic
+kernel_headers_package: linux-headers-generic
+kernel_devel_package: linux-headers-generic
+
+# 包管理器
+package_manager: apt
