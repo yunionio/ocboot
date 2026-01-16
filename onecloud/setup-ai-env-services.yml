@@ -1,0 +1,15 @@
+---
+- name: Setup AI Environment Services
+  hosts: all
+  become: true
+  
+  vars:
+    # NVIDIA 驱动和 CUDA 安装包完整路径（从命令行参数传入）
+    # nvidia_driver_installer_path: "/root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run"
+    # cuda_installer_path: "/root/nvidia/cuda_12.8.1_570.124.06_linux.run"
+
+    # GPU 设备虚拟编号（从命令行参数传入，默认值在 vars/main.yml 中）
+    # gpu_device_virtual_number: 2
+  
+  roles:
+    - { role: utils/ai-env }

@@ -1,0 +1,6 @@
+devices:
+{% for path in nvidia_render_devices | default([]) %}
+  - path: "{{ path }}"
+    type: "NVIDIA_GPU_SHARE"
+    virtual_number: {{ gpu_device_virtual_number | default(2) }}
+{% endfor %}

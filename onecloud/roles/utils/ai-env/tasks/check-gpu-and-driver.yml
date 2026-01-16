@@ -1,0 +1,42 @@
+# 部署前检查：目标主机是否存在 NVIDIA GPU，以及驱动/CUDA 是否已安装或已提供安装包路径
+
+- name: Check if NVIDIA GPU is present on target host
+  shell: lspci | grep -i nvidia
+  register: nvidia_gpu_check
+  changed_when: false
+  failed_when: false
+
+- name: Fail when no NVIDIA GPU detected
+  fail:
+    msg: "本机未检测到 NVIDIA GPU，无法部署 AI 环境。请使用带 NVIDIA GPU 的机器或提供正确的目标主机。"
+  when: nvidia_gpu_check.rc != 0 or (nvidia_gpu_check.stdout | default('') | trim | length == 0)
+
+- name: Check if NVIDIA driver is already installed
+  shell: nvidia-smi
+  register: nvidia_driver_check
+  changed_when: false
+  failed_when: false
+
+- name: Set NVIDIA driver installation flag
+  set_fact:
+    nvidia_driver_installed: "{{ nvidia_driver_check.rc == 0 }}"
+
+- name: Check if CUDA is already installed
+  shell: /usr/local/cuda/bin/nvcc --version
+  register: cuda_check
+  changed_when: false
+  failed_when: false
+
+- name: Set CUDA installation flag
+  set_fact:
+    cuda_installed: "{{ cuda_check.rc == 0 }}"
+
+- name: Fail when driver not installed and no installer path provided
+  fail:
+    msg: "未检测到已安装的 NVIDIA 驱动，且未提供 --nvidia-driver-installer-path。请先安装驱动或通过参数指定安装包路径。"
+  when: not nvidia_driver_installed | default(false) and nvidia_driver_installer_path is not defined
+
+- name: Fail when CUDA not installed and no installer path provided
+  fail:
+    msg: "未检测到已安装的 CUDA，且未提供 --cuda-installer-path。请先安装 CUDA 或通过参数指定安装包路径。"
+  when: not cuda_installed | default(false) and cuda_installer_path is not defined
