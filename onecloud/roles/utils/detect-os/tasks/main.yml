@@ -127,6 +127,12 @@
   - containerd_packages is not defined
   - 'enable_containerd|default(false) == true'
 
+- name: gather var for qemu 10.x packages
+  include_vars: "../vars/qemu_10_packages.yml"
+  when:
+  - qemu_10_packages is not defined
+  - onecloud_version is version('v4.0', '>=')
+
 - name: gather var for win11 packages
   include_vars: "../vars/win11_packages.yml"
   when:
