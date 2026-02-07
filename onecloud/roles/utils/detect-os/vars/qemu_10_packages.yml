@@ -1,0 +1,3 @@
+---
+qemu_10_packages:
+    - yunion-qemu-10.0.7
