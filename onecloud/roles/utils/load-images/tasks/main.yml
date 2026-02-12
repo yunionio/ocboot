@@ -23,15 +23,9 @@
   become: yes
   when:
   - offline_node_list | length > 0
-  delegate_to: '{{ item }}'
-  with_items:
-  - "{{ offline_node_list }}"
 
 - name: loading images (this is slow, be patient)
   shell: bash /tmp/load-images.sh
-  delegate_to: '{{ item }}'
-  with_items:
-  - "{{ offline_node_list }}"
   when:
   - offline_node_list | length > 0
   become: yes
