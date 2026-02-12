@@ -5,6 +5,10 @@ export loaded_path=${offline_data_path}/images/loaded
 
 enable_parallel=${enable_parallel:-false}
 
+if k3s --version > /dev/null 2>&1; then
+    enable_parallel=false
+fi
+
 load_and_mv(){
     local img=$1
     if [ ! -d $loaded_path ]; then
