@@ -1,0 +1,38 @@
+- name: Check if NVIDIA driver installer exists locally
+  stat:
+    path: "{{ nvidia_driver_installer_path }}"
+  register: nvidia_file_check
+  delegate_to: localhost
+  become: false
+  when: nvidia_driver_installer_path is defined
+
+- name: Fail if NVIDIA driver installer not found
+  fail:
+    msg: "NVIDIA driver installer not found at {{ nvidia_driver_installer_path }}"
+  when: nvidia_driver_installer_path is defined and (not nvidia_file_check.stat.exists | default(false))
+
+- name: Check if CUDA installer exists locally
+  stat:
+    path: "{{ cuda_installer_path }}"
+  register: cuda_file_check
+  delegate_to: localhost
+  become: false
+  when: cuda_installer_path is defined
+
+- name: Fail if CUDA installer not found
+  fail:
+    msg: "CUDA installer not found at {{ cuda_installer_path }}"
+  when: cuda_installer_path is defined and (not cuda_file_check.stat.exists | default(false))
+
+- name: Check if nvidia-driver-vol.tar.gz exists locally
+  stat:
+    path: "{{ nvidia_driver_tar_file_path }}"
+  register: nvidia_vol_file_check
+  delegate_to: localhost
+  become: false
+  when: nvidia_driver_tar_file_path is defined
+
+- name: Debug message when nvidia-driver-vol.tar.gz not found
+  debug:
+    msg: "nvidia-driver-vol.tar.gz not found at {{ nvidia_driver_tar_file_path }}, skipping (optional file)"
+  when: nvidia_driver_tar_file_path is defined and (not nvidia_vol_file_check.stat.exists | default(false))

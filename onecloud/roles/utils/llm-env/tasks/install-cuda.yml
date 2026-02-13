@@ -1,0 +1,104 @@
+- name: Check if CUDA is already installed
+  shell: /usr/local/cuda/bin/nvcc --version
+  register: cuda_check
+  ignore_errors: true
+  failed_when: false
+
+- name: Set CUDA installation flag
+  set_fact:
+    cuda_installed: "{{ cuda_check.rc == 0 }}"
+
+- block:
+  - name: Extract CUDA installer filename
+    set_fact:
+      cuda_installer: "{{ cuda_installer_path | basename }}"
+
+  - name: Ensure rsync is installed on remote host
+    package:
+      name: rsync
+      state: present
+    become: true
+
+  - name: Copy CUDA installer to remote host using synchronize
+    ansible.builtin.synchronize:
+      src: "{{ cuda_installer_path }}"
+      dest: "/opt/nvidia/{{ cuda_installer }}"
+      mode: push
+    delegate_to: localhost
+    become: false
+    when: cuda_installer_path is defined
+
+  - name: Check CUDA installer help
+    shell: |
+      cd /opt/nvidia
+      ./{{ cuda_installer }} --help
+    become: true
+    args:
+      executable: /bin/bash
+    register: cuda_help
+    ignore_errors: true
+
+  - name: Display CUDA installer help
+    debug: var=cuda_help.stdout_lines
+
+  - name: Create temporary directory for CUDA extraction
+    file:
+      path: /opt/nvidia/tmp
+      state: directory
+      mode: '0755'
+    become: true
+
+  - name: Verify CUDA installer file integrity
+    shell: |
+      cd /opt/nvidia
+      file ./{{ cuda_installer }}
+      ls -lh ./{{ cuda_installer }}
+    become: true
+    register: cuda_file_check
+    changed_when: false
+
+  - name: Display CUDA installer file info
+    debug: var=cuda_file_check.stdout_lines
+
+  - name: Install CUDA
+    shell: |
+      cd /opt/nvidia
+      export TMPDIR=/opt/nvidia/tmp
+      export TEMP=/opt/nvidia/tmp
+      export TMP=/opt/nvidia/tmp
+      setsid bash -c "./{{ cuda_installer }} --silent --toolkit" < /dev/null > /tmp/cuda_install.log 2>&1 || {
+        EXIT_CODE=$?
+        cat /tmp/cuda_install.log
+        exit $EXIT_CODE
+      }
+      cat /tmp/cuda_install.log
+    become: true
+    args:
+      executable: /bin/bash
+    register: cuda_install_result
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+      TERM: dumb
+      TMPDIR: /opt/nvidia/tmp
+      TEMP: /opt/nvidia/tmp
+      TMP: /opt/nvidia/tmp
+
+  - name: Check CUDA installation result
+    shell: |
+      if [ -f /usr/local/cuda/bin/nvcc ]; then
+        /usr/local/cuda/bin/nvcc --version
+        exit 0
+      else
+        echo "CUDA installation failed: nvcc not found"
+        exit 1
+      fi
+    become: true
+    args:
+      executable: /bin/bash
+    register: cuda_verify_result
+    failed_when: cuda_verify_result.rc != 0
+
+  - debug: var=cuda_install_result.stdout_lines
+  - debug: var=cuda_verify_result.stdout_lines
+
+  when: not cuda_installed | default(false)

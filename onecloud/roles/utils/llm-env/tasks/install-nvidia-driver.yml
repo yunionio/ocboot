@@ -1,0 +1,185 @@
+- name: Get current running kernel version
+  shell: uname -r
+  register: current_kernel_version
+  changed_when: false
+
+- name: Install kernel headers and development packages for current kernel (RedHat)
+  shell: |
+    KERNEL_VERSION="{{ current_kernel_version.stdout }}"
+    yum install -y kernel-headers-${KERNEL_VERSION} kernel-devel-${KERNEL_VERSION} || \
+    yum install -y "kernel-headers-${KERNEL_VERSION}" "kernel-devel-${KERNEL_VERSION}" || \
+    yum install -y {{ kernel_package }} {{ kernel_headers_package }} {{ kernel_devel_package }}
+  become: true
+  args:
+    executable: /bin/bash
+  register: kernel_install_result
+  when: ansible_os_family == "RedHat"
+
+- name: Install kernel headers and development packages for current kernel (Debian)
+  shell: |
+    KERNEL_VERSION="{{ current_kernel_version.stdout }}"
+    apt-get update && \
+    apt-get install -y linux-headers-${KERNEL_VERSION} || \
+    apt-get install -y {{ kernel_package }} {{ kernel_headers_package }} {{ kernel_devel_package }}
+  become: true
+  args:
+    executable: /bin/bash
+  register: kernel_install_result
+  when: ansible_os_family == "Debian"
+
+- name: Install build tools (gcc, make, etc.) for RedHat
+  package:
+    name:
+      - gcc
+      - make
+      - binutils
+    state: present
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Install build tools (gcc, make, etc.) for Debian
+  package:
+    name:
+      - build-essential
+    state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+# 新增：清理vfio相关配置和grub参数，重建grub并重启
+- name: 删除 /etc/modules-load.d/vfio.conf
+  file:
+    path: /etc/modules-load.d/vfio.conf
+    state: absent
+  become: true
+
+- name: 删除 /etc/modprobe.d/vfio.conf
+  file:
+    path: /etc/modprobe.d/vfio.conf
+    state: absent
+  become: true
+
+- name: 删除 /etc/modprobe.d/blacklist-gpu.conf
+  file:
+    path: /etc/modprobe.d/blacklist-gpu.conf
+    state: absent
+  become: true
+
+- name: 删除 /usr/bin/vfio-pci-override.sh
+  file:
+    path: /usr/bin/vfio-pci-override.sh
+    state: absent
+  become: true
+
+- name: 移除 /etc/default/grub 里的 vfio_iommu_type1.allow_unsafe_interrupts
+  replace:
+    path: /etc/default/grub
+    regexp: ' vfio_iommu_type1.allow_unsafe_interrupts(=\S*)?'
+    replace: ''
+  become: true
+  register: grub_vfio_removed
+
+- name: 移除 /etc/default/grub 里的 iommu=pt
+  replace:
+    path: /etc/default/grub
+    regexp: ' iommu=pt'
+    replace: ''
+  become: true
+  register: grub_iommu_removed
+
+- name: 重新生成 grub 配置
+  shell: grub2-mkconfig > /boot/efi/EFI/openEuler/grub.cfg
+  become: true
+  args:
+    executable: /bin/bash
+  when: grub_vfio_removed.changed or grub_iommu_removed.changed
+
+- name: 重启系统
+  reboot:
+    msg: "Reboot initiated by Ansible after vfio cleanup and grub update"
+    connect_timeout: 5
+    reboot_timeout: 600
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: whoami
+  become: true
+  when: kernel_install_result.changed or grub_vfio_removed.changed or grub_iommu_removed.changed 
+
+- name: Check if NVIDIA driver is already installed
+  shell: nvidia-smi
+  register: nvidia_check
+  ignore_errors: true
+  failed_when: false
+
+- name: Set NVIDIA driver installation flag
+  set_fact:
+    nvidia_driver_installed: "{{ nvidia_check.rc == 0 }}"
+
+- block:
+  - name: Create NVIDIA installation directory
+    file:
+      path: /opt/nvidia
+      state: directory
+      mode: '0755'
+    become: true
+
+  - name: Extract NVIDIA driver installer filename
+    set_fact:
+      nvidia_driver_installer: "{{ nvidia_driver_installer_path | basename }}"
+
+  - name: Ensure rsync is installed on remote host
+    package:
+      name: rsync
+      state: present
+    become: true
+
+  - name: Copy NVIDIA driver installer to remote host using synchronize
+    ansible.builtin.synchronize:
+      src: "{{ nvidia_driver_installer_path }}"
+      dest: "/opt/nvidia/{{ nvidia_driver_installer }}"
+      mode: push
+    delegate_to: localhost
+    become: false
+    when: nvidia_driver_installer_path is defined
+
+  - name: Find kernel source path
+    shell: |
+      if [ -d /usr/src/kernels/{{ current_kernel_version.stdout }} ]; then
+        echo /usr/src/kernels/{{ current_kernel_version.stdout }}
+      elif [ -d /usr/src/linux-headers-{{ current_kernel_version.stdout }} ]; then
+        echo /usr/src/linux-headers-{{ current_kernel_version.stdout }}
+      elif [ -d /lib/modules/{{ current_kernel_version.stdout }}/build ]; then
+        echo /lib/modules/{{ current_kernel_version.stdout }}/build
+      else
+        echo ""
+      fi
+    register: kernel_source_path_result
+    changed_when: false
+    failed_when: false
+
+  - name: Set kernel source path
+    set_fact:
+      kernel_source_path: "{{ kernel_source_path_result.stdout }}"
+
+  - name: Install NVIDIA driver with kernel source path
+    shell: |
+      cd /opt/nvidia
+      ./{{ nvidia_driver_installer }} --silent --accept-license --no-questions --kernel-source-path={{ kernel_source_path }}
+    become: true
+    args:
+      executable: /bin/bash
+    register: nvidia_install_result
+    when: kernel_source_path | default('') != ''
+
+  - name: Install NVIDIA driver without kernel source path
+    shell: |
+      cd /opt/nvidia
+      ./{{ nvidia_driver_installer }} --silent --accept-license --no-questions
+    become: true
+    args:
+      executable: /bin/bash
+    register: nvidia_install_result
+    when: kernel_source_path | default('') == ''
+
+  - debug: var=nvidia_install_result.stdout_lines
+
+  when: not nvidia_driver_installed | default(false)

@@ -1,0 +1,6 @@
+devices:
+{% for i in range(128, 128 + (gpu_device_count | default(8))) %}
+  - path: "/dev/dri/renderD{{ i }}"
+    type: "NVIDIA_GPU_SHARE"
+    virtual_number: 1
+{% endfor %}

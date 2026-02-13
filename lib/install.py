@@ -85,7 +85,7 @@ def try_reboot_primary(ip):
     os.system('reboot')
 
 
-def start(config_file):
+def start(config_file, extra_vars=None):
     config = ocboot.load_config(config_file)
 
     k3s.init_airgap_assets(k3s.GET_AIRGAP_DIR(), k3s.VERSION_V1_28_5_K3S_1)
@@ -100,6 +100,11 @@ def start(config_file):
     # 240722 wanyaoqi: no_reboot has been removed before this change
     # vars['no_reboot'] = 'false' if need_reboot(ip, inside=True) else 'true'
     vars['is_controller_node'] = 'true' if config.is_controller_node() else 'false'
+    
+    # 合并额外的变量（如 llm 相关变量）
+    if extra_vars:
+        vars.update(extra_vars)
+    
     print("vars: ", vars)
     return_code = cmd.run_ansible_playbook(
         inventory_f,

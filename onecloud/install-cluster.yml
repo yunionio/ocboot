@@ -55,6 +55,14 @@
   tags:
     - containerd
 
+# 在 containerd 部署完成后，如果是 llm 模式，则设置 llm 环境
+- hosts: primary_master_node:master_nodes:worker_nodes
+  roles:
+    - { role: utils/llm-env, when: 'enable_llm_env|default(false) == true and enable_containerd|default(false) == true' }
+  tags:
+    - llm
+    - containerd
+
 - hosts: master_nodes:worker_nodes
   roles:
     - { role: utils/kernel-check, when: 'enable_containerd|default(false) == false' }
