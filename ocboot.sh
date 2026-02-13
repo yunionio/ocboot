@@ -6,7 +6,7 @@ set -e
 
 DEFAULT_REPO=registry.cn-beijing.aliyuncs.com/yunionio
 IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-$DEFAULT_REPO}
-VERSION=${VERSION:-v4-k3s.4}
+VERSION=${VERSION:-v4-k3s.4-rc1}
 OCBOOT_IMAGE="$IMAGE_REPOSITORY/ocboot:$VERSION"
 
 CUR_DIR="$(pwd)"

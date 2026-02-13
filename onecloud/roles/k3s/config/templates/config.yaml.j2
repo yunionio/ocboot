@@ -29,7 +29,11 @@ pause-image: {{ image_repository }}/pause:3.1
 tls-san: {{ high_availability_vip }}
 {% endif %}
 {% if is_k3s_server %}
+{% if k3s_arch == 'riscv64' %}
+flannel-backend: vxlan
+{% else %}
 flannel-backend: none
+{% endif %}
 disable-network-policy: true
 {% if ip_type == 'dual-stack' %}
 {% if node_ip | regex_search(':') %}

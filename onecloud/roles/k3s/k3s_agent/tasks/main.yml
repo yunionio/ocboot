@@ -4,6 +4,7 @@
     name: k3s/config
   vars:
     is_k3s_server: False
+    k3s_arch: "{{ ansible_architecture }}"
 
 # If airgapped, all K3s artifacts are already on the node.
 - name: Copy K3s service file

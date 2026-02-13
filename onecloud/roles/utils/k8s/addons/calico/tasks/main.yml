@@ -4,3 +4,5 @@
   vars:
     resource_name: calico-kube-controllers
   ignore_errors: true
+  when:
+  - is_ubuntu_based_riscv64 is not defined
