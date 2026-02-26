@@ -318,7 +318,7 @@
 
 - name: Set adm0 command for IPv4
   set_fact:
-    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} "
+    adm0_cmd: "/opt/yunion/bin/climc network-create3 --server-type baremetal bcast0 adm0 --start-ip {{ default_ip }} --end-ip {{ default_ip }} --net-mask {{ default_masklen }} "
   when:
   - ip_type is not defined or ip_type != 'ipv6'
 
@@ -331,7 +331,7 @@
 
 - name: Set adm0 command for IPv6
   set_fact:
-    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 --start-ip6 {{ default_ip }} --end-ip6 {{ default_ip }} --net-mask6 {{ default_masklen }} "
+    adm0_cmd: "/opt/yunion/bin/climc network-create3 --server-type baremetal bcast0 adm0 --start-ip6 {{ default_ip }} --end-ip6 {{ default_ip }} --net-mask6 {{ default_masklen }} "
   when:
   - ip_type is defined and ip_type == 'ipv6'
 
@@ -344,7 +344,7 @@
 
 - name: Set adm0 command for dual-stack (IPv4 primary)
   set_fact:
-    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} --start-ip6 {{ node_ip_v6 }} --end-ip6 {{ node_ip_v6 }} --net-mask6 64 "
+    adm0_cmd: "/opt/yunion/bin/climc network-create3 --server-type baremetal bcast0 adm0 --start-ip {{ default_ip }} --end-ip {{ default_ip }} --net-mask {{ default_masklen }} --start-ip6 {{ node_ip_v6 }} --end-ip6 {{ node_ip_v6 }} --net-mask6 64 "
   when:
   - ip_type is defined and ip_type == 'dual-stack'
   - node_ip is defined and node_ip == node_ip_v4
@@ -359,7 +359,7 @@
 
 - name: Set adm0 command for dual-stack (IPv6 primary)
   set_fact:
-    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 --start-ip6 {{ default_ip }} --end-ip6 {{ default_ip }} --net-mask6 {{ default_masklen }} --start-ip {{ node_ip_v4 }} --end-ip {{ node_ip_v4 }} --net-mask 24 "
+    adm0_cmd: "/opt/yunion/bin/climc network-create3 --server-type baremetal bcast0 adm0 --start-ip6 {{ default_ip }} --end-ip6 {{ default_ip }} --net-mask6 {{ default_masklen }} --start-ip {{ node_ip_v4 }} --end-ip {{ node_ip_v4 }} --net-mask 24 "
   when:
   - ip_type is defined and ip_type == 'dual-stack'
   - node_ip is defined and node_ip == node_ip_v6

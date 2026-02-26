@@ -19,6 +19,30 @@
     force: yes
   become: true
 
+- name: install ceph-14
+  file:
+    src: /opt/yunion/bin/ceph.sh
+    dest: /usr/local/bin/ceph-14
+    state: link
+    force: yes
+  become: true
+
+- name: install ceph-16
+  file:
+    src: /opt/yunion/bin/ceph.sh
+    dest: /usr/local/bin/ceph-16
+    state: link
+    force: yes
+  become: true
+
+- name: install ceph-18
+  file:
+    src: /opt/yunion/bin/ceph.sh
+    dest: /usr/local/bin/ceph-18
+    state: link
+    force: yes
+  become: true
+
 - name: install ovs-vsctl
   file:
     src: /opt/yunion/bin/ovs.sh
