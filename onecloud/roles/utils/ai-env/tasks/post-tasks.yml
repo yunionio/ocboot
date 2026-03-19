@@ -1,0 +1,29 @@
+- name: Verify NVIDIA driver installation
+  shell: nvidia-smi
+  register: nvidia_verification
+  failed_when: false
+  
+- name: Display NVIDIA driver status
+  debug:
+    msg: "NVIDIA driver status: {{ nvidia_verification.stdout_lines }}"
+  when: nvidia_verification.rc == 0
+  
+- name: Verify CUDA installation
+  shell: /usr/local/cuda/bin/nvcc --version
+  register: cuda_verification
+  failed_when: false
+  
+- name: Display CUDA status
+  debug:
+    msg: "CUDA status: {{ cuda_verification.stdout_lines }}"
+  when: cuda_verification.rc == 0
+  
+- name: Verify Container Toolkit installation
+  shell: nvidia-ctk --version
+  register: toolkit_verification
+  failed_when: false
+  
+- name: Display Container Toolkit status
+  debug:
+    msg: "Container Toolkit status: {{ toolkit_verification.stdout_lines }}"
+  when: toolkit_verification.rc == 0
