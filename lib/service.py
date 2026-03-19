@@ -269,6 +269,11 @@ class AddNodesConfig(object):
         self.node_ip_v4 = kwargs.get("node_ip_v4", None)
         self.node_ip_v6 = kwargs.get("node_ip_v6", None)
 
+        self.enable_ai_env = kwargs.get('enable_ai_env', False)
+        self.gpu_device_virtual_number = kwargs.get('gpu_device_virtual_number', 2)
+        self.nvidia_driver_installer_path = kwargs.get('nvidia_driver_installer_path')
+        self.cuda_installer_path = kwargs.get('cuda_installer_path')
+
         utils.pr_green(f"Get current cluster: {controlplane_host}, primary_master_node_ip: {primary_master_node_ip}, version: {self.current_version}, is_using_k3s: {self.is_using_k3s}")
 
     def run(self):
@@ -301,6 +306,14 @@ class AddNodesConfig(object):
             vars['node_ip_v4'] = self.node_ip_v4
         if self.node_ip_v6:
             vars['node_ip_v6'] = self.node_ip_v6
+
+        if self.enable_ai_env:
+            vars['enable_ai_env'] = True
+            vars['gpu_device_virtual_number'] = self.gpu_device_virtual_number
+            if self.nvidia_driver_installer_path:
+                vars['nvidia_driver_installer_path'] = self.nvidia_driver_installer_path
+            if self.cuda_installer_path:
+                vars['cuda_installer_path'] = self.cuda_installer_path
 
         return vars
 
