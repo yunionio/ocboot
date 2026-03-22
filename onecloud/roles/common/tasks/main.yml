@@ -237,6 +237,8 @@
   become: true
   loop:
   - yunion-executor
+  when:
+  - is_ubuntu_based_riscv64 is not defined
 
 - name: Include cronjobs
   include_role:
