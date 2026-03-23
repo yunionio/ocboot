@@ -15,6 +15,9 @@ common_packages:
   - nfs-utils
   - chrony
   - parallel
+  - rsync
+  - pciutils
+  - tcpdump
   - python-selinux
   - python-setuptools
   - python-pip
