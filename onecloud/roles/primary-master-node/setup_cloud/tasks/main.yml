@@ -403,6 +403,19 @@
   when:
   - product_version | default("") in ['FullStack', 'Edge', 'LightEdge', 'AI']
 
+- name: add default host-local network
+  shell: |
+    source ~/.onecloud_rcadmin
+    if [ $(/opt/yunion/bin/climc network-list --scope system | grep -w vhl0 | wc -l) -eq 0 ]; then
+      /opt/yunion/bin/climc network-create3 --server-type hostlocal __host_local__ vh0 --start-ip 10.255.192.2 --end-ip 10.255.255.254 --net-mask 18 --gateway 10.255.192.1 --desc 'Default hostlocal virtual network'
+    fi
+  become: yes
+  args:
+    executable: /bin/bash
+  when:
+  - product_version | default("") in ['FullStack', 'Edge', 'LightEdge', 'AI']
+  - onecloud_version is version('v4.0', '>=')
+
 - name: rm sync-user option
   include_role:
     name: utils/sync-user/off
