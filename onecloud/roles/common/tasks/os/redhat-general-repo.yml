@@ -9,6 +9,7 @@
     enabled=1
     gpgcheck=0
     priority=1
+    module_hotfixes=true
 
     [yunion-repo-updates]
     name=Updated Packages for Yunion Cloud Platform
@@ -18,6 +19,7 @@
     enabled=1
     gpgcheck=0
     priority=2
+    module_hotfixes=true
     EOF_MISC
   become: yes
   args:
@@ -69,6 +71,13 @@
   when:
   - preinstall_packages is defined
   - online_status == 'online'
+
+- name: Declare imported_repos fact if imported_repos is not defined
+  set_fact:
+    imported_repos: []
+  when:
+  - imported_repos is not defined
+  - onecloud_version is version('v4.0', '<')
 
 - name: Append ovs_imported_repos to imported_repos if ovs_imported_repos is defined
   set_fact:
