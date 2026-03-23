@@ -17,6 +17,7 @@ common_packages:
     - nfs-utils
     - parallel
     - rsync
+    - pciutils
     - tcpdump
     - python3-libselinux
     - "{{ yunion_qemu_package }}"
