@@ -1,11 +1,9 @@
-- name: Run pre-tasks
-  include_tasks: pre-tasks.yml
-
 - name: Gather OS specific variables
   include_vars: "{{ ansible_os_family }}.yml"
 
 - name: Check NVIDIA GPU and driver/CUDA status on target host
   include_tasks: check-gpu-and-driver.yml
+  when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
 
 - name: Check local installation files
   include_tasks: check-local-files.yml
@@ -17,16 +15,19 @@
 
 - name: Install CUDA (if installer path provided)
   include_tasks: install-cuda.yml
-  when: cuda_installer_path is defined
+  when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
 
 - name: Configure GRUB
   include_tasks: configure-grub.yml
+  when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
 
 - name: Install Container Toolkit
   include_tasks: install-container-toolkit.yml
+  when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
 
 - name: Configure containerd
   include_tasks: configure-containerd.yml
+  when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
 
 - name: Install lxcfs
   include_tasks: install-lxcfs.yml
@@ -36,3 +37,4 @@
 
 - name: Run post-tasks
   include_tasks: post-tasks.yml
+  when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
