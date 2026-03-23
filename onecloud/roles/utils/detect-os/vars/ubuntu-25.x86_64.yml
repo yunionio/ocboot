@@ -20,6 +20,9 @@ common_packages:
   - nfs-common
   - chrony
   - parallel
+  - rsync
+  - pciutils
+  - tcpdump
   - python3-selinux
   - software-properties-common
   - "{{ yunion_qemu_package }}"

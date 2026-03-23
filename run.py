@@ -699,7 +699,7 @@ def main():
         if args.nvidia_driver_installer_path and args.cuda_installer_path:
             pr_green("Starting allinone installation with containerd runtime and AI environment setup (including NVIDIA driver installation)...")
         else:
-            pr_green("Starting allinone installation with containerd runtime and AI environment setup (assuming NVIDIA drivers are already installed)...")
+            pr_green("Starting allinone installation with containerd runtime and AI environment setup (skipping NVIDIA GPU/driver/CUDA checks/installation and NVIDIA runtime configuration; assuming it is already set up)...")
     else:
         pr_green(f"Starting installation with {stack} stack...")
     

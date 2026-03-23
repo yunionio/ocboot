@@ -26,6 +26,7 @@ common_packages:
     - nfs-utils
     - parallel
     - rsync
+    - pciutils
     - tcpdump
     - python3-libselinux
     - python3-pip
