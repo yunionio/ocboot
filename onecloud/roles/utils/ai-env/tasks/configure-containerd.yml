@@ -1,9 +1,9 @@
-- name: Copy containerd config
-  template:
-    src: containerd_config.toml.j2
-    dest: /etc/yunion/containerd/config.toml
-    mode: '0644'
-  become: true
+# - name: Copy containerd config
+#   template:
+#     src: containerd_config.toml.j2
+#     dest: /etc/yunion/containerd/config.toml
+#     mode: '0644'
+#   become: true
 
 - name: Configure containerd runtime for NVIDIA
   shell: |
