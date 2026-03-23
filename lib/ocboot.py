@@ -482,6 +482,8 @@ class OnecloudConfig(object):
         self.offline_deploy = config.get('offline_deploy', False) or os.environ.get('OFFLINE_DEPLOY') == 'true'
         self.enable_lbagent = config.get('enable_lbagent', False)
         self.enable_containerd = config.get(KEY_ENABLE_CONTAINERD, False)
+        # AI 环境开关：仅在 product_version 为 AI 且显式开启时触发 utils/ai-env role
+        self.enable_ai_env = config.get('enable_ai_env', False)
         self.host_networks = config.get(KEY_HOST_NETWORKS, None)
         if isinstance(self.host_networks, str):
             self.host_networks = [self.host_networks]
@@ -502,6 +504,7 @@ class OnecloudConfig(object):
             'offline_deploy': self.offline_deploy,
             'enable_lbagent': self.enable_lbagent,
             KEY_ENABLE_CONTAINERD: self.enable_containerd,
+            'enable_ai_env': self.enable_ai_env,
         }
         if self.high_availability_vip:
             vars['high_availability_vip'] = self.high_availability_vip
