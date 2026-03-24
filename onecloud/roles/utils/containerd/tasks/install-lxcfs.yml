@@ -1,0 +1,49 @@
+- name: Install lxcfs
+  package:
+    name: lxcfs
+    state: present
+  become: true
+
+- name: Enable and start lxcfs service
+  systemd:
+    name: lxcfs
+    state: started
+    enabled: true
+  become: true
+
+# 不同发行版 lxcfs 挂载点可能为 /var/lib/lxc/lxcfs、/var/lib/lxcfs 等，启动后从 /proc/mounts 与常见目录探测
+- name: Detect lxcfs mount path on target host
+  ansible.builtin.shell: |
+    set -eu
+    p="$(awk '$3=="fuse.lxcfs" {print $2; exit}' /proc/mounts 2>/dev/null || true)"
+    if [ -n "${p:-}" ]; then printf '%s' "$p"; exit 0; fi
+    p="$(awk '/lxcfs/ && /fuse/ {print $2; exit}' /proc/mounts 2>/dev/null || true)"
+    if [ -n "${p:-}" ]; then printf '%s' "$p"; exit 0; fi
+    for d in /var/lib/lxc/lxcfs /var/lib/lxcfs; do
+      if [ -d "$d" ] && { [ -e "$d/proc/uptime" ] || [ -d "$d/proc" ]; }; then
+        printf '%s' "$d"
+        exit 0
+      fi
+    done
+    for d in /var/lib/lxc/lxcfs /var/lib/lxcfs; do
+      if [ -d "$d" ]; then printf '%s' "$d"; exit 0; fi
+    done
+    exit 1
+  args:
+    executable: /bin/bash
+  register: lxcfs_path_detect
+  changed_when: false
+  become: true
+  retries: 8
+  delay: 2
+  until: lxcfs_path_detect.rc == 0 and (lxcfs_path_detect.stdout | default('') | trim | length > 0)
+
+- name: Set lxcfs_path in host.conf from detected path
+  ansible.builtin.lineinfile:
+    path: /etc/yunion/host.conf
+    regexp: '^lxcfs_path:'
+    line: "lxcfs_path: {{ lxcfs_path_detect.stdout | trim }}"
+    state: present
+    create: true
+    mode: '0644'
+  become: true
