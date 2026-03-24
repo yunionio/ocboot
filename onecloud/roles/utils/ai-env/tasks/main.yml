@@ -29,9 +29,6 @@
   include_tasks: configure-containerd.yml
   when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
 
-- name: Install lxcfs
-  include_tasks: install-lxcfs.yml
-
 - name: Configure host
   include_tasks: configure-host.yml
 
