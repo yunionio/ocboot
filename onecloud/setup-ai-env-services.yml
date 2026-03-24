@@ -12,4 +12,5 @@
     # gpu_device_virtual_number: 2
   
   roles:
+    - { role: utils/containerd }
     - { role: utils/ai-env }
