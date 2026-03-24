@@ -32,5 +32,4 @@
     state: present
   become: true
   loop:
-    - "lxcfs_path: /var/lib/lxc/lxcfs"
     - "container_device_config_file: /etc/yunion/host_container_device.yml"
