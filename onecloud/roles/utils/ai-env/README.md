@@ -8,7 +8,6 @@
 - 安装 CUDA 环境
 - 安装 NVIDIA Container Toolkit
 - 配置 containerd runtime
-- 安装和配置 lxcfs
 - 配置主机设备映射
 - 更新 GRUB 配置
 
@@ -119,6 +118,5 @@ scp /path/to/cuda/cuda_12.8.1_570.124.06_linux.run target_host:/root/nvidia/
 7. 配置 GRUB（添加 nvidia-drm.modeset=1）
 8. 安装 NVIDIA Container Toolkit
 9. 配置 containerd runtime
-10. 安装 lxcfs
-11. 配置主机设备映射
-12. 验证安装结果
+10. 配置主机设备映射（lxcfs 由 `utils/containerd` 在本 role 之前完成）
+11. 验证安装结果
