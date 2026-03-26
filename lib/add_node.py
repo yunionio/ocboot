@@ -37,11 +37,15 @@ class AddWorkerNodeService(AddNodeService):
             else:
                 raise ValueError("ip type is not set and cannot be determined from primary master host")
 
-        # AI 环境必须使用 containerd；若用户指定了 enable_ai_env 且 runtime 为 qemu 则报错
+        # AI 环境必须使用 containerd；若用户显式指定了 --runtime qemu 则报错
         if getattr(args, 'enable_ai_env', False):
             if args.runtime == consts.RUNTIME_QEMU:
                 raise ValueError("AI 环境必须使用 containerd 运行时，不能与 --runtime qemu 同时使用。请去掉 --runtime qemu 或改用 containerd。")
             args.runtime = consts.RUNTIME_CONTAINERD
+
+        # 如果未指定 runtime，使用默认值 qemu
+        if args.runtime is None:
+            args.runtime = consts.RUNTIME_QEMU
 
         # 处理双栈配置
         kwargs = {
