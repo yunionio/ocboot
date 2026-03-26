@@ -318,7 +318,7 @@
 
 - name: Set adm0 command for IPv4
   set_fact:
-    adm0_cmd: "/opt/yunion/bin/climc network-create3 --server-type baremetal bcast0 adm0 --start-ip {{ default_ip }} --end-ip {{ default_ip }} --net-mask {{ default_masklen }} "
+    adm0_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 adm0 {{ default_ip }} {{ default_ip }} {{ default_masklen }} "
   when:
   - ip_type is not defined or ip_type != 'ipv6'
 
