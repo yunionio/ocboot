@@ -30,7 +30,6 @@ common_packages:
     - tcpdump
     - python3-libselinux
     - python3-pip
-    - kernel-modules-extra-{{ ansible_kernel }}
     - "{{ yunion_qemu_package }}"
 
 ceph_packages:
