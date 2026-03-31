@@ -27,3 +27,12 @@
   when:
   - is_supported | default(true) | bool == false
 
+- name: Ensure kernel module br_netfilter is installed
+  block:
+    - modprobe:
+        name: br_netfilter
+        state: present
+      become: true
+  rescue:
+    - fail:
+        msg: "br_netfilter is not installed, please install by `yum install -y kernel-modules-extra` and reboot the system to take effect"

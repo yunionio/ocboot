@@ -9,3 +9,5 @@
   shell: |
     sed -i 's/^OVS_USER_ID=/# OVS_USER_ID=/g' /etc/sysconfig/openvswitch
   become: true
+  when:
+  - onecloud_version is version('v4.0', '<')

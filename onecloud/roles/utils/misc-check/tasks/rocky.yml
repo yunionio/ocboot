@@ -5,3 +5,13 @@
       - "ansible_architecture in ('x86_64', 'aarch64')"
     success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is supported. "
     fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} {{ ansible_architecture }} is not supported by {{ onecloud_version }}"
+
+- name: Ensure kernel module br_netfilter is installed
+  block:
+    - modprobe:
+        name: br_netfilter
+        state: present
+      become: true
+  rescue:
+    - fail:
+        msg: "br_netfilter is not installed, please install by `yum install -y kernel-modules-extra` and reboot the system to take effect"
