@@ -26,3 +26,14 @@
     name: k3s/k3s_server
   vars:
     is_keepalived_master: false
+
+- name: Verify online status
+  ansible.builtin.debug:
+    msg: Online status is {{ online_status }} and offline_data_path is {{ offline_data_path }}
+
+- name: loading images
+  include_role:
+    name: utils/load-images
+  when:
+  - online_status == "offline"
+  - offline_data_path | length > 0

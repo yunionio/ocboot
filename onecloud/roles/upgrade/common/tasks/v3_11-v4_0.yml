@@ -20,24 +20,6 @@
   - primary_node_ip is defined
   - primary_node_ip != ansible_default_ipv4.address
 
-- name: "Add cloud rpm repository {{ yunion_yum_repo }}"
-  copy:
-    content: |
-      [yunion-repo-offline]
-      name=Packages for Yunion Multi-Cloud Platform -
-      baseurl=https://iso.yunion.cn/$contentdir/$releasever/4.0/$basearch
-      sslverify=0
-      failovermethod=priority
-      enabled=1
-      gpgcheck=0
-    dest: /etc/yum.repos.d/yunion.repo
-  become: yes
-  retries: 3
-  delay: 30
-  when:
-  - is_centos | default(false) | bool == true
-  - offline_data_path is not defined or offline_data_path | length == 0
-
 - name: "update repo"
   shell: |
     yum clean all
@@ -49,10 +31,10 @@
   yum:
     name:
       - yunion-climc
-      - yunion-climc-ee
       - yunion-executor
       - yunion-qemu-4.2.0
-      - openvswitch
+      - yunion-qemu-10.0.7
+      - yunion-ovmf
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     state: latest

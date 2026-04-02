@@ -29,12 +29,8 @@ export -f push_and_tag
 
 for i in {{ docker_insecure_registries | join(" ") }}
 do
-    if [ -x /usr/bin/parallel ]; then
-        insecure_registry=$i registry=$registry parallel --jobs $(nproc) --will-cite push_and_tag ::: "${imgs[@]}"
-    else
-        for img in "${imgs[@]}"
-        do
-            insecure_registry=$i registry=$registry push_and_tag $img
-        done
-    fi
+    for img in "${imgs[@]}"
+    do
+        insecure_registry=$i registry=$registry push_and_tag $img
+    done
 done
