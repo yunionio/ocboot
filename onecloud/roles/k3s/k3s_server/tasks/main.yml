@@ -156,6 +156,10 @@
         daemon_reload: true
         state: started
         enabled: true
+      register: k3s_service_result
+      retries: 5
+      delay: 5
+      until: k3s_service_result is succeeded
       ignore_errors: false
 
     - name: Verify that all server nodes joined
