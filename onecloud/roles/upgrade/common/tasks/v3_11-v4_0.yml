@@ -35,6 +35,8 @@
       - yunion-qemu-4.2.0
       - yunion-qemu-10.0.7
       - yunion-ovmf
+      - yunion-secbootovmf
+      - yunion-swtpm
     disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
     enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
     state: latest
