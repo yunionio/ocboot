@@ -10,3 +10,4 @@
     - { role: utils/containerd, when: 'enable_containerd | default(false) == true'}
     - { role: utils/ai-env, when: 'enable_ai_env|default(false) == true and enable_containerd|default(false) == true' }
     - { role: utils/kernel-check, when: "join_as_host|default(false) and enable_containerd|default(false) == false" }
+    - { role: utils/enable-pod-feature, when: 'enable_containerd | default(false) == true' }

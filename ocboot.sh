@@ -41,7 +41,7 @@ ROOT_DIR='/ocboot'
 CMD=""
 
 is_ocboot_subcmd() {
-    local subcmds="install upgrade add-node add-lbagent backup restore setup-container-env switch-edition clickhouse"
+    local subcmds="install upgrade add-node add-lbagent backup restore setup-container-env switch-edition clickhouse setup-ai-env"
     for subcmd in $subcmds; do
         if [[ "$1" == "$subcmd" ]]; then
             return 0
