@@ -21,6 +21,7 @@
   - ovs_packages is defined
   - common_packages is defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Append ceph_packages to common_packages if ceph_packages is defined
   set_fact:
@@ -29,6 +30,7 @@
   - ceph_packages is defined
   - common_packages is defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Install Common Packages Via Loop
   package:

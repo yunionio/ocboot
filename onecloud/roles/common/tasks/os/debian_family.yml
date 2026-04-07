@@ -68,6 +68,7 @@
     - ansible_distribution_major_version in ["11", "12", "13", "22", "24", "25"]
     - onecloud_version is defined
     - onecloud_version is version('v3.10', '<=')
+    - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v3.10', '<=')
 
 - name: Append ovs_packages to common_packages if ovs_packages is defined
   set_fact:
@@ -76,6 +77,7 @@
   - ovs_packages is defined
   - common_packages is defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Append ceph_packages to common_packages if ceph_packages is defined
   set_fact:
@@ -84,6 +86,7 @@
   - ceph_packages is defined
   - common_packages is defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Install common packages via loop for Debian Family
   package:

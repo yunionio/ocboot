@@ -11,3 +11,4 @@
   become: true
   when:
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')

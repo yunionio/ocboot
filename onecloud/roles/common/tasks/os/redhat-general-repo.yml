@@ -43,6 +43,7 @@
   - ovs_preinstall_packages is defined
   - preinstall_packages is defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Append ceph_preinstall_packages to preinstall_packages if ceph_preinstall_packages is defined
   set_fact:
@@ -51,6 +52,7 @@
   - ceph_preinstall_packages is defined
   - preinstall_packages is defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Install Preinstall Packages Via Loop
   package:
@@ -78,6 +80,7 @@
   when:
   - imported_repos is not defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Append ovs_imported_repos to imported_repos if ovs_imported_repos is defined
   set_fact:
@@ -86,6 +89,7 @@
   - ovs_imported_repos is defined
   - imported_repos is defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Append ceph_imported_repos to imported_repos if ceph_imported_repos is defined
   set_fact:
@@ -94,6 +98,7 @@
   - ceph_imported_repos is defined
   - imported_repos is defined
   - onecloud_version is version('v4.0', '<')
+  - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
 - name: Import additional repos
   shell: |
