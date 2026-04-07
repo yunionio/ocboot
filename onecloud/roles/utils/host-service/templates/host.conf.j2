@@ -55,7 +55,11 @@ hostname: {{ ansible_hostname }}
 host_cpu_passthrough: true
 host_health_timeout: 30
 host_lease_timeout: 10
+{% if enable_containerd | default(false) %}
+host_type: container
+{% else %}
 host_type: hypervisor
+{% endif %}
 {% if host_enable_hugepage %}
 hugepages_option: native
 {% else %}
