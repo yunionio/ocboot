@@ -19,11 +19,20 @@
     mode: '0644'
   become: true
 
-- name: Update PCI IDs
-  shell: update-pciids
+- name: Ensure hwdata directory exists
+  file:
+    path: /usr/share/hwdata
+    state: directory
   become: true
-  args:
-    executable: /bin/bash
+
+- name: Update PCI IDs
+  copy:
+    src: "{{ role_path }}/../gpu-init/files/pci.ids"
+    dest: /usr/share/hwdata/pci.ids
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
 
 - name: Update host configuration
   lineinfile:
