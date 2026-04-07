@@ -1,0 +1,10 @@
+---
+- name: Enable pod feature config on controlplane
+  shell: |
+    source ~/.onecloud_rcadmin
+    /opt/yunion/bin/climc feature-config-pod --switch on
+  delegate_to: "{{ k8s_controlplane_host }}"
+  run_once: true
+  become: true
+  args:
+    executable: /bin/bash
