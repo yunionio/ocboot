@@ -114,6 +114,7 @@
       name: rsync
       state: present
     become: true
+    when: not (nvidia_installer_on_remote | default(false))
 
   - name: Copy NVIDIA driver installer to remote host using synchronize
     ansible.builtin.synchronize:
@@ -122,7 +123,11 @@
       mode: push
     delegate_to: localhost
     become: false
-    when: nvidia_driver_installer_path is defined
+    when: nvidia_driver_installer_path is defined and not (nvidia_installer_on_remote | default(false))
+
+  - name: Set effective NVIDIA driver installer path
+    set_fact:
+      nvidia_installer_effective_path: "{{ nvidia_driver_installer_path if (nvidia_installer_on_remote | default(false)) else '/opt/nvidia/' + nvidia_driver_installer }}"
 
   - name: Find kernel source path
     shell: |
@@ -145,8 +150,8 @@
 
   - name: Install NVIDIA driver with kernel source path
     shell: |
-      cd /opt/nvidia
-      ./{{ nvidia_driver_installer }} --silent --accept-license --no-questions --kernel-source-path={{ kernel_source_path }}
+      chmod +x {{ nvidia_installer_effective_path }}
+      {{ nvidia_installer_effective_path }} --silent --accept-license --no-questions --kernel-source-path={{ kernel_source_path }}
     become: true
     args:
       executable: /bin/bash
@@ -155,8 +160,8 @@
 
   - name: Install NVIDIA driver without kernel source path
     shell: |
-      cd /opt/nvidia
-      ./{{ nvidia_driver_installer }} --silent --accept-license --no-questions
+      chmod +x {{ nvidia_installer_effective_path }}
+      {{ nvidia_installer_effective_path }} --silent --accept-license --no-questions
     become: true
     args:
       executable: /bin/bash
