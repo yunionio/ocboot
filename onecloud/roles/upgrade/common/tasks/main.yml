@@ -2,10 +2,6 @@
 - name: collect upgrade info
   import_tasks: collect_upgrade_info.yml
 
-- name: Include cronjobs
-  include_role:
-    name: utils/cronjobs
-
 - name: Include utils/k8s/kubelet/extra-args tasks
   include_role:
     name: utils/k8s/kubelet/extra-args
@@ -30,7 +26,3 @@
     skip: true
   when:
     - is_major_upgrade or force_upgrade | default(false) | bool == true
-
-- name: checking ports
-  include_role:
-    name: utils/kernel-modules

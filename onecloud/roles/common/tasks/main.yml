@@ -3,11 +3,19 @@
 #   include_role:
 #     name: utils/misc-check
 
+- name: output onecloud_version
+  debug:
+    var: onecloud_version
+
+- name: output upgrade_onecloud_version
+  debug:
+    var: upgrade_onecloud_version
+ 
 - name: Verify OS is not debian based when lbagent is enabled
   fail:
     msg: "Cannot deploy lbagent on Debian based OS (AppArmor enabled OS)"
   when:
-    - enable_lbagent
+    - enable_lbagent | default(false) | bool == true
     - ansible_os_family == 'Debian'
 
 # 这里设置 primary_master_node_ip ，如果 primary_master_node_ip 不存在，则使用 hostvars[groups['primary_master_node'][0]]['node_ip']
@@ -37,7 +45,7 @@
   when:
   - win11_packages is defined
   - common_packages is defined
-  - onecloud_version is version('v4.0', '>=')
+  - (onecloud_version is version('v4.0', '>=') and upgrade_onecloud_version is not defined) or (upgrade_onecloud_version is defined and upgrade_onecloud_version is version('v4.0', '>='))
 
 - name: Append qemu_10_packages to common_packages after version 4.0
   set_fact:
@@ -45,10 +53,10 @@
   when:
   - qemu_10_packages is defined
   - common_packages is defined
-  - onecloud_version is version('v4.0', '>=')
+  - (onecloud_version is version('v4.0', '>=') and upgrade_onecloud_version is not defined) or (upgrade_onecloud_version is defined and upgrade_onecloud_version is version('v4.0', '>='))
 
 # onecloud/roles/common/tasks/
-- name: "Import OS Arch tasks Common 6 ({{ ansible_distribution }} {{ ansible_distribution_major_version }} {{ ansible_architecture }})"
+- name: "Import OS Arch tasks Common ({{ ansible_distribution }} {{ ansible_distribution_major_version }} {{ ansible_architecture }})"
   include_tasks: "{{ item }}"
   with_first_found:
   - files:
@@ -245,4 +253,4 @@
 - name: Install ceph and openvswitch scripts
   include_tasks: "symlink.yml"
   when:
-  - onecloud_version is version('v4.0', '>=')
+  - (onecloud_version is version('v4.0', '>=') and upgrade_onecloud_version is not defined) or (upgrade_onecloud_version is defined and upgrade_onecloud_version is version('v4.0', '>='))
