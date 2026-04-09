@@ -27,3 +27,9 @@
   debug:
     msg: "Container Toolkit status: {{ toolkit_verification.stdout_lines }}"
   when: toolkit_verification.rc == 0
+
+- name: Restart host service by killing /opt/yunion/bin/host process
+  shell: pgrep -xf '/opt/yunion/bin/host --common-config-file.*' | xargs -r kill || true
+  become: true
+  args:
+    executable: /bin/bash

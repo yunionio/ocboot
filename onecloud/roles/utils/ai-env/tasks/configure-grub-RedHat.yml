@@ -1,0 +1,5 @@
+- name: Update GRUB configuration
+  shell: grub2-mkconfig -o "$(readlink -f /etc/grub2-efi.cfg 2>/dev/null || readlink -f /etc/grub2.cfg 2>/dev/null || echo /boot/grub2/grub.cfg)"
+  become: true
+  args:
+    executable: /bin/bash

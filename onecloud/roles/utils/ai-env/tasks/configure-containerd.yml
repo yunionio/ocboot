@@ -7,13 +7,20 @@
 
 - name: Configure containerd runtime for NVIDIA
   shell: |
-    nvidia-ctk runtime configure --runtime=containerd --config /etc/yunion/containerd/config.toml
+    nvidia-ctk runtime configure --runtime=containerd --set-as-default --config /etc/yunion/containerd/config.toml
   become: true
   args:
     executable: /bin/bash
   register: runtime_config_result
 
 - debug: var=runtime_config_result.stdout_lines
+
+- name: Set default_runtime_name to nvidia in yunion-containerd config
+  replace:
+    path: /etc/yunion/containerd/config.toml
+    regexp: '(default_runtime_name\s*=\s*)"[^"]*"'
+    replace: '\1"nvidia"'
+  become: true
 
 - name: Restart yunion-containerd service
   systemd:

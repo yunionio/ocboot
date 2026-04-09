@@ -1,0 +1,5 @@
+- name: Update GRUB configuration
+  shell: update-grub
+  become: true
+  args:
+    executable: /bin/bash
