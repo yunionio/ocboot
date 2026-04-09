@@ -13,12 +13,8 @@
   when: grub_check.rc != 0
 
 - name: Update GRUB configuration
-  shell: grub2-mkconfig > /boot/efi/EFI/openEuler/grub.cfg
-  become: true
-  args:
-    executable: /bin/bash
+  include_tasks: "configure-grub-{{ ansible_os_family }}.yml"
   when: grub_check.rc != 0
-  register: grub_update_result
 
 - name: Reboot system after grub update
   reboot:

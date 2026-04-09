@@ -3,49 +3,35 @@
   register: current_kernel_version
   changed_when: false
 
-- name: Install kernel headers and development packages for current kernel (RedHat)
-  shell: |
-    KERNEL_VERSION="{{ current_kernel_version.stdout }}"
-    yum install -y kernel-headers-${KERNEL_VERSION} kernel-devel-${KERNEL_VERSION} || \
-    yum install -y "kernel-headers-${KERNEL_VERSION}" "kernel-devel-${KERNEL_VERSION}" || \
-    yum install -y {{ kernel_package }} {{ kernel_headers_package }} {{ kernel_devel_package }}
+- name: Install kernel headers, development packages and build tools
+  include_tasks: "install-nvidia-driver-{{ ansible_os_family }}.yml"
+
+# 禁用 Nouveau 驱动
+- name: Blacklist nouveau driver
+  copy:
+    content: |
+      blacklist nouveau
+      options nouveau modeset=0
+    dest: /etc/modprobe.d/blacklist-nouveau.conf
+    mode: '0644'
+  become: true
+  register: nouveau_blacklisted
+
+- name: Regenerate initramfs after blacklisting nouveau (RedHat)
+  shell: dracut --force
   become: true
   args:
     executable: /bin/bash
-  register: kernel_install_result
-  when: ansible_os_family == "RedHat"
+  when: nouveau_blacklisted.changed and ansible_os_family == "RedHat"
 
-- name: Install kernel headers and development packages for current kernel (Debian)
-  shell: |
-    KERNEL_VERSION="{{ current_kernel_version.stdout }}"
-    apt-get update && \
-    apt-get install -y linux-headers-${KERNEL_VERSION} || \
-    apt-get install -y {{ kernel_package }} {{ kernel_headers_package }} {{ kernel_devel_package }}
+- name: Regenerate initramfs after blacklisting nouveau (Debian)
+  shell: update-initramfs -u
   become: true
   args:
     executable: /bin/bash
-  register: kernel_install_result
-  when: ansible_os_family == "Debian"
+  when: nouveau_blacklisted.changed and ansible_os_family == "Debian"
 
-- name: Install build tools (gcc, make, etc.) for RedHat
-  package:
-    name:
-      - gcc
-      - make
-      - binutils
-    state: present
-  become: true
-  when: ansible_os_family == "RedHat"
-
-- name: Install build tools (gcc, make, etc.) for Debian
-  package:
-    name:
-      - build-essential
-    state: present
-  become: true
-  when: ansible_os_family == "Debian"
-
-# 新增：清理vfio相关配置和grub参数，重建grub并重启
+# 清理vfio相关配置和grub参数，重建grub并重启
 - name: 删除 /etc/modules-load.d/vfio.conf
   file:
     path: /etc/modules-load.d/vfio.conf
@@ -87,10 +73,7 @@
   register: grub_iommu_removed
 
 - name: 重新生成 grub 配置
-  shell: grub2-mkconfig > /boot/efi/EFI/openEuler/grub.cfg
-  become: true
-  args:
-    executable: /bin/bash
+  include_tasks: "configure-grub-{{ ansible_os_family }}.yml"
   when: grub_vfio_removed.changed or grub_iommu_removed.changed
 
 - name: 重启系统
@@ -102,7 +85,7 @@
     post_reboot_delay: 30
     test_command: whoami
   become: true
-  when: kernel_install_result.changed or grub_vfio_removed.changed or grub_iommu_removed.changed 
+  when: kernel_install_result.changed or nouveau_blacklisted.changed or grub_vfio_removed.changed or grub_iommu_removed.changed
 
 - name: Check if NVIDIA driver is already installed
   shell: nvidia-smi
