@@ -1,0 +1,17 @@
+- name: Install kernel headers and development packages for current kernel
+  shell: |
+    KERNEL_VERSION="{{ current_kernel_version.stdout }}"
+    apt-get update && \
+    apt-get install -y linux-headers-${KERNEL_VERSION} || \
+    apt-get install -y {{ kernel_package }} {{ kernel_headers_package }} {{ kernel_devel_package }}
+  become: true
+  args:
+    executable: /bin/bash
+  register: kernel_install_result
+
+- name: Install build tools
+  package:
+    name:
+      - build-essential
+    state: present
+  become: true
