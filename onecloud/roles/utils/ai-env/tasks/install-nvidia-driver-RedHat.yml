@@ -1,0 +1,19 @@
+- name: Install kernel headers and development packages for current kernel
+  shell: |
+    KERNEL_VERSION="{{ current_kernel_version.stdout }}"
+    yum install -y kernel-headers-${KERNEL_VERSION} kernel-devel-${KERNEL_VERSION} || \
+    yum install -y "kernel-headers-${KERNEL_VERSION}" "kernel-devel-${KERNEL_VERSION}" || \
+    yum install -y {{ kernel_package }} {{ kernel_headers_package }} {{ kernel_devel_package }}
+  become: true
+  args:
+    executable: /bin/bash
+  register: kernel_install_result
+
+- name: Install build tools (gcc, make, etc.)
+  package:
+    name:
+      - gcc
+      - make
+      - binutils
+    state: present
+  become: true
