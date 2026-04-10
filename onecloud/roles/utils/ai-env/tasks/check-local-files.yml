@@ -1,25 +1,53 @@
-- name: Check if NVIDIA driver installer exists locally
+- name: Check if NVIDIA driver installer exists on target host
   stat:
     path: "{{ nvidia_driver_installer_path }}"
-  register: nvidia_file_check
-  delegate_to: localhost
-  become: false
+  register: nvidia_remote_file_check
   when: nvidia_driver_installer_path is defined
 
-- name: Fail if NVIDIA driver installer not found
-  fail:
-    msg: "NVIDIA driver installer not found at {{ nvidia_driver_installer_path }}"
-  when: nvidia_driver_installer_path is defined and (not nvidia_file_check.stat.exists | default(false))
+- name: Set flag for NVIDIA installer presence on target host
+  set_fact:
+    nvidia_installer_on_remote: "{{ nvidia_remote_file_check.stat.exists | default(false) }}"
+  when: nvidia_driver_installer_path is defined
 
-- name: Check if CUDA installer exists locally
+- name: Check if NVIDIA driver installer exists locally (control node fallback)
   stat:
-    path: "{{ cuda_installer_path }}"
-  register: cuda_file_check
+    path: "{{ nvidia_driver_installer_path }}"
+  register: nvidia_local_file_check
   delegate_to: localhost
   become: false
+  when: nvidia_driver_installer_path is defined and not (nvidia_installer_on_remote | default(false))
+
+- name: Fail if NVIDIA driver installer not found on target host or locally
+  fail:
+    msg: "NVIDIA driver installer not found at {{ nvidia_driver_installer_path }} on either the target host or the control node"
+  when: >
+    nvidia_driver_installer_path is defined and
+    not (nvidia_installer_on_remote | default(false)) and
+    not (nvidia_local_file_check.stat.exists | default(false))
+
+- name: Check if CUDA installer exists on target host
+  stat:
+    path: "{{ cuda_installer_path }}"
+  register: cuda_remote_file_check
   when: cuda_installer_path is defined
 
-- name: Fail if CUDA installer not found
+- name: Set flag for CUDA installer presence on target host
+  set_fact:
+    cuda_installer_on_remote: "{{ cuda_remote_file_check.stat.exists | default(false) }}"
+  when: cuda_installer_path is defined
+
+- name: Check if CUDA installer exists locally (control node fallback)
+  stat:
+    path: "{{ cuda_installer_path }}"
+  register: cuda_local_file_check
+  delegate_to: localhost
+  become: false
+  when: cuda_installer_path is defined and not (cuda_installer_on_remote | default(false))
+
+- name: Fail if CUDA installer not found on target host or locally
   fail:
-    msg: "CUDA installer not found at {{ cuda_installer_path }}"
-  when: cuda_installer_path is defined and (not cuda_file_check.stat.exists | default(false))
+    msg: "CUDA installer not found at {{ cuda_installer_path }} on either the target host or the control node"
+  when: >
+    cuda_installer_path is defined and
+    not (cuda_installer_on_remote | default(false)) and
+    not (cuda_local_file_check.stat.exists | default(false))

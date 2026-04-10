@@ -79,6 +79,28 @@ fi
 
 mkdir -p "$HOME/.kube"
 
+# Parse --nvidia-driver-installer-path and --cuda-installer-path from args and
+# add bind-mounts so the installer files are accessible inside the container at
+# their original absolute paths.
+extra_installer_volumes=()
+prev_arg=""
+declare -A mounted_installer_dirs
+for arg in "$@"; do
+    case "$prev_arg" in
+        --nvidia-driver-installer-path|--cuda-installer-path)
+            # Only handle absolute paths that are not already under $(pwd)
+            if [[ "$arg" == /* ]] && [[ "${arg#$(pwd)/}" == "$arg" ]]; then
+                _dir="$(dirname "$arg")"
+                if [[ -z "${mounted_installer_dirs[$_dir]+x}" ]]; then
+                    extra_installer_volumes+=(-v "$_dir:$_dir:ro")
+                    mounted_installer_dirs[$_dir]=1
+                fi
+            fi
+            ;;
+    esac
+    prev_arg="$arg"
+done
+
 buildah run --isolation chroot --user $(id -u):$(id -g) \
     -t "${buildah_extra_args[@]}" \
     --net=host \
@@ -89,4 +111,5 @@ buildah run --isolation chroot --user $(id -u):$(id -g) \
     -v "/etc/group:/etc/group:ro" \
     -v "$(pwd):$ROOT_DIR" \
     -v "$(pwd)/airgap_assets/k3s-install.sh:/airgap_assets/k3s-install.sh:ro" \
+    "${extra_installer_volumes[@]}" \
     "$CONTAINER_NAME" $CMD $origin_args $cmd_extra_args
