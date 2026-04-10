@@ -18,6 +18,7 @@
       name: rsync
       state: present
     become: true
+    when: not (cuda_installer_on_remote | default(false))
 
   - name: Copy CUDA installer to remote host using synchronize
     ansible.builtin.synchronize:
@@ -26,12 +27,15 @@
       mode: push
     delegate_to: localhost
     become: false
-    when: cuda_installer_path is defined
+    when: cuda_installer_path is defined and not (cuda_installer_on_remote | default(false))
+
+  - name: Set effective CUDA installer path
+    set_fact:
+      cuda_installer_effective_path: "{{ cuda_installer_path if (cuda_installer_on_remote | default(false)) else '/opt/nvidia/' + cuda_installer }}"
 
   - name: Check CUDA installer help
     shell: |
-      cd /opt/nvidia
-      ./{{ cuda_installer }} --help
+      {{ cuda_installer_effective_path }} --help
     become: true
     args:
       executable: /bin/bash
@@ -50,9 +54,8 @@
 
   - name: Verify CUDA installer file integrity
     shell: |
-      cd /opt/nvidia
-      file ./{{ cuda_installer }}
-      ls -lh ./{{ cuda_installer }}
+      file {{ cuda_installer_effective_path }}
+      ls -lh {{ cuda_installer_effective_path }}
     become: true
     register: cuda_file_check
     changed_when: false
@@ -62,11 +65,11 @@
 
   - name: Install CUDA
     shell: |
-      cd /opt/nvidia
       export TMPDIR=/opt/nvidia/tmp
       export TEMP=/opt/nvidia/tmp
       export TMP=/opt/nvidia/tmp
-      setsid bash -c "./{{ cuda_installer }} --silent --toolkit" < /dev/null > /tmp/cuda_install.log 2>&1 || {
+      chmod +x {{ cuda_installer_effective_path }}
+      setsid bash -c "{{ cuda_installer_effective_path }} --silent --toolkit" < /dev/null > /tmp/cuda_install.log 2>&1 || {
         EXIT_CODE=$?
         cat /tmp/cuda_install.log
         exit $EXIT_CODE
