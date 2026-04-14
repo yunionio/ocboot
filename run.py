@@ -522,8 +522,35 @@ def generate_config(
 parser = None
 
 
+def check_cluster_deployed(ipaddr):
+    """检查目标节点是否已经部署了 OneCloud 集群。
+    通过 SSH 到目标节点执行 kubectl 命令来检测。
+    """
+    username = get_username()
+    # 尝试通过 SSH 在目标节点上执行 kubectl 命令检查 onecloud 集群是否存在
+    # 先尝试 k3s kubectl，再尝试 kubectl
+    check_cmd = (
+        "k3s kubectl -n onecloud get onecloudclusters default -o name 2>/dev/null"
+        " || kubectl -n onecloud get onecloudclusters default -o name 2>/dev/null"
+    )
+    ssh_cmd = (
+        f"ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no"
+        f" -o PasswordAuthentication=no -o LogLevel=error"
+        f" {username}@{ipaddr} '{check_cmd}'"
+    )
+    try:
+        ret = subprocess.run(ssh_cmd, shell=True, capture_output=True, timeout=15)
+        if ret.returncode == 0 and b'onecloudcluster' in ret.stdout.lower():
+            return True
+    except (subprocess.TimeoutExpired, Exception):
+        pass
+    return False
+
+
 def inject_common_options(parser):
     """添加 run.py 中所有命令共用的参数"""
+    parser.add_argument('--force', action='store_true', default=False,
+                       help="Force install even if a cluster is already deployed on the target node")
     parser.add_argument('--ip-dual-conf', type=str, dest='ip_dual_conf',
                        help="Input the second IP address for dual-stack configuration (IPv6 if IP_CONF is IPv4, or IPv4 if IP_CONF is IPv6)")
     parser.add_argument('--enable-ipip', action='store_true', dest='enable_ipip',
@@ -681,7 +708,13 @@ def main():
         exit()
     
     check_env(ip_conf, pip_mirror=args.pip_mirror)
-    
+
+    # 检查目标节点是否已经部署了集群
+    if not args.force:
+        if check_cluster_deployed(ip_conf):
+            pr_red(f"Error: A OneCloud cluster is already deployed on {ip_conf}.")
+            sys.exit(1)
+
     # 如果是 ai 模式，设置 enable_ai_env，并根据是否提供参数决定是否传递 NVIDIA 变量
     extra_vars = None
     if is_ai_mode:
