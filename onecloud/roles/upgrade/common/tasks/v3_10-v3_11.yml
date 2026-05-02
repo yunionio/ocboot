@@ -48,7 +48,6 @@
     name:
       - yunion-ocadm
       - yunion-climc
-      - yunion-climc-ee
       - yunion-executor
       - yunion-qemu-4.2.0
       - openvswitch

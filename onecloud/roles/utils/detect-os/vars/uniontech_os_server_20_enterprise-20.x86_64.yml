@@ -38,7 +38,6 @@ common_packages:
   - software-properties-common
   - wget
   - yunion-climc
-  - yunion-climc-ee
   - yunion-executor
   - yunion-fetcherfs
   - yunion-ocadm

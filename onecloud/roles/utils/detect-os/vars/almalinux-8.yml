@@ -1,5 +1,6 @@
 ---
 is_redhat_based: true
+centos_version: 8
 
 common_packages:
     - autogen-libopts
