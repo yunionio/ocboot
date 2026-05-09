@@ -1,3 +1,10 @@
 - name: include some {{ k8s_or_k3s }} tasks
   include_role:
     name: "primary-master-node/setup_{{k8s_or_k3s}}"
+
+- name: cache ceph docker image
+  shell: |
+    /usr/local/bin/ceph --version
+  when:
+  - (onecloud_version is version('v4.0', '>=') and upgrade_onecloud_version is not defined) or (upgrade_onecloud_version is defined and upgrade_onecloud_version is version('v4.0', '>='))
+  - enable_lbagent | default(false) | bool == false
