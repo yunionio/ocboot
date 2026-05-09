@@ -18,6 +18,8 @@
     state: link
     force: yes
   become: true
+  when:
+  - enable_lbagent | default(false) | bool == false
 
 - name: install ceph-14
   file:
@@ -26,6 +28,8 @@
     state: link
     force: yes
   become: true
+  when:
+  - enable_lbagent | default(false) | bool == false
 
 - name: install ceph-16
   file:
@@ -34,6 +38,8 @@
     state: link
     force: yes
   become: true
+  when:
+  - enable_lbagent | default(false) | bool == false
 
 - name: install ceph-18
   file:
@@ -42,6 +48,48 @@
     state: link
     force: yes
   become: true
+  when:
+  - enable_lbagent | default(false) | bool == false
+
+- name: install rbd
+  file:
+    src: /opt/yunion/bin/ceph.sh
+    dest: /usr/local/bin/rbd
+    state: link
+    force: yes
+  become: true
+  when:
+  - enable_lbagent | default(false) | bool == false
+
+- name: install rbd-14
+  file:
+    src: /opt/yunion/bin/ceph.sh
+    dest: /usr/local/bin/rbd-14
+    state: link
+    force: yes
+  become: true
+  when:
+  - enable_lbagent | default(false) | bool == false
+
+- name: install rbd-16
+  file:
+    src: /opt/yunion/bin/ceph.sh
+    dest: /usr/local/bin/rbd-16
+    state: link
+    force: yes
+  become: true
+  when:
+  - enable_lbagent | default(false) | bool == false
+
+- name: install rbd-18
+  file:
+    src: /opt/yunion/bin/ceph.sh
+    dest: /usr/local/bin/rbd-18
+    state: link
+    force: yes
+  become: true
+  when:
+  - enable_lbagent | default(false) | bool == false
 
 - name: install ovs-vsctl
   file:
