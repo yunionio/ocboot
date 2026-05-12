@@ -11,13 +11,6 @@
   debug:
     var: upgrade_onecloud_version
  
-- name: Verify OS is not debian based when lbagent is enabled
-  fail:
-    msg: "Cannot deploy lbagent on Debian based OS (AppArmor enabled OS)"
-  when:
-    - enable_lbagent | default(false) | bool == true
-    - ansible_os_family == 'Debian'
-
 # 这里设置 primary_master_node_ip ，如果 primary_master_node_ip 不存在，则使用 hostvars[groups['primary_master_node'][0]]['node_ip']
 - name: set primary_master_node_ip if not defined
   set_fact:
