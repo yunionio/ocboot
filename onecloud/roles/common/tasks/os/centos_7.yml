@@ -10,11 +10,33 @@
     content: |
       [yunion-repo-offline]
       name=Packages for Yunion Multi-Cloud Platform -
-      baseurl=https://iso.yunion.cn/centos/$releasever/{{onecloud_version_abbr}}/$basearch
+      baseurl=https://iso.yunion.cn/centos/$releasever/3.11/$basearch
       sslverify=0
       failovermethod=priority
       enabled=1
       gpgcheck=0
+      priority=3
+      module_hotfixes=true
+
+      [yunion-repo-base]
+      name=Packages for Yunion Cloud Platform
+      baseurl=https://iso.yunion.cn/rpm/8/{{ ansible_architecture }}
+      sslverify=0
+      failovermethod=priority
+      enabled=1
+      gpgcheck=0
+      priority=1
+      module_hotfixes=true
+
+      [yunion-repo-updates]
+      name=Updated Packages for Yunion Cloud Platform
+      baseurl=https://iso.yunion.cn/rpm-updates/{{ansible_architecture}}
+      sslverify=0
+      failovermethod=priority
+      enabled=1
+      gpgcheck=0
+      priority=2
+      module_hotfixes=true
     dest: /etc/yum.repos.d/yunion.repo
   become: yes
   retries: 3
