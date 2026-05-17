@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TTY=""
-BIMG={{ insecure_registry | default('registry.cn-beijing.aliyuncs.com') }}/{{ registry | default('yunion') }}/openvswitch:2.12.4-20260212
+BIMG={{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion') }}/openvswitch:2.12.4-20260212
 
 {% if k8s_or_k3s | default('k3s') == 'k3s' %}
 if [ -t 0 ]; then
@@ -14,7 +14,7 @@ if [ -z "$IMG" ]; then
         IMG=$BIMG
         k3s ctr images list name==$IMG -q | grep $IMG > /dev/null
         if [ $? -ne 0 ]; then
-            k3s ctr images pull $IMG
+            k3s ctr images pull $IMG{{ ' --plain-http' if online_status == 'offline' else '' }}
         fi
     fi
 fi
