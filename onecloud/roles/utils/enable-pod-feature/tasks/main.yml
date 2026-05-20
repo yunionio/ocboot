@@ -3,6 +3,7 @@
   shell: |
     source ~/.onecloud_rcadmin
     /opt/yunion/bin/climc feature-config-pod --switch on
+    /opt/yunion/bin/climc feature-config-ai --switch on
   delegate_to: "{{ k8s_controlplane_host }}"
   run_once: true
   become: true
