@@ -40,4 +40,25 @@
   when:
   - nm_service is defined
   - nm_service.state | default('stopped') == 'started'
-  notify: Reload NetworkManager
+
+- name: Reload NetworkManager
+  service:
+    name: NetworkManager
+    state: reloaded
+  become: true
+  when:
+  - '"running" in nm_check.stdout'
+  - is_uos_fou | default(false)|bool == false
+  ignore_errors: yes
+  changed_when: false
+  failed_when: false
+
+- name: Remove immutable flag on /etc/resolv.conf
+  shell: |
+    chattr -i /etc/resolv.conf
+  become: true
+  ignore_errors: yes
+  changed_when: false
+  failed_when: false
+  when:
+  - is_uos_fou | default(false)|bool == false
