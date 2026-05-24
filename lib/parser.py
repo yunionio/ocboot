@@ -16,8 +16,7 @@ def inject_ssh_options(parser):
 
     parser.add_argument("--key-file", "-k",
                         dest="ssh_private_file",
-                        default=os.path.expanduser("~/.ssh/id_rsa"),
-                        help=help_d("target host ssh private key file"))
+                        help=help_d("target host ssh private key file, if not provided, will use the default private key file in ~/.ssh"))
 
     parser.add_argument("--port", "-p",
                         dest="ssh_port",

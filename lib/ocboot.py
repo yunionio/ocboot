@@ -577,8 +577,9 @@ class PrimaryMasterConfig(OnecloudConfig):
             self.node_ip_v6 = config.get('node_ip_v6', None)
             self.pod_network_cidr_v4 = config.get('pod_network_cidr_v4', '10.40.0.0/16')
             self.service_cidr_v4 = config.get('service_cidr_v4', '10.96.0.0/12')
-            # IPIP配置选项
-            self.enable_ipip = config.get('enable_ipip', False)
+
+        # IPIP配置选项
+        self.enable_ipip = config.get('enable_ipip', False)
 
         # set calico ip_autodetection_method only in primary master
         self.ip_autodetection_method = config.get('ip_autodetection_method', None)
@@ -664,7 +665,8 @@ class PrimaryMasterConfig(OnecloudConfig):
             vars['node_ip_v6'] = self.node_ip_v6
             vars['pod_network_cidr_v4'] = self.pod_network_cidr_v4
             vars['service_cidr_v4'] = self.service_cidr_v4
-            vars['enable_ipip'] = self.enable_ipip
+
+        vars['enable_ipip'] = self.enable_ipip
 
         if len(self.offline_nodes) > 0:
             vars['offline_nodes'] = ' '.join(self.offline_nodes)
