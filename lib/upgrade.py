@@ -63,8 +63,7 @@ def add_command(subparsers, command="upgrade"):
 
     parser.add_argument("--key-file", "-k",
                         dest="ssh_private_file",
-                        default=os.path.expanduser("~/.ssh/id_rsa"),
-                        help=help_d("primary master ssh private key file"))
+                        help=help_d("primary master ssh private key file, if not provided, will use the default private key file in ~/.ssh"))
 
     parser.add_argument("--port", "-p",
                         dest="ssh_port",
@@ -161,6 +160,7 @@ def do_upgrade(args):
     # for sync files. no ha ip.
     if args.primary_node_ip:
         vars['primary_node_ip'] = args.primary_node_ip
+        vars['primary_master_node_ip'] = args.primary_node_ip
 
     # when using -G: include gpu_init task;
     # when not using -G: ignore gpu_init task;
@@ -192,9 +192,7 @@ class UpgradeConfig(object):
         return self.current_onecloud_major_version != self.upgrade_onecloud_major_version
 
     def get_yunion_yum_repo(self):
-        ver = self.upgrade_onecloud_major_version.replace('_', '.')
-        ver = ver[1:]
-        return "https://iso.yunion.cn/centos/7/%s/x86_64/yunion.repo" % (ver)
+        return "https://iso.yunion.cn/centos/7/3.11/x86_64/yunion.repo"
 
     def to_ansible_vars(self, cluster):
         ret = {
