@@ -48,11 +48,7 @@ data:
   # Typha is disabled.
   typha_service_name: "none"
   # Configure the backend to use.
-{% if ip_type == 'ipv6' %}
-  calico_backend: "vxlan"
-{% else %}
-  calico_backend: "bird"
-{% endif %}
+  calico_backend: "{% if enable_ipip is defined and enable_ipip %}bird{% else %}vxlan{% endif %}"
 
   # Configure the MTU to use for workload interfaces and tunnels.
   # By default, MTU is auto-detected, and explicitly setting this field should not be required.
@@ -130,7 +126,7 @@ spec:
 ---
 {% endif %}
 # BGP configuration for dual-stack mode - disable BGP mesh for VXLAN
-{% if ip_type == 'dual-stack' %}
+{% if ip_type == 'dual-stack' and (enable_ipip is not defined or not enable_ipip) %}
 apiVersion: crd.projectcalico.org/v1
 kind: BGPConfiguration
 metadata:
@@ -141,7 +137,7 @@ spec:
 ---
 {% endif %}
 # BGP configuration for IPv4 mode - disable BGP mesh for VXLAN
-{% if ip_type == 'ipv4' %}
+{% if ip_type == 'ipv4' and (enable_ipip is not defined or not enable_ipip) %}
 apiVersion: crd.projectcalico.org/v1
 kind: BGPConfiguration
 metadata:
@@ -4962,7 +4958,7 @@ spec:
                   key: calico_backend
             # Cluster type to identify the deployment type
             - name: CLUSTER_TYPE
-              value: "k8s,vxlan"
+              value: "{% if enable_ipip is defined and enable_ipip %}k8s,bgp{% else %}k8s,vxlan{% endif %}"
             # Auto-detect the BGP IP address.
 {% if ip_type == 'ipv6' %}
             # IPv6 environment: disable IPv4 and enable IPv6
@@ -5179,6 +5175,9 @@ spec:
               command:
               - /bin/calico-node
               - -felix-live
+{% if enable_ipip is defined and enable_ipip %}
+              - -bird-live
+{% endif %}
 {% if ip_type == 'ipv6' %}
             periodSeconds: 10
             initialDelaySeconds: 10
@@ -5190,7 +5189,6 @@ spec:
               - /bin/calico-node
               - -felix-ready
 {% else %}
-              - -bird-live
             periodSeconds: 10
             initialDelaySeconds: 10
             failureThreshold: 6
@@ -5200,7 +5198,9 @@ spec:
               command:
               - /bin/calico-node
               - -felix-ready
+{% if enable_ipip is defined and enable_ipip %}
               - -bird-ready
+{% endif %}
 {% endif %}
             periodSeconds: 10
             timeoutSeconds: 10
