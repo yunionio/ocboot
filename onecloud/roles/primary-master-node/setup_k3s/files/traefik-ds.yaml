@@ -54,7 +54,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
-        image: rancher/mirrored-library-traefik:2.10.5
+        image: rancher/mirrored-library-traefik:{{ treafik_version }}
         imagePullPolicy: IfNotPresent
         name: traefik
         ports:
