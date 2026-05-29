@@ -1,0 +1,52 @@
+---
+- name: Collect current DNS servers from resolvectl
+  become: true
+  shell: |
+    resolvectl dns 2>/dev/null \
+      | awk '
+        /^Global:/ {
+          sub(/^Global:[[:space:]]*/, "")
+          if ($0 != "") print
+          next
+        }
+        /^Link / {
+          sub(/^Link [0-9]+ \([^)]+\):[[:space:]]*/, "")
+          if ($0 != "") print
+        }' \
+      | tr ' ' '\n' \
+      | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$|^([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}$' \
+      | grep -v '^127\.0\.0\.53$' \
+      | sort -u \
+      | paste -sd' ' -
+  args:
+    executable: /bin/bash
+  register: resolvectl_dns
+  changed_when: false
+  failed_when: false
+
+- name: Set systemd resolved DNS servers fact
+  set_fact:
+    systemd_resolved_dns_servers: "{{ resolvectl_dns.stdout | trim }}"
+  when: resolvectl_dns.stdout | trim | length > 0
+
+- name: Write /etc/systemd/resolved.conf
+  become: true
+  template:
+    src: etc_systemd_resolved.conf.j2
+    dest: /etc/systemd/resolved.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart systemd-resolved
+  become: true
+  service:
+    name: systemd-resolved
+    state: restarted
+
+- name: Link /etc/resolv.conf to /run/systemd/resolve/resolv.conf
+  become: true
+  shell: |
+    ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+  args:
+    executable: /bin/bash
