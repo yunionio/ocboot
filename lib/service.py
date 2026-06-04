@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import os
 
-from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, ClickhouseConfig, NodeConfig, Config, get_ansible_global_vars_by_cluster, KEY_PRIMARY_MASTER_NODE_IP
+from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, GROUP_PRIMARY_MASTER_NODE, ClickhouseConfig, Node, NodeConfig, Config, get_ansible_global_vars_by_cluster, KEY_PRIMARY_MASTER_NODE_IP
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
 from .parser import help_d, inject_add_hostagent_options, inject_primary_node_options, inject_ssh_options
@@ -414,25 +414,51 @@ class AutoBackupService(Service):
         return config.run(self.action)
 
 
+class PrimaryMasterNodeConfig(object):
+
+    def __init__(self, config, bastion_host=None):
+        self.node = Node(config).with_bastion(bastion_host)
+
+    @classmethod
+    def get_group(cls):
+        return GROUP_PRIMARY_MASTER_NODE
+
+    def get_nodes(self):
+        return [self.node]
+
+    def ansible_vars(self):
+        return {}
+
+
 class ClickhouseServiceConfig(object):
 
-    def __init__(self, cluster, primary_host,
+    def __init__(self, cluster, primary_host, clickhouse_host,
                  ch_pwd, ch_port, offline_data_path,
+                 ch_data_path='/opt/clickhouse',
                  ssh_user='root', ssh_port=22):
-        cfg = {
-            'host': primary_host,
+        ch_cfg = {
+            'host': clickhouse_host,
             'user': ssh_user,
             'port': ssh_port,
             'ch_password': ch_pwd,
             'ch_port': ch_port,
+            'ch_data_path': ch_data_path,
+        }
+        primary_cfg = {
+            'host': primary_host,
+            'user': ssh_user,
+            'port': ssh_port,
         }
         self.cluster = cluster
         self.primary_host = primary_host
-        self.ch_config = ClickhouseConfig(Config(cfg))
+        self.clickhouse_host = clickhouse_host
+        self.ch_config = ClickhouseConfig(Config(ch_cfg))
+        self.primary_config = PrimaryMasterNodeConfig(Config(primary_cfg))
         self.offline_data_path = offline_data_path
 
     def run(self):
-        inventory_content = ansible.get_inventory_config(self.ch_config)
+        inventory_content = ansible.get_inventory_config(
+            self.ch_config, self.primary_config)
         yaml_content = utils.to_yaml(inventory_content)
         filepath = './cluster_clickhouse_inventory.yml'
         with open(filepath, 'w') as f:
@@ -448,6 +474,7 @@ class ClickhouseServiceConfig(object):
         vars = self.ch_config.ansible_vars()
         vars['offline_data_path'] = self.offline_data_path
         vars[KEY_K8S_CONTROLPLANE_HOST] = self.primary_host
+        vars['ch_host'] = self.ch_config.node.node_ip
         global_vars = get_ansible_global_vars_by_cluster(self.cluster)
         vars.update(global_vars)
         return vars
@@ -463,24 +490,42 @@ class ClickhouseService(BaseService):
         inject_ssh_options(parser)
         parser.add_argument("offline_data_path",
                             metavar='OFFLINE_DATA_PATH',
-                            help="offline ISO mount point, e.g., /mnt")
+                            help="offline ISO mount point for RPM repo, e.g., /mnt")
         parser.add_argument("--ch-password", dest="ch_password",
                             help=help_d("clickhouse password"))
         parser.add_argument("--ch-port", dest="ch_port",
                             default=9000, type=int,
                             help=help_d("clickhouse port"))
+        parser.add_argument("--ch-data-path", dest="ch_data_path",
+                            default='/opt/clickhouse',
+                            help=help_d("clickhouse data directory"))
+        parser.add_argument("--clickhouse-host", dest="clickhouse_host",
+                            default=None,
+                            help=help_d("clickhouse target host, "
+                                        "defaults to primary master host"))
 
     def do_action(self, args):
-        # config = 
         if args.ch_password is None:
             args.ch_password = utils.generage_random_string(12)
             print(f'generated clickhouse password: {args.ch_password}')
+        clickhouse_host = args.clickhouse_host or args.primary_master_host
         cluster = construct_cluster(
             args.primary_master_host,
             args.ssh_user,
             args.ssh_private_file,
             args.ssh_port)
         print(f'found cluster {cluster.get_current_version()}')
-        config = ClickhouseServiceConfig(cluster,
-            args.primary_master_host, args.ch_password, args.ch_port, args.offline_data_path, args.ssh_user, args.ssh_port)
+        if clickhouse_host != args.primary_master_host:
+            print(f'deploy clickhouse on {clickhouse_host}, '
+                  f'patch cluster via primary master {args.primary_master_host}')
+        config = ClickhouseServiceConfig(
+            cluster,
+            args.primary_master_host,
+            clickhouse_host,
+            args.ch_password,
+            args.ch_port,
+            args.offline_data_path,
+            args.ch_data_path,
+            args.ssh_user,
+            args.ssh_port)
         return config.run()
