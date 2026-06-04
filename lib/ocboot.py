@@ -403,6 +403,7 @@ class ClickhouseConfig(object):
         self.node = Node(config).with_bastion(bastion_host)
         self.ch_password = config.ensure_get('ch_password')
         self.ch_port = config.get('ch_port', 9000)
+        self.ch_data_path = config.get('ch_data_path', '/opt/clickhouse')
 
     @classmethod
     def get_group(cls):
@@ -415,6 +416,7 @@ class ClickhouseConfig(object):
         vars = {
             "ch_password": self.ch_password,
             "ch_port": self.ch_port,
+            "ch_data_path": self.ch_data_path,
         }
         return vars
 

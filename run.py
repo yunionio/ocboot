@@ -268,6 +268,8 @@ conf = """
 #   user: ocboot_user
 #   # Password of clickhouse
 #   ch_password: your-clickhouse-password
+#   # Data directory of clickhouse (default: /opt/clickhouse)
+#   ch_data_path: /data/clickhouse
 # mariadb_node indicates the node where the mariadb service needs to be deployed
 mariadb_node:
   # IP of the machine to be deployed
