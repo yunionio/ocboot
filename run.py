@@ -18,6 +18,7 @@ from lib.utils import init_local_user_path
 from lib.utils import pr_red, pr_green
 from lib.utils import regex_search
 from lib.utils import is_valid_dns
+from lib.utils import validate_cidr, apply_cidr_to_config_dict
 from lib import ocboot
 from lib import consts
 
@@ -378,13 +379,106 @@ def update_config(yaml_conf, produc_stack, runtime):
     return yaml_conf
 
 
+def has_cidr_args(pod_network_cidr=None, service_cidr=None,
+                  pod_network_cidr_v4=None, service_cidr_v4=None):
+    return any(v is not None for v in (
+        pod_network_cidr, service_cidr, pod_network_cidr_v4, service_cidr_v4))
+
+
+def validate_cli_cidrs(args, ip_type):
+    if args.pod_network_cidr_v4 is not None:
+        validate_cidr(args.pod_network_cidr_v4, 'pod_network_cidr_v4', version=4)
+    if args.service_cidr_v4 is not None:
+        validate_cidr(args.service_cidr_v4, 'service_cidr_v4', version=4)
+    if args.pod_network_cidr is not None:
+        if ip_type == consts.IP_TYPE_IPV4:
+            validate_cidr(args.pod_network_cidr, 'pod_network_cidr', version=4)
+        elif ip_type in (consts.IP_TYPE_IPV6, consts.IP_TYPE_DUAL_STACK):
+            validate_cidr(args.pod_network_cidr, 'pod_network_cidr', version=6)
+        else:
+            validate_cidr(args.pod_network_cidr, 'pod_network_cidr')
+    if args.service_cidr is not None:
+        if ip_type == consts.IP_TYPE_IPV4:
+            validate_cidr(args.service_cidr, 'service_cidr', version=4)
+        elif ip_type in (consts.IP_TYPE_IPV6, consts.IP_TYPE_DUAL_STACK):
+            validate_cidr(args.service_cidr, 'service_cidr', version=6)
+        else:
+            validate_cidr(args.service_cidr, 'service_cidr')
+
+
+def get_config_ip_type(yaml_conf):
+    import yaml
+    if not path.isfile(yaml_conf):
+        return None
+    try:
+        with open(yaml_conf, 'r') as stream:
+            yaml_data = yaml.safe_load(stream) or {}
+    except yaml.YAMLError:
+        return None
+    pri = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {})
+    ip_type = pri.get('ip_type')
+    if ip_type:
+        return ip_type
+    hostname = pri.get('hostname') or pri.get('node_ip')
+    if hostname:
+        match_ip, ip_type = match_ipaddr(hostname)
+        if match_ip:
+            return ip_type
+    return None
+
+
+def patch_config_cidrs(yaml_conf, pod_network_cidr=None, service_cidr=None,
+                       pod_network_cidr_v4=None, service_cidr_v4=None):
+    if not has_cidr_args(pod_network_cidr, service_cidr,
+                         pod_network_cidr_v4, service_cidr_v4):
+        return yaml_conf
+
+    import yaml
+    yaml_data = {}
+    try:
+        if path.isfile(yaml_conf) and path.getsize(yaml_conf) > 0:
+            with open(yaml_conf, 'r') as stream:
+                yaml_data = yaml.safe_load(stream) or {}
+    except yaml.YAMLError as exc:
+        pr_red("paring %s error: %s" % (yaml_conf, exc))
+        raise Exception("paring %s error: %s" % (yaml_conf, exc))
+
+    pri = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {})
+    if not pri:
+        return yaml_conf
+
+    ip_type = pri.get('ip_type')
+    if not ip_type:
+        hostname = pri.get('hostname') or pri.get('node_ip')
+        if hostname:
+            match_ip, ip_type = match_ipaddr(hostname)
+            if not match_ip:
+                ip_type = consts.IP_TYPE_IPV4
+
+    changed = apply_cidr_to_config_dict(
+        pri,
+        ip_type=ip_type,
+        pod_network_cidr=pod_network_cidr,
+        service_cidr=service_cidr,
+        pod_network_cidr_v4=pod_network_cidr_v4,
+        service_cidr_v4=service_cidr_v4,
+    )
+    if changed:
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE] = pri
+        with open(yaml_conf, 'w') as f:
+            f.write(yaml.dump(yaml_data))
+    return yaml_conf
+
+
 def generate_config(
     ipaddr, produc_stack,
     dns_list=[], runtime=consts.RUNTIME_QEMU,
     image_repository=None,
     region=consts.DEFAULT_REGION_NAME,
     zone=consts.DEFAULT_ZONE_NAME,
-    ip_dual_conf=None, ip_type=None, enable_ipip=False):
+    ip_dual_conf=None, ip_type=None, enable_ipip=False,
+    pod_network_cidr=None, service_cidr=None,
+    pod_network_cidr_v4=None, service_cidr_v4=None):
     global conf
     import os.path
     import os
@@ -424,6 +518,15 @@ def generate_config(
     if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipaddr and \
             yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
         update_config(temp, produc_stack, runtime)
+        if has_cidr_args(pod_network_cidr, service_cidr,
+                         pod_network_cidr_v4, service_cidr_v4):
+            patch_config_cidrs(
+                temp,
+                pod_network_cidr=pod_network_cidr,
+                service_cidr=service_cidr,
+                pod_network_cidr_v4=pod_network_cidr_v4,
+                service_cidr_v4=service_cidr_v4,
+            )
         pr_green(f"reuse conf: {temp}")
         return temp
 
@@ -501,6 +604,15 @@ def generate_config(
             extra_pri_dict['enable_ipip'] = enable_ipip
         extra_pri_dict['host_networks'] = f'{interface}/br0/{ipaddr}'
 
+    apply_cidr_to_config_dict(
+        extra_pri_dict,
+        ip_type=ip_type,
+        pod_network_cidr=pod_network_cidr,
+        service_cidr=service_cidr,
+        pod_network_cidr_v4=pod_network_cidr_v4,
+        service_cidr_v4=service_cidr_v4,
+    )
+
     if runtime == consts.RUNTIME_CONTAINERD:
         yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE].update({
             ocboot.KEY_ENABLE_CONTAINERD: True,
@@ -573,6 +685,14 @@ def inject_common_options(parser):
     parser.add_argument('--zone', type=str, dest='zone',
                        default=consts.DEFAULT_ZONE_NAME,
                        help=f"Default zone name: {consts.DEFAULT_ZONE_NAME}")
+    parser.add_argument('--pod-network-cidr-v4', dest='pod_network_cidr_v4', type=str, default=None,
+                       help='IPv4 pod network CIDR for dual-stack, e.g. 10.50.0.0/16')
+    parser.add_argument('--service-cidr-v4', dest='service_cidr_v4', type=str, default=None,
+                       help='IPv4 service network CIDR for dual-stack, e.g. 10.100.0.0/16')
+    parser.add_argument('--pod-network-cidr', dest='pod_network_cidr', type=str, default=None,
+                       help='Pod network CIDR (IPv6 for dual-stack, or primary for single-stack)')
+    parser.add_argument('--service-cidr', dest='service_cidr', type=str, default=None,
+                       help='Service network CIDR (IPv6 for dual-stack, or primary for single-stack)')
 
 
 def get_args():
@@ -692,6 +812,17 @@ def main():
         # 普通模式：使用用户指定的 runtime
         runtime = args.runtime
 
+    cidr_ip_type = ip_type
+    if not match_ip and path.isfile(ip_conf):
+        cidr_ip_type = get_config_ip_type(ip_conf) or ip_type
+    if has_cidr_args(args.pod_network_cidr, args.service_cidr,
+                     args.pod_network_cidr_v4, args.service_cidr_v4):
+        try:
+            validate_cli_cidrs(args, cidr_ip_type)
+        except Exception as e:
+            pr_red(str(e))
+            sys.exit(1)
+
     # 生成配置文件
     if match_ip:
         conf = generate_config(ip_conf, stackDict.get(stack),
@@ -700,9 +831,20 @@ def main():
                                args.region, args.zone,
                                ip_dual_conf=args.ip_dual_conf,
                                ip_type=ip_type,
-                               enable_ipip=args.enable_ipip)
+                               enable_ipip=args.enable_ipip,
+                               pod_network_cidr=args.pod_network_cidr,
+                               service_cidr=args.service_cidr,
+                               pod_network_cidr_v4=args.pod_network_cidr_v4,
+                               service_cidr_v4=args.service_cidr_v4)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
         conf = update_config(ip_conf, stackDict.get(stack), runtime)
+        conf = patch_config_cidrs(
+            conf,
+            pod_network_cidr=args.pod_network_cidr,
+            service_cidr=args.service_cidr,
+            pod_network_cidr_v4=args.pod_network_cidr_v4,
+            service_cidr_v4=args.service_cidr_v4,
+        )
     else:
         pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()
