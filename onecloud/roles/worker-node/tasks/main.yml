@@ -46,6 +46,7 @@
 - name: cache ceph docker image
   shell: |
     /usr/local/bin/ceph --version
+  ignore_errors: true
   when:
   - (onecloud_version is version('v4.0', '>=') and upgrade_onecloud_version is not defined) or (upgrade_onecloud_version is defined and upgrade_onecloud_version is version('v4.0', '>='))
   - enable_lbagent | default(false) | bool == false
