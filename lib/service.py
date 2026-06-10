@@ -15,7 +15,7 @@ from .parser import inject_ssh_hosts_options
 from . import utils
 from . import ansible
 from . import consts
-from .cluster import construct_cluster
+from .cluster import construct_cluster, resolve_ssh_private_file
 from .ocboot import WorkerConfig, Config
 from .ocboot import get_ansible_global_vars
 from .ocboot import KEY_ONECLOUD_VERSION
@@ -211,6 +211,7 @@ class AddNodesConfig(object):
                  enable_host_on_vm=False,
                  enable_lbagent=False,
                  **kwargs):
+        ssh_private_file = resolve_ssh_private_file(ssh_private_file)
         target_nodes = list(set(target_nodes))
         target_hostnames = [node.get_hostname() for node in cluster.k8s_nodes]
         self.enable_containerd = kwargs.get('runtime') == 'containerd'
