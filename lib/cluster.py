@@ -15,7 +15,7 @@ from .color import GB
 A_OCBOOT_UPGRADE_CURRENT_VERSION = 'upgrade.ocboot.yunion.io/current-version'
 
 
-def construct_cluster(primary_master_host, ssh_user, ssh_private_file, ssh_port):
+def resolve_ssh_private_file(ssh_private_file):
     if ssh_private_file is None or ssh_private_file == '':
         ssh_path = os.path.expanduser('~/.ssh')
         files = os.listdir(ssh_path)
@@ -25,8 +25,13 @@ def construct_cluster(primary_master_host, ssh_user, ssh_private_file, ssh_port)
                 break
     else:
         ssh_private_file = os.path.expanduser(ssh_private_file)
-    if not os.path.exists(ssh_private_file):
+    if not ssh_private_file or not os.path.exists(ssh_private_file):
         raise Exception(f"Private key file {ssh_private_file} not found")
+    return ssh_private_file
+
+
+def construct_cluster(primary_master_host, ssh_user, ssh_private_file, ssh_port):
+    ssh_private_file = resolve_ssh_private_file(ssh_private_file)
     cli = SSHClient(
         primary_master_host,
         ssh_user,
