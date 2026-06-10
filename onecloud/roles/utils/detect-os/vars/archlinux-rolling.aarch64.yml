@@ -1,6 +1,6 @@
-is_debian_based: true
-is_debian_based_x86: true
-debian_based_arch: amd64
+is_arch_based: true
+is_arch_based_aarch64: true
+arch_based_arch: arm64
 
 common_packages:
   - bash-completion
@@ -26,5 +26,4 @@ common_packages:
   - yunion-ovmfrpm
 
 common_services:
-  - chrony
   - yunion-executor
