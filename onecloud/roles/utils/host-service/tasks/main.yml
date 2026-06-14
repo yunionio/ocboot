@@ -23,6 +23,7 @@
   - onecloud_version is defined
   - onecloud_version is version('v3.10', '>=')
   - ansible_architecture == 'x86_64'
+  - enable_containerd|default(false) == false
   - ansible_memtotal_mb >= 30*1024 # if total memory size greater then 30g
 
 - name: Make /etc/yunion directory
