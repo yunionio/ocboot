@@ -33,13 +33,13 @@ if ! systemctl is-enabled k3s-agent &>/dev/null; then
     exit 1
 fi
 
-echo "[2/4] Stopping k3s-agent..."
+echo "[2/3] Stopping k3s-agent..."
 systemctl stop k3s-agent
 
-echo "[3/4] Rotating k3s agent certificates..."
-k3s certificate rotate
+#echo "[3/4] Rotating k3s agent certificates..."
+#k3s certificate rotate
 
-echo "[4/4] Starting k3s-agent..."
+echo "[3/3] Starting k3s-agent..."
 systemctl start k3s-agent
 
 sleep 5
