@@ -46,11 +46,10 @@
   - ansible_os_family != 'Debian'
   - onecloud_version is version('v4.0', '<')
 
-- name: add label onecloud.yunion.io/lbagent=enable to {{ k8s_controlplane_host }}
+- name: add label onecloud.yunion.io/lbagent=enable to {{ ansible_hostname }}
   shell: |
-    KUBECONFIG={{ENV_KUBECONFIG}} {{ K3S_CMDLINE_PREFIX }} kubectl label node {{ ansible_hostname }} onecloud.yunion.io/lbagent=enable
+    KUBECONFIG={{ENV_KUBECONFIG}} {{ K3S_CMDLINE_PREFIX }} kubectl label node {{ ansible_hostname }} onecloud.yunion.io/host- onecloud.yunion.io/lbagent=enable --overwrite
   delegate_to: "{{ k8s_controlplane_host }}"
-  run_once: yes
   environment:
     http_proxy: ''
     https_proxy: ''

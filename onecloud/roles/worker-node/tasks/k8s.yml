@@ -53,7 +53,9 @@
   - name: Set node_interface_name
     include_role:
       name: utils/set-hostnetworks
-    when: host_networks is undefined or host_networks == ''
+    when:
+    - host_networks is undefined or host_networks == ''
+    - enable_lbagent | default(false) | bool == false
 
   - name: Set host_networks_options
     set_fact:
@@ -74,6 +76,7 @@
     - enable_hugepage is defined
     - onecloud_version is defined
     - onecloud_version is version('v3.10', '>=')
+    - enable_lbagent | default(false) | bool == false
 
   - name: Wait for port {{ k8s_controlplane_host }}:{{ k8s_controlplane_port | default(6443)}} to be ready
     wait_for:
