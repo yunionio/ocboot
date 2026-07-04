@@ -41,7 +41,7 @@
   include_role:
     name: worker-node/lbagent
   when:
-    enable_lbagent
+    enable_lbagent | default(false) | bool == true
 
 - name: cache ceph docker image
   shell: |
