@@ -32,11 +32,11 @@ if [ -z "$IMG" ]; then
         fi
     fi
 fi
-
+CTRNAME=ceph-common-$$-$RANDOM
 k3s ctr run --rm --net-host $TTY \
     --mount type=bind,src=/tmp,dst=/tmp,options=rbind \
     $IMG \
-    ceph-common \
+    $CTRNAME \
     /usr/bin/$CMD $@
 {% else %}
 if [ -t 0 ]; then
