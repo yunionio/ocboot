@@ -1,6 +1,6 @@
 spec:
   clickhouse:
     username: "default"
-    host: {{ node_ip }}
+    host: {{ ch_host | default(node_ip) }}
     password: {{ ch_password }}
     port: {{ ch_port }}

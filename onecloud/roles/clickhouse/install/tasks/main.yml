@@ -37,7 +37,7 @@
 
   - name: Mkdir for data path
     ansible.builtin.file:
-      path: /opt/clickhouse
+      path: "{{ ch_data_path | default('/opt/clickhouse') }}"
       state: directory
       owner: clickhouse
       group: clickhouse
@@ -45,8 +45,8 @@
   - name: Change data path
     replace:
       path: /etc/clickhouse-server/config.xml
-      regexp: 'path>/var/lib/clickhouse/'
-      replace: 'path>/opt/clickhouse/'
+      regexp: 'path>(?:/var/lib/clickhouse|/opt/clickhouse|{{ ch_data_path | default("/opt/clickhouse") | regex_escape }})/'
+      replace: 'path>{{ ch_data_path | default("/opt/clickhouse") }}/'
       backup: yes
 
   - name: Change default port
