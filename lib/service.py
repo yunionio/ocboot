@@ -3,6 +3,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, GROUP_PRIMARY_MASTER_NODE, ClickhouseConfig, Node, NodeConfig, Config, get_ansible_global_vars_by_cluster, KEY_PRIMARY_MASTER_NODE_IP
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
@@ -13,7 +15,7 @@ from .parser import inject_ssh_hosts_options
 from . import utils
 from . import ansible
 from . import consts
-from .cluster import construct_cluster
+from .cluster import construct_cluster, resolve_ssh_private_file
 from .ocboot import WorkerConfig, Config
 from .ocboot import get_ansible_global_vars
 from .ocboot import KEY_ONECLOUD_VERSION
@@ -209,6 +211,7 @@ class AddNodesConfig(object):
                  enable_host_on_vm=False,
                  enable_lbagent=False,
                  **kwargs):
+        ssh_private_file = resolve_ssh_private_file(ssh_private_file)
         target_nodes = list(set(target_nodes))
         target_hostnames = [node.get_hostname() for node in cluster.k8s_nodes]
         self.enable_containerd = kwargs.get('runtime') == 'containerd'
@@ -230,6 +233,12 @@ class AddNodesConfig(object):
             target_hostname = cli.get_hostname()
             if target_hostname in target_hostnames:
                 raise Exception(Red(f"Node {target_hostname}[{target_node}] already exists in cluster (By Hostname Check). "))
+
+        self._check_target_nodes_cidr_conflicts(
+            cluster, target_nodes,
+            kwargs.get('ip_dual_conf'),
+            kwargs.get('node_ip_v4'),
+            kwargs.get('node_ip_v6'))
 
         self.current_version = cluster.get_current_version()
         controlplane_host = cluster.get_cluster_controlplane_host()
@@ -275,6 +284,36 @@ class AddNodesConfig(object):
         self.cuda_installer_path = kwargs.get('cuda_installer_path')
 
         utils.pr_green(f"Get current cluster: {controlplane_host}, primary_master_node_ip: {primary_master_node_ip}, version: {self.current_version}, is_using_k3s: {self.is_using_k3s}")
+
+    @staticmethod
+    def _check_target_nodes_cidr_conflicts(cluster, target_nodes, ip_dual_conf=None,
+                                         node_ip_v4=None, node_ip_v6=None):
+        if os.getenv("IGNORE_ALL_CHECKS") == "true":
+            return
+        if not cluster.is_using_k3s():
+            return
+        try:
+            config_yaml = cluster.ssh_client.exec_command(
+                'cat /etc/rancher/k3s/config.yaml', use_sudo=True)
+        except Exception as e:
+            raise Exception(Red(
+                "Failed to read k3s config from primary master: %s" % e))
+
+        cidrs = utils.parse_k3s_network_cidrs(config_yaml)
+        if not cidrs:
+            return
+
+        ips = []
+        seen = set()
+        for ip_str in list(target_nodes) + [ip_dual_conf, node_ip_v4, node_ip_v6]:
+            if not ip_str or ip_str in seen:
+                continue
+            seen.add(ip_str)
+            ips.append(('worker_node', ip_str))
+
+        errors = utils.check_ips_against_cidrs(ips, cidrs)
+        if errors:
+            raise Exception(Red("\n".join(errors)))
 
     def run(self):
         inventory_content = ansible.get_inventory_config(self.worker_config)

@@ -42,6 +42,11 @@ class SSHClient(object):
     def new_ssh_client(self):
 
         def cli_w(cmd):
+            private_key_file = self.get_private_key_file()
+            if not private_key_file:
+                raise Exception(
+                    "SSH private key file is not specified. "
+                    "Use --key-file/-k or place a key in ~/.ssh/")
             user_host = "%s@%s" % (self.get_user(), self.get_host())
             args = ["ssh",
                     "-p", str(self.get_port()),
@@ -49,7 +54,7 @@ class SSHClient(object):
                     "-o", "StrictHostKeyChecking=no",
                     "-o", "UserKnownHostsFile=/dev/null",
                     "-o", "ForwardX11=no",
-                    "-i", self.get_private_key_file(),
+                    "-i", private_key_file,
                     user_host,
                     cmd]
             debug_args = [x for x in args]

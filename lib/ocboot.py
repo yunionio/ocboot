@@ -234,6 +234,69 @@ class OcbootConfig(object):
     def is_using_ee(self):
         return self.primary_master_config.use_ee
 
+    def _collect_k8s_node_ips(self):
+        ips = []
+        seen = set()
+
+        def add(label, ip_str):
+            if not ip_str or ip_str == '127.0.0.1':
+                return
+            if utils.parse_ip(ip_str) is None:
+                return
+            if ip_str in seen:
+                return
+            seen.add(ip_str)
+            ips.append((label, ip_str))
+
+        def collect_from_config(conf, group_name):
+            if not conf:
+                return
+            for node in conf.get_nodes():
+                add(group_name, node.host)
+                if node.node_ip != node.host:
+                    add(group_name, node.node_ip)
+
+        collect_from_config(self.primary_master_config, GROUP_PRIMARY_MASTER_NODE)
+        if self.primary_master_config:
+            pc = self.primary_master_config
+            if pc.ip_type == consts.IP_TYPE_DUAL_STACK:
+                if getattr(pc, 'node_ip_v4', None):
+                    add(GROUP_PRIMARY_MASTER_NODE, pc.node_ip_v4)
+                if getattr(pc, 'node_ip_v6', None):
+                    add(GROUP_PRIMARY_MASTER_NODE, pc.node_ip_v6)
+            add('controlplane_host', pc.controlplane_host)
+            if pc.high_availability_vip:
+                add('high_availability_vip', pc.high_availability_vip)
+
+        collect_from_config(self.master_config, GROUP_MASTER_NODES)
+        collect_from_config(self.worker_config, GROUP_WORKER_NODES)
+        return ips
+
+    def _get_network_cidrs(self, pc):
+        if pc.ip_type == consts.IP_TYPE_DUAL_STACK:
+            return [
+                ('pod_network_cidr', pc.pod_network_cidr),
+                ('service_cidr', pc.service_cidr),
+                ('pod_network_cidr_v4', pc.pod_network_cidr_v4),
+                ('service_cidr_v4', pc.service_cidr_v4),
+            ]
+        return [
+            ('pod_network_cidr', pc.pod_network_cidr),
+            ('service_cidr', pc.service_cidr),
+        ]
+
+    def check_network_cidr_conflicts(self):
+        if os.getenv("IGNORE_ALL_CHECKS") == "true":
+            return
+        pc = self.primary_master_config
+        if not pc:
+            return
+        ips = self._collect_k8s_node_ips()
+        cidrs = self._get_network_cidrs(pc)
+        errors = utils.check_ips_against_cidrs(ips, cidrs)
+        if errors:
+            raise Exception(Red("\n".join(errors)))
+
 
 class ConfigNotFoundException(Exception):
 
