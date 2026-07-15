@@ -2,4 +2,8 @@
   roles:
     - { role: utils/detect-os }
     - { role: clickhouse/install }
+
+- hosts: primary_master_node
+  roles:
+    - { role: utils/detect-os }
     - { role: clickhouse/deploy }
