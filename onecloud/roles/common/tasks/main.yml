@@ -177,14 +177,9 @@
         systemctl mask "$i"
     done
     systemctl daemon-reload
-
-    cp -fv /etc/fstab /etc/fstab.$(date +"%Y%m%d-%H%M%S").bak
-    sed -i '/swap/ s/^#*/#/' -i /etc/fstab
   become: true
   args:
     executable: /bin/bash
-  when:
-  - is_debian_based is defined
 
 #  https://github.com/kubernetes-retired/contrib/blob/master/ansible/roles/node/tasks/swapoff.yml
 - name: Turn off swap mount
