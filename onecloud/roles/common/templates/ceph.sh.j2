@@ -18,9 +18,6 @@ TTY=""
 BIMG={{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion') }}/ceph:$TAG
 
 {% if k8s_or_k3s | default('k3s') == 'k3s' %}
-if [ -t 0 ]; then
-    TTY="-t"
-fi
 IMG=$(k3s ctr images list -q | grep -m 1 -w "yunion/ceph")
 if [ -z "$IMG" ]; then
     IMG=$(k3s ctr images list -q | grep -m 1 -w "yunionio/ceph")
@@ -33,7 +30,7 @@ if [ -z "$IMG" ]; then
     fi
 fi
 CTRNAME=ceph-common-$$-$RANDOM
-k3s ctr run --rm --net-host $TTY \
+k3s ctr run --rm --net-host \
     --mount type=bind,src=/tmp,dst=/tmp,options=rbind \
     $IMG \
     $CTRNAME \
