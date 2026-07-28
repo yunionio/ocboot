@@ -86,16 +86,18 @@ def inject_add_hostagent_options(parser):
                         help="enable kvm host service inside virtual machine")
 
     parser.add_argument("--host-network",
-                        nargs="*",
-                        action="extend",
+                        action="append",
                         dest="host_networks",
-                        help="networks option of /etc/yunion/host.conf")
+                        metavar="HOST_NETWORK",
+                        help="networks option of /etc/yunion/host.conf; "
+                             "repeatable, e.g. --host-network eth0 --host-network eth1")
 
     parser.add_argument("--disk-path",
-                        nargs="*",
-                        action="extend",
+                        action="append",
                         dest="disk_paths",
-                        help="local_image_path of /etc/yunion/host.conf")
+                        metavar="DISK_PATH",
+                        help="local_image_path of /etc/yunion/host.conf; "
+                             "repeatable, e.g. --disk-path /opt/cloud/disks")
 
 
 def inject_add_nodes_runtime_options(parser):

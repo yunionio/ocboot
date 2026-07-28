@@ -1,0 +1,13 @@
+[Match]
+Name=vxlan{{ vxlan_vni }}
+
+[Network]
+Address={{ fabric_node_ip_addr }}/{{ fabric_cidr_prefix_length }}
+{% for peer_ip in fabric_peer_node_ips %}
+{% if peer_ip != fabric_local_node_ip %}
+
+[BridgeFDB]
+MACAddress=00:00:00:00:00:00
+Destination={{ peer_ip }}
+{% endif %}
+{% endfor %}

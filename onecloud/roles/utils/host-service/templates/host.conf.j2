@@ -70,6 +70,9 @@ image_cache_path: /opt/cloud/workspace/disks/image_cache
 is_slave_node: false
 kubelet_run_directory: /var/lib/kubelet
 linux_default_root_user: true
+{% if host_listen_interface is defined and host_listen_interface != '' %}
+listen_interface: {{ host_listen_interface }}
+{% endif %}
 local_image_path:
 {% for disk_path in disk_paths %}
 - {{ disk_path }}
