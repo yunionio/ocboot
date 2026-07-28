@@ -347,7 +347,13 @@ class Node(object):
         self.host_networks = config.get(KEY_HOST_NETWORKS, None)
         if isinstance(self.host_networks, str):
             self.host_networks = [self.host_networks]
+        elif self.host_networks is not None:
+            self.host_networks = list(self.host_networks)
         self.disk_paths = config.get(KEY_DISK_PATHS, None)
+        if self.disk_paths is not None and not isinstance(self.disk_paths, list):
+            self.disk_paths = [self.disk_paths]
+        elif self.disk_paths is not None:
+            self.disk_paths = list(self.disk_paths)
         self.enable_hugepage = config.get('enable_hugepage', True)
         self.node_ip = config.get('node_ip', None)
         if not self.node_ip:
@@ -552,7 +558,13 @@ class OnecloudConfig(object):
         self.host_networks = config.get(KEY_HOST_NETWORKS, None)
         if isinstance(self.host_networks, str):
             self.host_networks = [self.host_networks]
+        elif self.host_networks is not None:
+            self.host_networks = list(self.host_networks)
         self.disk_paths = config.get(KEY_DISK_PATHS, None)
+        if self.disk_paths is not None and not isinstance(self.disk_paths, list):
+            self.disk_paths = [self.disk_paths]
+        elif self.disk_paths is not None:
+            self.disk_paths = list(self.disk_paths)
         self.primary_master_node_ip = config.get(KEY_PRIMARY_MASTER_NODE_IP, None)
 
     def ansible_vars(self):
@@ -643,8 +655,22 @@ class PrimaryMasterConfig(OnecloudConfig):
             self.pod_network_cidr_v4 = config.get('pod_network_cidr_v4', '10.40.0.0/16')
             self.service_cidr_v4 = config.get('service_cidr_v4', '10.96.0.0/12')
 
-        # IPIP配置选项
-        self.enable_ipip = config.get('enable_ipip', False)
+        # IPIP配置选项, deprecated
+        self.calico_backend = config.get('calico_backend', None)
+        if self.calico_backend is None:
+            # no calico_backend, look for enable_ipip
+            enable_ipip = config.get('enable_ipip', False)
+            if enable_ipip:
+                self.calico_backend = 'ipip'
+            else:
+                self.calico_backend = 'vxlan'
+        else:
+            if self.calico_backend not in ['ipip', 'vxlan', 'none']:
+                raise Exception("Invalid calico_backend: %s, valid values are ipip, vxlan, none" % self.calico_backend)
+
+        if self.ip_type == consts.IP_TYPE_IPV6:
+            if self.calico_backend != 'vxlan':
+                raise Exception("calico_backend must be vxlan for IPv6-native configuration")
 
         # set calico ip_autodetection_method only in primary master
         self.ip_autodetection_method = config.get('ip_autodetection_method', None)
@@ -731,7 +757,7 @@ class PrimaryMasterConfig(OnecloudConfig):
             vars['pod_network_cidr_v4'] = self.pod_network_cidr_v4
             vars['service_cidr_v4'] = self.service_cidr_v4
 
-        vars['enable_ipip'] = self.enable_ipip
+        vars['calico_backend'] = self.calico_backend
 
         if len(self.offline_nodes) > 0:
             vars['offline_nodes'] = ' '.join(self.offline_nodes)
@@ -809,7 +835,8 @@ class MasterConfig(OnecloudJointConfig):
             vars['node_ip_v6'] = pc.node_ip_v6
             vars['pod_network_cidr_v4'] = pc.pod_network_cidr_v4
             vars['service_cidr_v4'] = pc.service_cidr_v4
-            vars['enable_ipip'] = pc.enable_ipip
+
+        vars['calico_backend'] = pc.calico_backend
 
         return vars
 
@@ -862,7 +889,8 @@ class WorkerConfig(OnecloudJointConfig):
                 vars['node_ip_v6'] = pc.node_ip_v6
                 vars['pod_network_cidr_v4'] = pc.pod_network_cidr_v4
                 vars['service_cidr_v4'] = pc.service_cidr_v4
-                vars['enable_ipip'] = pc.enable_ipip
+
+            vars['calico_backend'] = pc.calico_backend
 
         # Critical: API endpoint variables for kubernetes-services-endpoint ConfigMap
         vars[KEY_K3S_API_ENDPOINT] = self.controlplane_host

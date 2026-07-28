@@ -1,17 +1,36 @@
 #!/bin/bash
 
+TAG=2.12.4-20260415
 TTY=""
-BIMG={{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion') }}/openvswitch:2.12.4-20260212
+BIMG={{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion') }}/openvswitch:${TAG}
+CACHEPATH=/opt/yunion/share/image-cache/ovs-${TAG}.tar
 
 {% if k8s_or_k3s | default('k3s') == 'k3s' %}
 IMG=$(k3s ctr images list -q | grep -m 1 -w "yunion/openvswitch")
 if [ -z "$IMG" ]; then
     IMG=$(k3s ctr images list -q | grep -m 1 -w "yunionio/openvswitch")
     if [ -z "$IMG" ]; then
+        # image not found, use default image
         IMG=$BIMG
-        k3s ctr images list name==$IMG -q | grep $IMG > /dev/null
-        if [ $? -ne 0 ]; then
+        # first find it in local cache
+        NEEDPULL=yes
+        if [ -f $CACHEPATH ]; then
+            k3s ctr images import $CACHEPATH > /dev/null
+            if [ $? -eq 0 ]; then
+                # import success, no need to pull from remote
+                NEEDPULL=
+            fi
+        fi
+        if [ "$NEEDPULL" == "yes" ]; then
             k3s ctr images pull $IMG{{ ' --plain-http' if online_status == 'offline' else '' }}
+            if [ $? -eq 0 ]; then
+                # pull success, save image to cache
+                mkdir -p $(dirname $CACHEPATH)
+                k3s ctr images export $CACHEPATH $IMG --local
+            else
+                echo "Failed to pull image $IMG"
+                exit 1
+            fi
         fi
     fi
 fi
@@ -32,7 +51,28 @@ IMG=$(docker image ls --filter 'reference=*/yunion/openvswitch' | grep -m 1 -w "
 if [ -z "$IMG" ]; then
     IMG=$(docker image ls --filter 'reference=*/yunionio/openvswitch' | grep -m 1 -w "yunionio/openvswitch" | awk '{print $1 ":" $2}')
     if [ -z "$IMG" ]; then
+        # image not found, use default image
         IMG=$BIMG
+        # first find it in local cache
+        NEEDPULL=yes
+        if [ -f $CACHEPATH ]; then
+            docker load -i $CACHEPATH > /dev/null
+            if [ $? -eq 0 ]; then
+                # import success, no need to pull from remote
+                NEEDPULL=
+            fi
+        fi
+        if [ "$NEEDPULL" == "yes" ]; then
+            docker pull $IMG
+            if [ $? -eq 0 ]; then
+                # pull success, save image to cache
+                mkdir -p $(dirname $CACHEPATH)
+                docker save $IMG -o $CACHEPATH
+            else
+                echo "Failed to pull image $IMG"
+                exit 1
+            fi
+        fi
     fi
 fi
 

@@ -1,0 +1,4 @@
+- hosts: all
+  any_errors_fatal: true
+  roles:
+    - { role: utils/fabric-setup }

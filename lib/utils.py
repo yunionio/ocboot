@@ -68,7 +68,12 @@ def is_below_v3_9(ver):
 
 def to_yaml(data):
     import yaml
-    return yaml.dump(data, default_flow_style=False)
+
+    class NoAliasDumper(yaml.SafeDumper):
+        def ignore_aliases(self, data):
+            return True
+
+    return yaml.dump(data, default_flow_style=False, Dumper=NoAliasDumper)
 
 
 def print_title(title):
