@@ -48,7 +48,7 @@ data:
   # Typha is disabled.
   typha_service_name: "none"
   # Configure the backend to use.
-  calico_backend: "{% if enable_ipip is defined and enable_ipip %}bird{% else %}vxlan{% endif %}"
+  calico_backend: "{% if calico_backend is defined and calico_backend != 'vxlan' %}bird{% else %}vxlan{% endif %}"
 
   # Configure the MTU to use for workload interfaces and tunnels.
   # By default, MTU is auto-detected, and explicitly setting this field should not be required.
@@ -126,24 +126,24 @@ spec:
 ---
 {% endif %}
 # BGP configuration for dual-stack mode - disable BGP mesh for VXLAN
-{% if ip_type == 'dual-stack' and (enable_ipip is not defined or not enable_ipip) %}
+{% if ip_type == 'dual-stack' and (calico_backend is defined and calico_backend != 'vxlan') %}
 apiVersion: crd.projectcalico.org/v1
 kind: BGPConfiguration
 metadata:
   name: default
 spec:
-  nodeToNodeMeshEnabled: false
+  nodeToNodeMeshEnabled: true
   asNumber: 64512
 ---
 {% endif %}
 # BGP configuration for IPv4 mode - disable BGP mesh for VXLAN
-{% if ip_type == 'ipv4' and (enable_ipip is not defined or not enable_ipip) %}
+{% if ip_type == 'ipv4' and (calico_backend is defined and calico_backend != 'vxlan') %}
 apiVersion: crd.projectcalico.org/v1
 kind: BGPConfiguration
 metadata:
   name: default
 spec:
-  nodeToNodeMeshEnabled: false
+  nodeToNodeMeshEnabled: true
   asNumber: 64512
 ---
 {% endif %}
@@ -4958,7 +4958,7 @@ spec:
                   key: calico_backend
             # Cluster type to identify the deployment type
             - name: CLUSTER_TYPE
-              value: "{% if enable_ipip is defined and enable_ipip %}k8s,bgp{% else %}k8s,vxlan{% endif %}"
+              value: "{% if calico_backend is defined and calico_backend != 'vxlan' %}k8s,bgp{% else %}k8s,vxlan{% endif %}"
             # Auto-detect the BGP IP address.
 {% if ip_type == 'ipv6' %}
             # IPv6 environment: disable IPv4 and enable IPv6
@@ -4989,9 +4989,9 @@ spec:
               value: "hash"
             # VXLAN configuration for dual-stack (both IPv4 and IPv6)
             - name: CALICO_IPV4POOL_IPIP
-              value: "{% if enable_ipip is defined and enable_ipip %}Always{% else %}Never{% endif %}"
+              value: "{% if calico_backend is defined and calico_backend == 'ipip' %}Always{% else %}Never{% endif %}"
             - name: CALICO_IPV4POOL_VXLAN
-              value: "{% if enable_ipip is defined and enable_ipip %}Never{% else %}Always{% endif %}"
+              value: "{% if calico_backend is defined and calico_backend != 'vxlan' %}Never{% else %}Always{% endif %}"
             - name: CALICO_IPV6POOL_VXLAN
               value: "Always"
 {% else %}
@@ -4999,10 +4999,10 @@ spec:
               value: "autodetect"
             # Enable VXLAN for IPv4 (default) or IPIP if enabled
             - name: CALICO_IPV4POOL_IPIP
-              value: "{% if enable_ipip is defined and enable_ipip %}Always{% else %}Never{% endif %}"
+              value: "{% if calico_backend is defined and calico_backend == 'ipip' %}Always{% else %}Never{% endif %}"
             # Enable or Disable VXLAN on the default IP pool.
             - name: CALICO_IPV4POOL_VXLAN
-              value: "{% if enable_ipip is defined and enable_ipip %}Never{% else %}Always{% endif %}"
+              value: "{% if calico_backend is defined and calico_backend != 'vxlan' %}Never{% else %}Always{% endif %}"
             # Enable or Disable VXLAN on the default IPv6 IP pool.
             - name: CALICO_IPV6POOL_VXLAN
               value: "Never"
@@ -5113,9 +5113,9 @@ spec:
 {% elif ip_type == 'dual-stack' %}
             # Dual-stack specific configurations
             - name: FELIX_IPIPENABLED
-              value: "{{ 'true' if enable_ipip is defined and enable_ipip else 'false' }}"
+              value: "{{ 'true' if calico_backend is defined and calico_backend == 'ipip' else 'false' }}"
             - name: FELIX_VXLANENABLED
-              value: "{{ 'false' if enable_ipip is defined and enable_ipip else 'true' }}"
+              value: "{{ 'false' if calico_backend is defined and calico_backend != 'vxlan' else 'true' }}"
             # VXLAN configuration for dual-stack
             - name: FELIX_VXLANPORT
               value: "4789"
@@ -5126,7 +5126,7 @@ spec:
               value: "vxlan.calico"
             # Disable BGP in VXLAN mode for dual-stack
             - name: FELIX_NODETONODEMESHENABLED
-              value: "false"
+              value: "{{ 'true' if calico_backend is defined and calico_backend != 'vxlan' else 'false' }}"
             # Additional dual-stack optimizations
             - name: FELIX_ALLOWVXLANPACKETSFROMWORKLOADS
               value: "false"
@@ -5137,9 +5137,9 @@ spec:
 {% else %}
             # IPv4 specific configurations (VXLAN mode by default, IPIP if enabled)
             - name: FELIX_IPIPENABLED
-              value: "{{ 'true' if enable_ipip is defined and enable_ipip else 'false' }}"
+              value: "{{ 'true' if calico_backend is defined and calico_backend == 'ipip' else 'false' }}"
             - name: FELIX_VXLANENABLED
-              value: "{{ 'false' if enable_ipip is defined and enable_ipip else 'true' }}"
+              value: "{{ 'false' if calico_backend is defined and calico_backend != 'vxlan' else 'true' }}"
             # VXLAN configuration for IPv4
             - name: FELIX_VXLANPORT
               value: "4789"
@@ -5150,7 +5150,7 @@ spec:
               value: "vxlan.calico"
             # Disable BGP in VXLAN mode
             - name: FELIX_NODETONODEMESHENABLED
-              value: "false"
+              value: "{{ 'true' if calico_backend is defined and calico_backend != 'vxlan' else 'false' }}"
             # Additional IPv4 optimizations
             - name: FELIX_ALLOWVXLANPACKETSFROMWORKLOADS
               value: "false"
@@ -5175,7 +5175,7 @@ spec:
               command:
               - /bin/calico-node
               - -felix-live
-{% if enable_ipip is defined and enable_ipip %}
+{% if calico_backend is defined and calico_backend != 'vxlan' %}
               - -bird-live
 {% endif %}
 {% if ip_type == 'ipv6' %}
@@ -5198,7 +5198,7 @@ spec:
               command:
               - /bin/calico-node
               - -felix-ready
-{% if enable_ipip is defined and enable_ipip %}
+{% if calico_backend is defined and calico_backend != 'vxlan' %}
               - -bird-ready
 {% endif %}
 {% endif %}
