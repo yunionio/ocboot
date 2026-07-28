@@ -52,6 +52,7 @@ supported_os=(
     "Rocky Linux 9.* aarch64"
     "Rocky Linux 10.* x86_64"
     "Rocky Linux 10.* aarch64"
+    "Ubuntu 22.04 x86_64"
     "Ubuntu 20.04.* LTS x86_64"
     "Ubuntu 20.04.* LTS aarch64"
     "Ubuntu 22.04.* LTS x86_64"
@@ -70,6 +71,8 @@ supported_os=(
 )
 
 ubuntu_20_os=(
+    "Ubuntu 22.04 x86_64"
+    "Ubuntu 22.04 LTS x86_64"
     "Ubuntu 20.04.* LTS x86_64"
     "Ubuntu 20.04.* LTS aarch64"
 )

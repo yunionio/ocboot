@@ -3,6 +3,7 @@
 # Version configuration (can be overridden by environment variables)
 TARGET_REGISTRY=${TARGET_REGISTRY:-"registry.cn-beijing.aliyuncs.com/yunion"}
 CALICO_VERSION=${CALICO_VERSION:-"v3.27.5"}
+CALICO_VERSION_HYGON=${CALICO_VERSION_HYGON:-"v3.26.4"}
 
 # skopeo login --username $USERNAME $TARGET_REGISTRY
 
@@ -31,6 +32,9 @@ declare -A IMAGES=()
 
 # Add calico images
 add_calico_images "${CALICO_VERSION}"
+if [ "${CALICO_VERSION_HYGON}" != "${CALICO_VERSION}" ]; then
+    add_calico_images "${CALICO_VERSION_HYGON}"
+fi
 
 # Add other images
 IMAGES["traefik:2.10.5"]="docker.io/rancher/mirrored-library-traefik:2.10.5"
