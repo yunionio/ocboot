@@ -26,10 +26,35 @@
   register: cuda_check
   changed_when: false
   failed_when: false
+  when: cuda_installer_path is defined
 
 - name: Set CUDA installation flag
   set_fact:
     cuda_installed: "{{ cuda_check.rc == 0 }}"
+  when: cuda_installer_path is defined
+
+- name: Assume CUDA ready when installer path not provided
+  set_fact:
+    cuda_installed: true
+  when: cuda_installer_path is not defined
+
+- name: Check if nvidia-drm.modeset=1 is in GRUB_CMDLINE_LINUX
+  shell: grep -q "nvidia-drm.modeset=1" /etc/default/grub
+  register: grub_modeset_check
+  changed_when: false
+  failed_when: false
+
+- name: Set GRUB readiness flag
+  set_fact:
+    ai_env_grub_ready: "{{ grub_modeset_check.rc == 0 }}"
+
+- name: Set full AI env readiness flag
+  set_fact:
+    ai_env_fully_ready: "{{
+      (nvidia_driver_installed | default(false)) and
+      (cuda_installed | default(false)) and
+      (ai_env_grub_ready | default(false))
+    }}"
 
 - name: Fail when driver not installed and no installer path provided
   fail:
