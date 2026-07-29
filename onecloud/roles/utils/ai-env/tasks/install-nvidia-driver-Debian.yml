@@ -1,13 +1,21 @@
-- name: Install kernel headers and development packages for current kernel
-  shell: |
-    KERNEL_VERSION="{{ current_kernel_version.stdout }}"
-    apt-get update && \
-    apt-get install -y linux-headers-${KERNEL_VERSION} || \
-    apt-get install -y {{ kernel_package }} {{ kernel_headers_package }} {{ kernel_devel_package }}
-  become: true
-  args:
-    executable: /bin/bash
-  register: kernel_install_result
+- block:
+  - name: Install linux headers for current kernel
+    package:
+      name: "linux-headers-{{ current_kernel_version.stdout }}"
+      state: present
+      update_cache: true
+    register: kernel_install_result
+    become: true
+  rescue:
+  - name: Install linux headers (fallback)
+    package:
+      name:
+        - "{{ kernel_headers_package }}"
+        - "{{ kernel_devel_package }}"
+      state: present
+      update_cache: true
+    register: kernel_install_result
+    become: true
 
 - name: Install build tools
   package:
