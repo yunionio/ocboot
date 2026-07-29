@@ -10,6 +10,7 @@ import sys
 import re
 import argparse
 import subprocess
+import yaml
 
 from lib import install
 from lib import cmd
@@ -308,7 +309,7 @@ primary_master_node:
   enable_eip_man: true
   product_version: 'product_stack'
   image_repository: registry.cn-beijing.aliyuncs.com/yunion
-  # host_networks: '<interface>/br0/<ip>'
+  # host_networks: '<interface>'
 """
 
 
@@ -333,7 +334,6 @@ def dynamic_load():
 def update_config(yaml_conf, produc_stack, runtime):
     import os.path
     import os
-    import yaml
     yaml_data = {}
     to_write = False
 
@@ -409,7 +409,6 @@ def validate_cli_cidrs(args, ip_type):
 
 
 def get_config_ip_type(yaml_conf):
-    import yaml
     if not path.isfile(yaml_conf):
         return None
     try:
@@ -435,7 +434,6 @@ def patch_config_cidrs(yaml_conf, pod_network_cidr=None, service_cidr=None,
                          pod_network_cidr_v4, service_cidr_v4):
         return yaml_conf
 
-    import yaml
     yaml_data = {}
     try:
         if path.isfile(yaml_conf) and path.getsize(yaml_conf) > 0:
@@ -476,8 +474,8 @@ def patch_config_onecloud_version(yaml_conf, onecloud_version):
     if not onecloud_version:
         return yaml_conf
 
-    import yaml
     ver = onecloud_version.strip()
+
     yaml_data = {}
     try:
         if path.isfile(yaml_conf) and path.getsize(yaml_conf) > 0:
@@ -502,21 +500,60 @@ def patch_config_onecloud_version(yaml_conf, onecloud_version):
     return yaml_conf
 
 
+def patch_config_hostagent_options(yaml_conf, host_networks=None, disk_paths=None,
+                                   enable_host_on_vm=None):
+    if not host_networks and not disk_paths and enable_host_on_vm is None:
+        return yaml_conf
+
+    yaml_data = {}
+    try:
+        if path.isfile(yaml_conf) and path.getsize(yaml_conf) > 0:
+            with open(yaml_conf, 'r') as stream:
+                yaml_data = yaml.safe_load(stream) or {}
+    except yaml.YAMLError as exc:
+        pr_red("paring %s error: %s" % (yaml_conf, exc))
+        raise Exception("paring %s error: %s" % (yaml_conf, exc))
+
+    pri = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {})
+    if not pri:
+        return yaml_conf
+
+    changed = False
+    if host_networks:
+        pri['host_networks'] = list(host_networks)
+        changed = True
+    if disk_paths:
+        pri['disk_paths'] = list(disk_paths)
+        changed = True
+    if enable_host_on_vm is not None:
+        pri[ocboot.KEY_AS_HOST_ON_VM] = enable_host_on_vm
+        changed = True
+
+    if changed:
+        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE] = pri
+        with open(yaml_conf, 'w') as f:
+            f.write(yaml.dump(yaml_data))
+
+    return yaml_conf
+
+
 def generate_config(
     ipaddr, produc_stack,
     dns_list=[], runtime=consts.RUNTIME_QEMU,
     image_repository=None,
     region=consts.DEFAULT_REGION_NAME,
     zone=consts.DEFAULT_ZONE_NAME,
-    ip_dual_conf=None, ip_type=None, enable_ipip=False,
+    ip_dual_conf=None, ip_type=None,
+    enable_ipip=False, calico_backend=None,
     pod_network_cidr=None, service_cidr=None,
     pod_network_cidr_v4=None, service_cidr_v4=None,
-    onecloud_version=None):
+    onecloud_version=None,
+    host_networks=None, disk_paths=None,
+    enable_host_on_vm=None):
     global conf
     import os.path
     import os
     dynamic_load()
-    import yaml
     from lib.get_interface_by_ip import get_interface_by_ip
 
     config_dir = os.getenv("OCBOOT_CONFIG_DIR")
@@ -553,16 +590,22 @@ def generate_config(
 
     if yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_HOSTNAME, '') == ipaddr and \
             yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
-        update_config(temp, produc_stack, runtime)
+        temp = update_config(temp, produc_stack, runtime)
         if has_cidr_args(pod_network_cidr, service_cidr,
                          pod_network_cidr_v4, service_cidr_v4):
-            patch_config_cidrs(
+            temp = patch_config_cidrs(
                 temp,
                 pod_network_cidr=pod_network_cidr,
                 service_cidr=service_cidr,
                 pod_network_cidr_v4=pod_network_cidr_v4,
                 service_cidr_v4=service_cidr_v4,
             )
+        temp = patch_config_hostagent_options(
+            temp,
+            host_networks=host_networks,
+            disk_paths=disk_paths,
+            enable_host_on_vm=enable_host_on_vm,
+        )
         pr_green(f"reuse conf: {temp}")
         return temp
 
@@ -608,7 +651,6 @@ def generate_config(
     # 添加双栈配置
     if ip_type == consts.IP_TYPE_DUAL_STACK and ip_dual_conf:
         extra_pri_dict['ip_type'] = ip_type
-        extra_pri_dict['enable_ipip'] = enable_ipip
 
         # 确定哪个是IPv4，哪个是IPv6
         if _match_ip4addr(ipaddr):
@@ -621,7 +663,7 @@ def generate_config(
             extra_pri_dict['pod_network_cidr'] = 'fd85:ee78:d8a6:8607::/56'
             extra_pri_dict['service_cidr'] = 'fd85:ee78:d8a6:8608::/112'
             # 双栈host_networks格式：interface/br0/ipv4/ipv6
-            extra_pri_dict['host_networks'] = f'{interface}/br0/{ipaddr}/{ip_dual_conf}'
+            # extra_pri_dict['host_networks'] = f'{interface}/br0/{ipaddr}/{ip_dual_conf}'
         else:
             # 主IP是IPv6，ip_dual_conf是IPv4
             extra_pri_dict['node_ip'] = ipaddr  # 主IP作为node_ip
@@ -632,13 +674,21 @@ def generate_config(
             extra_pri_dict['pod_network_cidr_v4'] = '10.40.0.0/16'
             extra_pri_dict['service_cidr_v4'] = '10.96.0.0/12'
             # 双栈host_networks格式：interface/br0/ipv4/ipv6
-            extra_pri_dict['host_networks'] = f'{interface}/br0/{ip_dual_conf}/{ipaddr}'
+            # extra_pri_dict['host_networks'] = f'{interface}/br0/{ip_dual_conf}/{ipaddr}'
     else:
         # 单栈配置
         extra_pri_dict['ip_type'] = ip_type
-        if ip_type == consts.IP_TYPE_IPV4:
-            extra_pri_dict['enable_ipip'] = enable_ipip
-        extra_pri_dict['host_networks'] = f'{interface}/br0/{ipaddr}'
+    if host_networks:
+        # Keep as list so ansible/set-hostnetworks can iterate entries.
+        extra_pri_dict['host_networks'] = list(host_networks)
+    else:
+        extra_pri_dict['host_networks'] = f'{interface}'
+    if disk_paths:
+        extra_pri_dict['disk_paths'] = list(disk_paths)
+    if enable_host_on_vm is not None:
+        extra_pri_dict[ocboot.KEY_AS_HOST_ON_VM] = enable_host_on_vm
+    extra_pri_dict['enable_ipip'] = enable_ipip
+    extra_pri_dict['calico_backend'] = calico_backend
 
     apply_cidr_to_config_dict(
         extra_pri_dict,
@@ -702,7 +752,9 @@ def inject_common_options(parser):
     parser.add_argument('--ip-dual-conf', type=str, dest='ip_dual_conf',
                        help="Input the second IP address for dual-stack configuration (IPv6 if IP_CONF is IPv4, or IPv4 if IP_CONF is IPv6)")
     parser.add_argument('--enable-ipip', action='store_true', dest='enable_ipip',
-                       help="Enable IPIP mode for IPv4 (default: VXLAN mode for both IPv4 single-stack and dual-stack)")
+                       help="[Deprecated] Enable IPIP mode for IPv4 (default: VXLAN mode for both IPv4 single-stack and dual-stack)")
+    parser.add_argument('--calico-backend', type=str, dest='calico_backend', choices=['ipip', 'vxlan', 'none'],
+                       help="Set the calico underlay network backend, e.g. ipip, vxlan, none")
     parser.add_argument('--offline-data-path', nargs='?',
                        help="offline packages location")
     parser.add_argument('--dns', nargs='*', help='Space seperated DNS server(s), eg: --dns 1.1.1.1 8.8.8.8')
@@ -850,6 +902,9 @@ def main():
         # 普通模式：使用用户指定的 runtime
         runtime = args.runtime
 
+    if stack == 'virt' or stack == 'light-virt' or stack == 'ai':
+        args.enable_host_on_vm = True
+
     cidr_ip_type = ip_type
     if not match_ip and path.isfile(ip_conf):
         cidr_ip_type = get_config_ip_type(ip_conf) or ip_type
@@ -870,11 +925,15 @@ def main():
                                ip_dual_conf=args.ip_dual_conf,
                                ip_type=ip_type,
                                enable_ipip=args.enable_ipip,
+                               calico_backend=args.calico_backend,
                                pod_network_cidr=args.pod_network_cidr,
                                service_cidr=args.service_cidr,
                                pod_network_cidr_v4=args.pod_network_cidr_v4,
                                service_cidr_v4=args.service_cidr_v4,
-                               onecloud_version=args.onecloud_version)
+                               onecloud_version=args.onecloud_version,
+                               host_networks=args.host_networks,
+                               disk_paths=args.disk_paths,
+                               enable_host_on_vm=args.enable_host_on_vm)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
         conf = update_config(ip_conf, stackDict.get(stack), runtime)
         conf = patch_config_cidrs(
@@ -886,6 +945,12 @@ def main():
         )
         if args.onecloud_version:
             conf = patch_config_onecloud_version(conf, args.onecloud_version)
+        conf = patch_config_hostagent_options(
+            conf,
+            host_networks=args.host_networks,
+            disk_paths=args.disk_paths,
+            enable_host_on_vm=args.enable_host_on_vm,
+        )
     else:
         pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()

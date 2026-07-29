@@ -1,0 +1,153 @@
+---
+- name: Resolve local node underlay IP
+  set_fact:
+    fabric_local_node_ip: "{{ ansible_host | default(inventory_hostname) }}"
+
+- name: Resolve interface that owns fabric_local_node_ip
+  shell: |
+    iface=$(ip -o addr show | awk -v ip="{{ fabric_local_node_ip }}" '$0 ~ ("[[:space:]]" ip "/") {print $2; exit}')
+    iface=${iface%%@*}
+    if [ -z "$iface" ]; then
+      echo "no interface owns {{ fabric_local_node_ip }}" >&2
+      exit 1
+    fi
+    echo "$iface"
+  register: fabric_local_iface_ret
+  changed_when: false
+  args:
+    executable: /bin/bash
+
+- name: Resolve mac address for this node
+  shell: |
+    cat /sys/class/net/{{ fabric_local_iface_ret.stdout }}/address
+  register: fabric_local_mac_ret
+  changed_when: false
+  failed_when: fabric_local_mac_ret.stdout | default('') | length == 0
+
+- name: Set fabric local interface facts
+  set_fact:
+    fabric_local_iface: "{{ fabric_local_iface_ret.stdout | trim }}"
+    fabric_local_mac_addr: "{{ fabric_local_mac_ret.stdout | trim | lower }}"
+
+- name: Calculate fabric addressing for this node
+  shell: |
+    python3 - <<'PY'
+    import hashlib
+    import ipaddress
+    import sys
+
+    mac = "{{ fabric_local_mac_addr }}"
+    cidr = "{{ fabric_cidr }}"
+    mac_prefix = "{{ fabric_mac_prefix }}"
+
+    network = ipaddress.ip_network(cidr, strict=False)
+    if network.version != 4:
+        sys.stderr.write("fabric overlay currently supports IPv4 only: %s\n" % cidr)
+        sys.exit(1)
+    if network.num_addresses <= 2:
+        sys.stderr.write("fabric cidr too small (need usable hosts): %s\n" % cidr)
+        sys.exit(1)
+
+    digest = hashlib.sha256(mac.encode("utf-8")).digest()
+    # Map into usable host range: exclude network and broadcast addresses.
+    usable = network.num_addresses - 2
+    idx = int.from_bytes(digest[:8], "big") % usable + 1
+    fabric_ip = network.network_address + idx
+
+    ip_hex = ":".join("%02x" % b for b in fabric_ip.packed)
+    prefix = mac_prefix.strip().rstrip(":").lower()
+    fabric_mac = "%s:%s" % (prefix, ip_hex)
+    print("%s %s" % (fabric_ip, fabric_mac))
+    PY
+  register: fabric_addr_ret
+  changed_when: false
+  args:
+    executable: /bin/bash
+
+- name: Set fabric addressing facts
+  set_fact:
+    fabric_node_ip_addr: "{{ fabric_addr_ret.stdout.split()[0] }}"
+    fabric_node_mac_addr: "{{ fabric_addr_ret.stdout.split()[1] }}"
+
+- name: Show fabric node plan
+  debug:
+    msg: "node={{ fabric_local_node_ip }} vxlan{{ vxlan_vni }} ip={{ fabric_node_ip_addr }}/{{ fabric_cidr_prefix_length }} mac={{ fabric_node_mac_addr }}"
+
+- name: Ensure systemd-networkd is installed
+  package:
+    name: systemd-networkd
+    state: present
+  become: true
+  failed_when: false
+
+- name: Ensure /etc/systemd/network exists
+  file:
+    path: /etc/systemd/network
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Deploy vxlan netdev config
+  template:
+    src: 25-vxlan.netdev.j2
+    dest: "/etc/systemd/network/25-vxlan{{ vxlan_vni }}.netdev"
+    mode: '0644'
+  become: true
+  register: fabric_netdev
+
+- name: Deploy vxlan network config
+  template:
+    src: 25-vxlan.network.j2
+    dest: "/etc/systemd/network/25-vxlan{{ vxlan_vni }}.network"
+    mode: '0644'
+  become: true
+  register: fabric_network
+
+- name: Ensure firewalld is disabled and stopped
+  shell: |
+    if [ -f /usr/lib/systemd/system/firewalld.service ] || \
+       [ -f /lib/systemd/system/firewalld.service ] || \
+       systemctl list-unit-files firewalld.service 2>/dev/null | grep -q '^firewalld.service'; then
+      systemctl disable --now firewalld.service || true
+      systemctl stop firewalld.service || true
+      systemctl disable firewalld.service || true
+    fi
+  become: true
+  args:
+    executable: /bin/bash
+  failed_when: false
+
+- name: Ensure ufw is disabled and stopped
+  shell: |
+    if command -v ufw >/dev/null 2>&1; then
+      ufw --force disable || true
+    fi
+    if [ -f /usr/lib/systemd/system/ufw.service ] || \
+       [ -f /lib/systemd/system/ufw.service ] || \
+       systemctl list-unit-files ufw.service 2>/dev/null | grep -q '^ufw.service'; then
+      systemctl disable --now ufw.service || true
+      systemctl stop ufw.service || true
+      systemctl disable ufw.service || true
+    fi
+  become: true
+  args:
+    executable: /bin/bash
+  failed_when: false
+
+- name: Ensure systemd-networkd is enabled
+  systemd:
+    name: systemd-networkd
+    enabled: true
+  become: true
+
+- name: Reload and restart systemd-networkd
+  shell: |
+    systemctl daemon-reload
+    systemctl restart systemd-networkd
+  become: true
+  args:
+    executable: /bin/bash
+
+- name: Show fabric info
+  debug:
+    msg: "node={{ fabric_local_node_ip }} vxlan{{ vxlan_vni }} ip={{ fabric_node_ip_addr }}/{{ fabric_cidr_prefix_length }} mac={{ fabric_node_mac_addr }}"
