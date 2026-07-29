@@ -1,0 +1,121 @@
+---
+- name: detect os
+  include_role:
+    name: utils/detect-os
+
+- name: Assert calico_version
+  fail:
+    msg: "calico_version is required, e.g. v3.26.4"
+  when:
+  - calico_version | default('') | length == 0
+
+- name: Resolve calico image repository from live calico-node
+  environment:
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
+  shell: |
+    set -e
+    image=$({{ K3S_CMDLINE_PREFIX }} kubectl -n kube-system get ds calico-node \
+      -o jsonpath='{.spec.template.spec.containers[?(@.name=="calico-node")].image}')
+    if [ -z "$image" ]; then
+      echo "failed to get calico-node image" >&2
+      exit 1
+    fi
+    name_tag="${image##*/}"
+    repo="${image%/$name_tag}"
+    if [ -z "$repo" ] || [ "$repo" = "$image" ]; then
+      echo "failed to parse image repository from $image" >&2
+      exit 1
+    fi
+    echo "$repo"
+  args:
+    executable: /bin/bash
+  register: calico_repo_from_cluster
+  when:
+  - calico_image_repository | default('') | length == 0
+  become: true
+
+- name: Set calico_image_repository fact from cluster
+  set_fact:
+    calico_image_repository: "{{ calico_repo_from_cluster.stdout }}"
+  when:
+  - calico_image_repository | default('') | length == 0
+
+- name: Debug selected calico images
+  debug:
+    msg: "calico_version={{ calico_version }}, calico_image_repository={{ calico_image_repository }}"
+
+- name: Set calico-node daemonset images
+  environment:
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
+  shell: |
+    {{ K3S_CMDLINE_PREFIX }} kubectl -n kube-system set image ds/calico-node \
+      calico-node={{ calico_image_repository }}/calico-node:{{ calico_version }} \
+      upgrade-ipam={{ calico_image_repository }}/calico-cni:{{ calico_version }} \
+      install-cni={{ calico_image_repository }}/calico-cni:{{ calico_version }} \
+      mount-bpffs={{ calico_image_repository }}/calico-node:{{ calico_version }}
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Set calico-kube-controllers deployment image
+  environment:
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
+  shell: |
+    {{ K3S_CMDLINE_PREFIX }} kubectl -n kube-system set image deploy/calico-kube-controllers \
+      calico-kube-controllers={{ calico_image_repository }}/calico-kube-controllers:{{ calico_version }}
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Stat k3s calico manifest
+  stat:
+    path: /var/lib/rancher/k3s/server/manifests/calico.yaml
+  register: k3s_calico_manifest
+
+- name: Persist calico image tags in k3s manifests
+  shell: |
+    set -e
+    sed -E -i \
+      's#(calico-(cni|node|kube-controllers)):v?[0-9]+\.[0-9]+\.[0-9]+#\1:{{ calico_version }}#g' \
+      /var/lib/rancher/k3s/server/manifests/calico.yaml
+  args:
+    executable: /bin/bash
+  when:
+  - k3s_calico_manifest.stat.exists | default(false)
+  become: true
+
+- name: Wait for calico-node rollout
+  environment:
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
+  shell: |
+    {{ K3S_CMDLINE_PREFIX }} kubectl -n kube-system rollout status ds/calico-node --timeout=180s
+  args:
+    executable: /bin/bash
+  become: true
+  failed_when: false
+
+- name: Wait for calico-kube-controllers rollout
+  environment:
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
+  shell: |
+    {{ K3S_CMDLINE_PREFIX }} kubectl -n kube-system rollout status deploy/calico-kube-controllers --timeout=180s
+  args:
+    executable: /bin/bash
+  become: true
+  failed_when: false
+
+- name: Show calico pods
+  environment:
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
+  shell: |
+    {{ K3S_CMDLINE_PREFIX }} kubectl -n kube-system get pods \
+      -l 'k8s-app in (calico-node,calico-kube-controllers)' -o wide
+  args:
+    executable: /bin/bash
+  become: true
+  register: calico_pods
+  changed_when: false
+
+- name: Print calico pods
+  debug:
+    var: calico_pods.stdout_lines
