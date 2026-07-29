@@ -36,23 +36,28 @@
   set_fact:
     default_ip: "{{ default_ip_ret.stdout if default_ip_ret is defined and default_ip_ret.stdout is defined else node_ip }}"
 
+- name: Ensure host_networks is a list for default interface detection
+  set_fact:
+    host_networks: "{{ [host_networks] if host_networks is string else host_networks }}"
+  when: host_networks is defined and host_networks != ''
+
 - name: Default interface for IPv6
   set_fact:
     default_interface: true
+  loop: "{{ host_networks | default([]) }}"
   when:
+  - not default_interface
   - ip_type is defined and ip_type == 'ipv6'
-  - node_ip is defined
-  - node_ip == default_ip
-  - node_ip | regex_search(':')
+  - default_ip in item
 
 - name: Default interface for IPv4
   set_fact:
     default_interface: true
+  loop: "{{ host_networks | default([]) }}"
   when:
+  - not default_interface
   - ip_type is not defined or ip_type != 'ipv6'
-  - node_ip is defined
-  - node_ip == default_ip
-  - node_ip is match('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')
+  - default_ip in item
 
 - name: Set default Gateway
   set_fact:
