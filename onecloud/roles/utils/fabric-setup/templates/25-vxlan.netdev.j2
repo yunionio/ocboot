@@ -1,0 +1,11 @@
+[NetDev]
+Name=vxlan{{ vxlan_vni }}
+Kind=vxlan
+MacLearning=true
+MACAddress={{ fabric_node_mac_addr }}
+
+[VXLAN]
+VNI={{ vxlan_vni }}
+Local={{ fabric_local_node_ip }}
+DestinationPort=4789
+Independent=true

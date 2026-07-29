@@ -1,9 +1,12 @@
+- name: Set node_interface_name
+  include_role:
+    name: utils/fetch-node-interface
+
+- name: Record whether host_networks was provided
+  set_fact:
+    _host_networks_provided: "{{ host_networks is defined and host_networks != '' }}"
+
 - block:
-
-  - name: Set node_interface_name
-    include_role:
-      name: utils/fetch-node-interface
-
   - name: Set host_networks for single-stack
     set_fact:
       host_networks: "['{{ node_interface_name }}/br0/{{ node_ip }}']"
@@ -29,4 +32,60 @@
       - node_ip_v4 is defined
       - node_ip_v6 is defined and node_ip_v6 == node_ip
 
-  when: host_networks is undefined or host_networks == ''
+  when: not (_host_networks_provided | bool)
+
+- block:
+  - name: Ensure host_networks is a list
+    set_fact:
+      host_networks: "{{ [host_networks] if host_networks is string else host_networks }}"
+
+  - name: Determine IP address for each host_networks entry
+    shell: |
+      iface=$(echo "{{ item }}" | cut -d'/' -f1)
+      {% if ip_type is defined and ip_type == 'ipv6' %}
+      ip -6 -brief address show "$iface" | awk '{print $3}' | cut -d/ -f1 | head -n1
+      {% elif ip_type is defined and ip_type == 'dual-stack' %}
+      v4addr=$(ip -4 -brief address show "$iface" | awk '{print $3}' | cut -d/ -f1 | head -n1)
+      v6addr=$(ip -6 -brief address show "$iface" | awk '{print $3}' | cut -d/ -f1 | head -n1)
+      echo "$v4addr/$v6addr"
+      {% else %}
+      ip -4 -brief address show "$iface" | awk '{print $3}' | cut -d/ -f1 | head -n1
+      {% endif %}
+    loop: "{{ host_networks }}"
+    loop_control:
+      index_var: hn_idx
+      label: "{{ item }}"
+    register: _host_networks_ip_lookup
+    changed_when: false
+    failed_when: _host_networks_ip_lookup.stdout | default('') | length == 0
+
+  - name: Initialize resolved host_networks
+    set_fact:
+      _resolved_host_networks: []
+
+  - name: Rebuild host_networks as interface/brN/ip
+    set_fact:
+      _resolved_host_networks: "{{ _resolved_host_networks + [ (item.item.split('/')[0]) ~ '/br' ~ hn_idx ~ '/' ~ (item.stdout | trim) ] }}"
+    loop: "{{ _host_networks_ip_lookup.results }}"
+    loop_control:
+      index_var: hn_idx
+      label: "{{ item.item }}"
+
+  - name: Set host_networks from resolved entries
+    set_fact:
+      host_networks: "{{ _resolved_host_networks }}"
+
+  - name: Record whether host_listen_interface was found
+    set_fact:
+      _host_listen_interface_found: true
+    loop: "{{ host_networks }}"
+    when:
+      - _host_listen_interface_found is not defined
+      - (item.split('/') | first) == node_interface_name
+
+  - name: Set host_listen_interface
+    set_fact:
+      host_listen_interface: "{{ node_interface_name }}"
+    when:
+      _host_listen_interface_found is not defined or not (_host_listen_interface_found | bool)
+  when: _host_networks_provided | bool
