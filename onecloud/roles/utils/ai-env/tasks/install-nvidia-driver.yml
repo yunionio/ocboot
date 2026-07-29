@@ -85,7 +85,7 @@
     post_reboot_delay: 30
     test_command: whoami
   become: true
-  when: kernel_install_result.changed or nouveau_blacklisted.changed or grub_vfio_removed.changed or grub_iommu_removed.changed
+  when: nouveau_blacklisted.changed or grub_vfio_removed.changed or grub_iommu_removed.changed
 
 - name: Check if NVIDIA driver is already installed
   shell: nvidia-smi
@@ -169,5 +169,16 @@
     when: kernel_source_path | default('') == ''
 
   - debug: var=nvidia_install_result.stdout_lines
+
+  - name: Reboot after NVIDIA driver installation
+    reboot:
+      msg: "Reboot initiated by Ansible after NVIDIA driver installation"
+      connect_timeout: 5
+      reboot_timeout: 600
+      pre_reboot_delay: 0
+      post_reboot_delay: 30
+      test_command: whoami
+    become: true
+    when: nvidia_install_result is defined and nvidia_install_result.changed | default(false)
 
   when: not nvidia_driver_installed | default(false)
