@@ -14,6 +14,7 @@ from lib import auto_backup
 from lib import setup_container_env
 from lib import setup_ai_env
 from lib import clickhouse
+from lib import set_calico_version
 
 
 def main():
@@ -37,6 +38,7 @@ def main():
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_HOST)
     upgrade.add_command(subparsers, command=upgrade.UPGRADE_MODES_UPGRADE_FINAL)
     clickhouse.add_command(subparsers)
+    set_calico_version.add_command(subparsers)
     args = parser.parse_args()
     if not args.subcmd:
         parser.print_help()
