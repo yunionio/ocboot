@@ -68,16 +68,68 @@ if [[ $buildah_version_major -eq 1 ]] && [[ "$buildah_version_minor" -gt 23 ]]; 
 fi
 
 cmd_extra_args=""
-origin_args="$@"
+origin_args=()
 
-if [[ "$1" == "run.py" ]]; then
+normalize_installer_path() {
+    local path="$1"
+    if [[ "$path" == /* ]]; then
+        if [[ "$path" == "$(pwd)"/* ]] || [[ "$path" == "$(pwd)" ]]; then
+            if [[ "$path" == "$(pwd)" ]]; then
+                echo "$ROOT_DIR"
+            else
+                echo "$ROOT_DIR/${path#$(pwd)/}"
+            fi
+        else
+            echo "$path"
+        fi
+    else
+        path="${path#./}"
+        echo "$ROOT_DIR/$path"
+    fi
+}
+
+prev_arg=""
+for arg in "$@"; do
+    case "$prev_arg" in
+        --nvidia-driver-installer-path|--cuda-installer-path)
+            origin_args+=("$(normalize_installer_path "$arg")")
+            ;;
+        *)
+            origin_args+=("$arg")
+            ;;
+    esac
+    prev_arg="$arg"
+done
+
+if [[ "${origin_args[0]:-}" == "run.py" ]]; then
     if [[ "$IMAGE_REPOSITORY" != "$DEFAULT_REPO" ]]; then
         cmd_extra_args="$cmd_extra_args -i $IMAGE_REPOSITORY"
     fi
-    origin_args="$ROOT_DIR/$origin_args"
+    origin_args[0]="$ROOT_DIR/run.py"
 fi
 
 mkdir -p "$HOME/.kube"
+
+# Parse --nvidia-driver-installer-path and --cuda-installer-path from original args and
+# add bind-mounts so installer files outside $(pwd) are accessible in the container.
+extra_installer_volumes=()
+prev_arg=""
+declare -A mounted_installer_dirs
+for arg in "$@"; do
+    case "$prev_arg" in
+        --nvidia-driver-installer-path|--cuda-installer-path)
+            # Only handle absolute paths that are not already under $(pwd)
+            if [[ "$arg" == /* ]] && [[ "${arg#$(pwd)/}" == "$arg" ]] && [[ "$arg" != "$(pwd)" ]]; then
+                _dir="$(dirname "$arg")"
+                if [[ -z "${mounted_installer_dirs[$_dir]+x}" ]]; then
+                    extra_installer_volumes+=(-v "$_dir:$_dir:ro")
+                    mounted_installer_dirs[$_dir]=1
+                fi
+            fi
+            ;;
+    esac
+    prev_arg="$arg"
+done
 
 buildah run --isolation chroot --user $(id -u):$(id -g) \
     -t "${buildah_extra_args[@]}" \
@@ -89,4 +141,5 @@ buildah run --isolation chroot --user $(id -u):$(id -g) \
     -v "/etc/group:/etc/group:ro" \
     -v "$(pwd):$ROOT_DIR" \
     -v "$(pwd)/airgap_assets/k3s-install.sh:/airgap_assets/k3s-install.sh:ro" \
-    "$CONTAINER_NAME" $CMD $origin_args $cmd_extra_args
+    "${extra_installer_volumes[@]}" \
+    "$CONTAINER_NAME" $CMD "${origin_args[@]}" $cmd_extra_args

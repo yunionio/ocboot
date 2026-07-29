@@ -3,7 +3,7 @@
 
 - name: Check NVIDIA GPU and driver/CUDA status on target host
   include_tasks: check-gpu-and-driver.yml
-  when: nvidia_driver_installer_path is defined and cuda_installer_path is defined
+  when: nvidia_driver_installer_path is defined
 
 - name: Check local installation files
   include_tasks: check-local-files.yml
@@ -11,7 +11,9 @@
 
 - name: Install NVIDIA driver (if installer path provided)
   include_tasks: install-nvidia-driver.yml
-  when: nvidia_driver_installer_path is defined
+  when: >
+    nvidia_driver_installer_path is defined and
+    not (ai_env_fully_ready | default(false))
 
 - name: Install CUDA (if installer path provided)
   include_tasks: install-cuda.yml
