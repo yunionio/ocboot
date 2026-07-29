@@ -472,6 +472,36 @@ def patch_config_cidrs(yaml_conf, pod_network_cidr=None, service_cidr=None,
     return yaml_conf
 
 
+def patch_config_onecloud_version(yaml_conf, onecloud_version):
+    if not onecloud_version:
+        return yaml_conf
+
+    import yaml
+    ver = onecloud_version.strip()
+    yaml_data = {}
+    try:
+        if path.isfile(yaml_conf) and path.getsize(yaml_conf) > 0:
+            with open(yaml_conf, 'r') as stream:
+                yaml_data = yaml.safe_load(stream) or {}
+    except yaml.YAMLError as exc:
+        pr_red("paring %s error: %s" % (yaml_conf, exc))
+        raise Exception("paring %s error: %s" % (yaml_conf, exc))
+
+    pri = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {})
+    if not pri:
+        return yaml_conf
+
+    if pri.get(ocboot.KEY_ONECLOUD_VERSION, '') == ver:
+        return yaml_conf
+
+    pri[ocboot.KEY_ONECLOUD_VERSION] = ver
+    yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE] = pri
+    with open(yaml_conf, 'w') as f:
+        f.write(yaml.dump(yaml_data))
+    pr_green(f"set onecloud_version={ver} in {yaml_conf}")
+    return yaml_conf
+
+
 def generate_config(
     ipaddr, produc_stack,
     dns_list=[], runtime=consts.RUNTIME_QEMU,
@@ -480,7 +510,8 @@ def generate_config(
     zone=consts.DEFAULT_ZONE_NAME,
     ip_dual_conf=None, ip_type=None, enable_ipip=False,
     pod_network_cidr=None, service_cidr=None,
-    pod_network_cidr_v4=None, service_cidr_v4=None):
+    pod_network_cidr_v4=None, service_cidr_v4=None,
+    onecloud_version=None):
     global conf
     import os.path
     import os
@@ -506,8 +537,11 @@ def generate_config(
     brand_new = True
     yaml_data = yaml.safe_load(conf)
 
-    with open(verf, 'r') as f:
-        ver = f.read().strip()
+    if onecloud_version:
+        ver = onecloud_version.strip()
+    else:
+        with open(verf, 'r') as f:
+            ver = f.read().strip()
     try:
         if path.isfile(temp) and path.getsize(temp) > 0:
             with open(temp, 'r') as stream:
@@ -681,6 +715,8 @@ def inject_common_options(parser):
     parser.add_argument('--image-repository', '-i', type=str, dest='image_repository',
                        default=consts.REGISTRY_ALI_YUNIONIO,
                        help=f"Image repository for container images, e.g.: docker.io/yunion. Default: {consts.REGISTRY_ALI_YUNIONIO}")
+    parser.add_argument('--version', dest='onecloud_version', default=None,
+                       help='OneCloud version; overrides VERSION file when set')
     parser.add_argument('--region', type=str, dest='region',
                        default=consts.DEFAULT_REGION_NAME,
                        help=f"Default region name: {consts.DEFAULT_REGION_NAME}")
@@ -837,7 +873,8 @@ def main():
                                pod_network_cidr=args.pod_network_cidr,
                                service_cidr=args.service_cidr,
                                pod_network_cidr_v4=args.pod_network_cidr_v4,
-                               service_cidr_v4=args.service_cidr_v4)
+                               service_cidr_v4=args.service_cidr_v4,
+                               onecloud_version=args.onecloud_version)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
         conf = update_config(ip_conf, stackDict.get(stack), runtime)
         conf = patch_config_cidrs(
@@ -847,6 +884,8 @@ def main():
             pod_network_cidr_v4=args.pod_network_cidr_v4,
             service_cidr_v4=args.service_cidr_v4,
         )
+        if args.onecloud_version:
+            conf = patch_config_onecloud_version(conf, args.onecloud_version)
     else:
         pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()

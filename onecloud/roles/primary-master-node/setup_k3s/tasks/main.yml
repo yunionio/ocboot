@@ -74,6 +74,24 @@
   become: yes
   until: push_images_result.rc == 0
 
+- name: Detect Hygon CPU for Calico compatibility
+  ansible.builtin.shell: |
+    grep -m 1 -qi 'HygonGenuine' /proc/cpuinfo
+  register: hygon_cpuinfo
+  changed_when: false
+  failed_when: false
+
+- name: Select Calico version for Hygon CPU
+  ansible.builtin.set_fact:
+    calico_version: "{{ calico_version_hygon }}"
+  when:
+  - hygon_cpuinfo.rc == 0
+  - calico_version == 'v3.27.5'
+
+- name: Debug selected calico_version
+  ansible.builtin.debug:
+    msg: "calico_version={{ calico_version }} (hygon={{ hygon_cpuinfo.rc == 0 }})"
+
 - name: Copy calico.yaml to /tmp/calico.yaml
   template:
     src: calico.yaml.j2

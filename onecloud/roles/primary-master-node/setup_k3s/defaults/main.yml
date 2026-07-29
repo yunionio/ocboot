@@ -1,2 +1,4 @@
 ---
 extra_server_args: '--disable servicelb'
+calico_version: v3.27.5
+calico_version_hygon: v3.26.4
