@@ -1,0 +1,55 @@
+# Upgrade OnecloudCluster: set spec.version only after operator is ready.
+- name: primary master node | Upgrade OnecloudCluster "{{ current_onecloud_version }}" to "{{ upgrade_onecloud_version }}"
+  environment:
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
+    PATH: /opt/yunion/bin:{{ ansible_env.PATH }}
+  args:
+    executable: /bin/bash
+  shell: |
+    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl patch onecloudclusters -n onecloud default --type merge --patch '
+    {
+      "spec": {
+        "version": "{{ upgrade_onecloud_version }}",
+        "imageRepository": "{{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}}"
+      }
+    }'
+    # delete legacy current-version annotations (ocboot / autoupdate)
+    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl patch onecloudclusters -n onecloud default --type merge --patch '
+      {
+        "metadata": {
+          "annotations": {
+            "upgrade.ocboot.yunion.io/current-version": null,
+            "autoupdate.onecloud.yunion.io/current-version": null
+          }
+        },
+        "spec": {
+          "autoupdate": {
+            "tag": ""
+          },
+          "hostagent": {
+            "tag": ""
+          }
+        }
+      }
+    '
+    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl rollout restart deployment -n onecloud onecloud-operator
+    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud rollout status deployment/onecloud-operator --timeout=1800s
+    # EXPECT_VERSION: do not return early while old service pods are still Running.
+    EXPECT_VERSION="{{ upgrade_onecloud_version }}" bash /opt/yunion/bin/wait-onecloud-services.sh
+  become: yes
+  async: 1800
+  poll: 0
+  register: upgrade_oc_status
+
+- name: >
+    primary master node | Check OnecloudCluster upgrade async task.
+    To watch upgrade process,
+    SSH login host "{{ ansible_hostname }}" execute:
+      kubectl get pods -n onecloud -w
+  become: yes
+  async_status:
+    jid: "{{ upgrade_oc_status.ansible_job_id }}"
+  register: upgrade_oc_result
+  until: upgrade_oc_result.finished
+  retries: 30
+  delay: 60
