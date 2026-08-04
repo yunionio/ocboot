@@ -33,10 +33,10 @@ UPGRADE_MODES_ROLE_FILE = {
 }
 
 UPGRADE_MODES_FINISH_MSG = {
-    UPGRADE_MODES_UPGRADE: "The system has been upgraded to the latest version.",
-    UPGRADE_MODES_UPGRADE_CONTROLLER: "The Controller has been upgraded to the latest version.",
-    UPGRADE_MODES_UPGRADE_HOST: "Worker nodes have been upgraded to the latest version.",
-    UPGRADE_MODES_UPGRADE_FINAL: "The final step of the upgraded is now finished.",
+    UPGRADE_MODES_UPGRADE: "The system has been upgraded to {version}.",
+    UPGRADE_MODES_UPGRADE_CONTROLLER: "The Controller has been upgraded to {version}.",
+    UPGRADE_MODES_UPGRADE_HOST: "Worker nodes have been upgraded to {version}.",
+    UPGRADE_MODES_UPGRADE_FINAL: "The final step of the upgrade to {version} is now finished.",
 }
 
 
@@ -101,6 +101,12 @@ def add_command(subparsers, command="upgrade"):
                         action="store_true",
                         default=False,
                         help="re-init gpu druing upgrading. default: false.")
+
+    parser.add_argument("--allow-errors",
+                        dest="allow_errors",
+                        action="store_true",
+                        default=False,
+                        help="disable any_errors_fatal so other hosts continue after some hosts fail (default: false)")
 
     if command == UPGRADE_MODES_UPGRADE_HOST:
         parser.add_argument("--hosts", "-H",
@@ -168,6 +174,18 @@ def do_upgrade(args):
     if not args.gpu_init:
         vars['upgrade_without_gpu'] = True
 
+    # Ansible cannot reliably template play-level any_errors_fatal (Jinja always
+    # yields a string; non-empty strings are treated as true). Strip the keyword
+    # from a temp playbook so Ansible uses its default (continue on host failure).
+    # Keep the file beside the original playbook so relative roles/ paths resolve.
+    if args.allow_errors:
+        with open(playbook_file) as f:
+            playbook_lines = f.readlines()
+        playbook_file = os.path.join(
+            os.path.dirname(playbook_file), 'upgrade-cluster-allow-errors.yml')
+        with open(playbook_file, 'w') as f:
+            f.writelines(line for line in playbook_lines if 'any_errors_fatal' not in line)
+
     return_code = run_ansible_playbook(
         inventory_f,
         playbook_file,
@@ -176,8 +194,8 @@ def do_upgrade(args):
 
     if return_code is not None and return_code != 0:
         return return_code
-    cluster.set_current_version(args.version)
-    utils.pr_green('\n' + UPGRADE_MODES_FINISH_MSG.get(args.subcmd) + '\n')
+    finish_msg = UPGRADE_MODES_FINISH_MSG.get(args.subcmd, '').format(version=args.version)
+    utils.pr_green('\n' + finish_msg + '\n')
 
 
 class UpgradeConfig(object):
