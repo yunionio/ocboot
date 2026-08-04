@@ -12,8 +12,6 @@ from .k3s import is_using_k3s
 from .ocboot import GROUP_PRIMARY_MASTER_NODE, GROUP_MASTER_NODES, GROUP_WORKER_NODES
 from .color import GB
 
-A_OCBOOT_UPGRADE_CURRENT_VERSION = 'upgrade.ocboot.yunion.io/current-version'
-
 
 def resolve_ssh_private_file(ssh_private_file):
     if ssh_private_file is None or ssh_private_file == '':
@@ -112,9 +110,6 @@ class OnecloudCluster(object):
         return (repo, IPADDR_REG.match(repo) is not None)
 
     def get_current_version(self):
-        version = self.get_annotations().get(A_OCBOOT_UPGRADE_CURRENT_VERSION, None)
-        if version:
-            return version
         return self.get_spec().get('version')
 
     def _construct_nodes(self):
@@ -156,12 +151,6 @@ class OnecloudCluster(object):
             add_i(AnsibleWorkerHost(node, port=node_port))
 
         return inventory.generate_content()
-
-    def set_current_version(self, version):
-        k3s_cmd_placeholder = 'k3s' if self.is_using_k3s() else ''
-        cmd = f'{k3s_cmd_placeholder} kubectl -n onecloud annotate --overwrite=true onecloudclusters default {A_OCBOOT_UPGRADE_CURRENT_VERSION}={version}'
-        print(GB(cmd))
-        self.ssh_client.exec_command(cmd, self.use_sudo())
 
 
 class AnsibleInventory(object):

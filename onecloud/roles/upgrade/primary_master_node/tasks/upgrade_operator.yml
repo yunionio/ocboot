@@ -1,0 +1,40 @@
+# Upgrade operator only; do not patch OnecloudCluster spec.version here.
+- name: primary master node | Upgrade operator to "{{ upgrade_onecloud_version }}"
+  environment:
+    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
+    PATH: /opt/yunion/bin:{{ ansible_env.PATH }}
+  args:
+    executable: /bin/bash
+  shell: |
+    edition=$(KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud get oc -o jsonpath='{.items[0].metadata.annotations.onecloud\.yunion\.io/edition}' || :)
+    if [[ "$edition" == "ee" ]]; then
+      /opt/yunion/bin/climc-ee update-record-create --version {{ upgrade_onecloud_version }} \
+        --registry {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} || :
+    fi
+
+    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud patch deployment onecloud-operator --type=json \
+      -p '[
+        {"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "{{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}}/onecloud-operator:{{ upgrade_onecloud_version }}"},
+        {"op": "replace", "path": "/spec/template/spec/containers/0/command", "value": ["/bin/onecloud-controller-manager", "-disable-init-crd", "-clear-component"]}
+      ]'
+
+    # rollout status waits for new RS; EXPECT_VERSION avoids returning on old Running pods.
+    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud rollout status deployment/onecloud-operator --timeout=1800s
+    EXPECT_VERSION="{{ upgrade_onecloud_version }}" bash /opt/yunion/bin/wait-onecloud-services.sh "onecloud-operator"
+  become: yes
+  async: 1800
+  poll: 0
+  register: upgrade_operator_status
+
+- name: >
+    primary master node | Check operator upgrade async task.
+    To watch upgrade process,
+    SSH login host "{{ ansible_hostname }}" execute:
+      kubectl get pods -n onecloud -w
+  become: yes
+  async_status:
+    jid: "{{ upgrade_operator_status.ansible_job_id }}"
+  register: upgrade_operator_result
+  until: upgrade_operator_result.finished
+  retries: 30
+  delay: 60
