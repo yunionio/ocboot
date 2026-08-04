@@ -83,73 +83,13 @@
   include_role:
     name: utils/onecloud-waiter
 
-# use async task to upgrade, ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_async.html
-- name: primary master node | Upgrade version "{{ current_onecloud_version }}" to "{{ upgrade_onecloud_version }}"
-  environment:
-    KUBECONFIG: "{{ ENV_KUBECONFIG }}"
-    PATH: /opt/yunion/bin:{{ ansible_env.PATH }}
-  args:
-    executable: /bin/bash
-  shell: |
-    edition=$(KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud get oc -o jsonpath='{.items[0].metadata.annotations.onecloud\.yunion\.io/edition}' || :)
-    if [[ "$edition" == "ee" ]]; then
-      /opt/yunion/bin/climc-ee update-record-create --version {{ upgrade_onecloud_version }} \
-        --registry {{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}} || :
-    fi
+# Upgrade operator first; only then patch OnecloudCluster spec.version.
+# Ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_async.html
+- name: primary master node | Upgrade operator
+  include_tasks: upgrade_operator.yml
 
-    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl -n onecloud patch deployment onecloud-operator --type=json \
-      -p '[
-        {"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "{{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}}/onecloud-operator:{{ upgrade_onecloud_version }}"},
-        {"op": "replace", "path": "/spec/template/spec/containers/0/command", "value": ["/bin/onecloud-controller-manager", "-disable-init-crd", "-clear-component"]} ## disable-init-cr
-      ]'
-
-    bash /opt/yunion/bin/wait-onecloud-services.sh "onecloud-operator"
-
-    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl patch onecloudclusters -n onecloud default --type merge --patch '
-    {
-      "spec": {
-        "version": "{{ upgrade_onecloud_version }}",
-        "imageRepository": "{{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion')}}"
-      }
-    }'
-    # delete annotation for autoupdate.onecloud.yunion.io/current-version
-    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl patch onecloudclusters -n onecloud default --type merge --patch '
-      {
-        "metadata": {
-          "annotations": {
-            "autoupdate.onecloud.yunion.io/current-version": null
-          }
-        },
-        "spec": {
-          "autoupdate": {
-            "tag": ""
-          },
-          "hostagent": {
-            "tag": ""
-          }
-        }
-      }
-    '
-    KUBECONFIG="{{ ENV_KUBECONFIG }}" {{ K3S_CMDLINE_PREFIX }} kubectl rollout restart deployment -n onecloud onecloud-operator
-    bash /opt/yunion/bin/wait-onecloud-services.sh
-  # 30 minutes timeout
-  become: yes
-  async: 1800
-  poll: 0
-  register: upgrade_status
-
-- name: >
-    primary master node | Check upgrade async task.
-    To watch upgrade process,
-    SSH login host "{{ ansible_hostname }}" execute:
-      kubectl get pods -n onecloud -w
-  become: yes
-  async_status:
-    jid: "{{ upgrade_status.ansible_job_id }}"
-  register: ocadm_update_result
-  until: ocadm_update_result.finished
-  retries: 30
-  delay: 60
+- name: primary master node | Upgrade OnecloudCluster
+  include_tasks: upgrade_oc.yml
 
 - name: Copy turn-off-operator-clear-component patch to /tmp/turn-off-operator-clear-component.patch.yml
   template:

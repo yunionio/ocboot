@@ -1,6 +1,22 @@
 #!/bin/bash
 
-export KUBECONFIG="{{ ENV_KUBECONFIG }}"
+_OC_KUBECONFIG="{{ ENV_KUBECONFIG }}"
+_OC_KUBECTL_PREFIX="{{ K3S_CMDLINE_PREFIX }}"
+
+if [[ -n "$_OC_KUBECONFIG" && -f "$_OC_KUBECONFIG" ]]; then
+	export KUBECONFIG="$_OC_KUBECONFIG"
+elif [[ -z "${KUBECONFIG:-}" ]]; then
+	for f in /etc/kubernetes/admin.conf /etc/rancher/k3s/k3s.yaml "${HOME}/.kube/config"; do
+		if [[ -f "$f" ]]; then
+			export KUBECONFIG="$f"
+			break
+		fi
+	done
+fi
+
+# Optional: EXPECT_VERSION=v4.0.0 — also require pod images contain this tag.
+# Used by upgrade so we do not return early on old still-Running pods.
+EXPECT_VERSION="${EXPECT_VERSION:-}"
 
 services=(
 	keystone
@@ -10,38 +26,111 @@ services=(
 	onecloud-operator
 )
 
+kubectl_cmd() {
+	if [[ -n "$_OC_KUBECTL_PREFIX" ]]; then
+		$_OC_KUBECTL_PREFIX kubectl "$@"
+	else
+		kubectl "$@"
+	fi
+}
+
+pod_label_key() {
+	local svc="$1"
+	if [ "$svc" == "onecloud-operator" ]; then
+		echo "k8s-app"
+	else
+		echo "app"
+	fi
+}
+
+# stdout: "true" or "false" only; diagnostics go to stderr.
 check_svc() {
 	local svc="$1"
-	local key="app"
-	if [ "$svc" == "onecloud-operator" ]; then
-		key="k8s-app"
-	fi
-	local status=$({{ K3S_CMDLINE_PREFIX }} kubectl get pods -n onecloud -l $key=$svc | grep "$svc" | grep -v Terminating | awk '{print $3}' | sort -u | xargs)
-	if [[ "$status" == "Running" ]]; then
-		echo "true"
-	else
-		echo "service pod $svc status is $status"
+	local key
+	key="$(pod_label_key "$svc")"
+
+	local pods kubectl_err
+	kubectl_err="$(mktemp)"
+	pods="$(kubectl_cmd get pods -n onecloud -l "$key=$svc" --no-headers 2>"$kubectl_err" | grep -v Terminating || true)"
+	if [[ -z "$pods" ]]; then
+		if [[ -s "$kubectl_err" ]]; then
+			echo "kubectl failed while listing pod $svc (KUBECONFIG=${KUBECONFIG:-unset}):" >&2
+			cat "$kubectl_err" >&2
+		else
+			echo "service pod $svc not found" >&2
+		fi
+		rm -f "$kubectl_err"
 		echo "false"
+		return
 	fi
+	rm -f "$kubectl_err"
+
+	# READY must be N/N (N>0) and STATUS must be Running for every pod.
+	# Note: awk regex does not support backreferences; compare split READY fields.
+	local not_ready
+	not_ready="$(echo "$pods" | awk '{
+		n = split($2, a, "/")
+		if ($3 != "Running" || n != 2 || a[1]+0 == 0 || a[1]+0 != a[2]+0) print
+	}')"
+	if [[ -n "$not_ready" ]]; then
+		echo "service pod $svc not ready:" >&2
+		echo "$not_ready" >&2
+		echo "false"
+		return
+	fi
+
+	# During upgrade, old pods can still be Running; require image tag match.
+	if [[ -n "$EXPECT_VERSION" ]]; then
+		local name images matched=0
+		# jsonpath braces must stay literal for kubectl; keep outside Jinja parsing.
+		local jp
+		jp='{% raw %}{range .spec.containers[*]}{.image}{"\n"}{end}{% endraw %}'
+		while read -r name _; do
+			[[ -z "$name" ]] && continue
+			images="$(kubectl_cmd get pod -n onecloud "$name" -o jsonpath="$jp" 2>/dev/null || true)"
+			if echo "$images" | grep -Fq ":${EXPECT_VERSION}"; then
+				matched=1
+			else
+				echo "service pod $name image not yet ${EXPECT_VERSION}, current:" >&2
+				echo "$images" >&2
+				echo "false"
+				return
+			fi
+		done <<< "$pods"
+		if [[ "$matched" -ne 1 ]]; then
+			echo "service pod $svc has no image with tag ${EXPECT_VERSION}" >&2
+			echo "false"
+			return
+		fi
+	fi
+
+	echo "true"
 }
 
 wait_svc() {
 	local svc="$1"
-	local is_running=$(check_svc "$svc")
+	local is_running
+	is_running="$(check_svc "$svc")"
 	sleep 1
 	while true; do
-		if [[ $is_running == "true" ]]; then
+		if [[ "$is_running" == "true" ]]; then
 			echo "service pod $svc is running"
 			return
 		else
 			echo "continue waiting service pod $svc, sleep 30s"
-			is_running=$(check_svc "$svc")
+			is_running="$(check_svc "$svc")"
 			sleep 30
 		fi
 	done
 }
 
-for svc in ${@:-${services[@]}}; do
-	echo "waiting service pod $svc to be running"
+if [[ $# -gt 0 ]]; then
+	svcs=("$@")
+else
+	svcs=("${services[@]}")
+fi
+
+for svc in "${svcs[@]}"; do
+	echo "waiting service pod $svc to be running${EXPECT_VERSION:+ (version $EXPECT_VERSION)}"
 	wait_svc "$svc"
 done
