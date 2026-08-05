@@ -1,26 +1,32 @@
 - hosts: all
+  any_errors_fatal: true
   roles:
     - { role: utils/detect-os }
     - { role: common }
     - { role: upgrade/common }
 
 - hosts: primary_master_node
+  any_errors_fatal: true
   roles:
     - { role: upgrade/primary_master_node }
     - { role: utils/k8s/addons }
 
 - hosts: master_nodes
+  any_errors_fatal: true
   roles:
     - { role: upgrade/master_nodes }
 
 - hosts: worker_nodes
+  any_errors_fatal: true
   roles:
     - { role: upgrade/worker_nodes }
 
 - hosts: primary_master_node:master_nodes
+  any_errors_fatal: true
   roles:
     - { role: utils/k8s/apiserver/args }
 
 - hosts: primary_master_node:master_nodes:worker_nodes
+  any_errors_fatal: true
   roles:
     - { role: utils/gpu-init }
