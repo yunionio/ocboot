@@ -185,22 +185,25 @@ def install_ansible(mirror):
         raise Exception("Install ansible failed. ")
 
 
-def check_passless_ssh(ipaddr, ip_type):
-    username = get_username()
-    cmd = f"ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' {username}@{ipaddr} uptime"
+def check_passless_ssh(ipaddr, ip_type, ssh_user=None, ssh_port=22):
+    username = ssh_user or get_username()
+    cmd = (
+        f"ssh -p {ssh_port} -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' "
+        f"{username}@{ipaddr} uptime"
+    )
     print('cmd:', cmd)
     ret = os.system(cmd)
     if ret == 0:
         return
     try:
-        install_passless_ssh(ipaddr)
+        install_passless_ssh(ipaddr, ssh_user=username, ssh_port=ssh_port)
     except Exception as e:
         print("Configure passwordless ssh failed, please try to configure it manually")
         raise e
 
 
-def install_passless_ssh(ipaddr):
-    username = get_username()
+def install_passless_ssh(ipaddr, ssh_user=None, ssh_port=22):
+    username = ssh_user or get_username()
     rsa_path = os.path.join(os.environ.get("HOME"), ".ssh/id_rsa")
     if not os.path.exists(rsa_path):
         ret = os.system("ssh-keygen -f %s -P '' -N ''" % (rsa_path))
@@ -208,20 +211,21 @@ def install_passless_ssh(ipaddr):
             raise Exception("ssh-keygen")
     print("We are going to run the following command to enable passwordless SSH login:")
     print("")
-    print("    ssh-copy-id -i ~/.ssh/id_rsa.pub %s@%s" % (username, ipaddr))
+    print("    ssh-copy-id -i ~/.ssh/id_rsa.pub -p %s %s@%s" % (ssh_port, username, ipaddr))
     print("")
     print("Press any key to continue and then input %s's password to %s" % (username, ipaddr))
     os.system("read")
-    ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub %s@%s" % (username, ipaddr))
+    ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub -p %s %s@%s" % (ssh_port, username, ipaddr))
     if ret != 0:
         raise Exception("ssh-copy-id")
     ret = os.system(
-        "ssh -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' %s@%s hostname" % (username, ipaddr))
+        "ssh -p %s -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' %s@%s hostname"
+        % (ssh_port, username, ipaddr))
     if ret != 0:
         raise Exception("check passwordless ssh login failed")
 
 
-def check_env(ipaddr=None, pip_mirror=None):
+def check_env(ipaddr=None, pip_mirror=None, ssh_user=None, ssh_port=22):
 
     ignore_check = os.getenv("IGNORE_ALL_CHECKS")
     if ignore_check == "true":
@@ -230,7 +234,7 @@ def check_env(ipaddr=None, pip_mirror=None):
     # check_ansible(pip_mirror)
     match_ip, ip_type = match_ipaddr(ipaddr)
     if match_ip:
-        check_passless_ssh(ipaddr, ip_type)
+        check_passless_ssh(ipaddr, ip_type, ssh_user=ssh_user, ssh_port=ssh_port)
 
 
 def random_password(num):
@@ -537,6 +541,41 @@ def patch_config_hostagent_options(yaml_conf, host_networks=None, disk_paths=Non
     return yaml_conf
 
 
+def patch_config_ssh_options(yaml_conf, ssh_user=None, ssh_port=None):
+    """Update SSH user/port when reusing config-allinone-current.yml."""
+    if ssh_user is None and ssh_port is None:
+        return yaml_conf
+
+    yaml_data = {}
+    try:
+        if path.isfile(yaml_conf) and path.getsize(yaml_conf) > 0:
+            with open(yaml_conf, 'r') as stream:
+                yaml_data = yaml.safe_load(stream) or {}
+    except yaml.YAMLError as exc:
+        pr_red("paring %s error: %s" % (yaml_conf, exc))
+        raise Exception("paring %s error: %s" % (yaml_conf, exc))
+
+    changed = False
+    for group in (ocboot.GROUP_PRIMARY_MASTER_NODE, ocboot.GROUP_MARIADB_NODE):
+        node = yaml_data.get(group)
+        if not isinstance(node, dict):
+            continue
+        if ssh_user is not None and node.get('user') != ssh_user:
+            node['user'] = ssh_user
+            changed = True
+        if ssh_port is not None and node.get('port') != ssh_port:
+            node['port'] = ssh_port
+            changed = True
+        yaml_data[group] = node
+
+    if changed:
+        with open(yaml_conf, 'w') as f:
+            f.write(yaml.dump(yaml_data))
+        pr_green(f"set ssh user={ssh_user} port={ssh_port} in {yaml_conf}")
+
+    return yaml_conf
+
+
 def generate_config(
     ipaddr, produc_stack,
     dns_list=[], runtime=consts.RUNTIME_QEMU,
@@ -549,7 +588,8 @@ def generate_config(
     pod_network_cidr_v4=None, service_cidr_v4=None,
     onecloud_version=None,
     host_networks=None, disk_paths=None,
-    enable_host_on_vm=None):
+    enable_host_on_vm=None,
+    ssh_user=None, ssh_port=22):
     global conf
     import os.path
     import os
@@ -606,6 +646,8 @@ def generate_config(
             disk_paths=disk_paths,
             enable_host_on_vm=enable_host_on_vm,
         )
+        username = ssh_user or get_username()
+        temp = patch_config_ssh_options(temp, ssh_user=username, ssh_port=ssh_port)
         pr_green(f"reuse conf: {temp}")
         return temp
 
@@ -624,12 +666,13 @@ def generate_config(
         yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE]['insecure_registries'] = [r]
 
     interface = get_interface_by_ip(ipaddr)
-    username = get_username()
+    username = ssh_user or get_username()
     db_password = random_password(12) if brand_new else yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get('db_password')
     assert db_password
     extra_db_dict = {
         'db_password': db_password,
         'user': username,
+        'port': ssh_port,
         ocboot.KEY_HOSTNAME: ipaddr,
     }
     enable_host = produc_stack in [ocboot.KEY_STACK_FULLSTACK, ocboot.KEY_STACK_EDGE, ocboot.KEY_STACK_LIGHT_EDGE, ocboot.KEY_STACK_AI]
@@ -639,6 +682,7 @@ def generate_config(
         'db_host': ipaddr,
         'db_password': db_password,
         'user': username,
+        'port': ssh_port,
         ocboot.KEY_AS_HOST: enable_host,
         ocboot.KEY_AS_HOST_ON_VM: enable_host,
         ocboot.KEY_HOSTNAME: ipaddr,
@@ -682,7 +726,11 @@ def generate_config(
         # Keep as list so ansible/set-hostnetworks can iterate entries.
         extra_pri_dict['host_networks'] = list(host_networks)
     else:
-        extra_pri_dict['host_networks'] = f'{interface}'
+        existing_hn = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {}).get('host_networks')
+        if existing_hn not in (None, ''):
+            extra_pri_dict['host_networks'] = existing_hn
+        else:
+            extra_pri_dict['host_networks'] = f'{interface}'
     if disk_paths:
         extra_pri_dict['disk_paths'] = list(disk_paths)
     if enable_host_on_vm is not None:
@@ -720,11 +768,11 @@ def generate_config(
 parser = None
 
 
-def check_cluster_deployed(ipaddr):
+def check_cluster_deployed(ipaddr, ssh_user=None, ssh_port=22):
     """检查目标节点是否已经部署了 OneCloud 集群。
     通过 SSH 到目标节点执行 kubectl 命令来检测。
     """
-    username = get_username()
+    username = ssh_user or get_username()
     # 尝试通过 SSH 在目标节点上执行 kubectl 命令检查 onecloud 集群是否存在
     # 先尝试 k3s kubectl，再尝试 kubectl
     check_cmd = (
@@ -732,7 +780,7 @@ def check_cluster_deployed(ipaddr):
         " || kubectl -n onecloud get onecloudclusters default -o name 2>/dev/null"
     )
     ssh_cmd = (
-        f"ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no"
+        f"ssh -p {ssh_port} -o ConnectTimeout=5 -o StrictHostKeyChecking=no"
         f" -o PasswordAuthentication=no -o LogLevel=error"
         f" {username}@{ipaddr} '{check_cmd}'"
     )
@@ -749,6 +797,12 @@ def inject_common_options(parser):
     """添加 run.py 中所有命令共用的参数"""
     parser.add_argument('--force', action='store_true', default=False,
                        help="Force install even if a cluster is already deployed on the target node")
+    parser.add_argument("--user", "-u", dest="ssh_user",
+                        default=get_username(),
+                        help="SSH user for target host (default: current user)")
+    parser.add_argument("--port", "-p", dest="ssh_port",
+                        type=int, default=22,
+                        help="SSH port for target host (default: 22)")
     parser.add_argument('--ip-dual-conf', type=str, dest='ip_dual_conf',
                        help="Input the second IP address for dual-stack configuration (IPv6 if IP_CONF is IPv4, or IPv4 if IP_CONF is IPv6)")
     parser.add_argument('--enable-ipip', action='store_true', dest='enable_ipip',
@@ -933,7 +987,9 @@ def main():
                                onecloud_version=args.onecloud_version,
                                host_networks=args.host_networks,
                                disk_paths=args.disk_paths,
-                               enable_host_on_vm=args.enable_host_on_vm)
+                               enable_host_on_vm=args.enable_host_on_vm,
+                               ssh_user=args.ssh_user,
+                               ssh_port=args.ssh_port)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
         conf = update_config(ip_conf, stackDict.get(stack), runtime)
         conf = patch_config_cidrs(
@@ -955,11 +1011,12 @@ def main():
         pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
         exit()
     
-    check_env(ip_conf, pip_mirror=args.pip_mirror)
+    check_env(ip_conf, pip_mirror=args.pip_mirror,
+              ssh_user=args.ssh_user, ssh_port=args.ssh_port)
 
     # 检查目标节点是否已经部署了集群
     if not args.force:
-        if check_cluster_deployed(ip_conf):
+        if check_cluster_deployed(ip_conf, ssh_user=args.ssh_user, ssh_port=args.ssh_port):
             pr_red(f"Error: A OneCloud cluster is already deployed on {ip_conf}.")
             sys.exit(1)
 
