@@ -4,3 +4,4 @@ containerd_packages:
     - yunion-crictl
     - yunion-ocnet-cni
     - yunion-containerd
+    - yunion-hami
