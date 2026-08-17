@@ -1,0 +1,12 @@
+[Unit]
+Description=OneCloud fabric HTTPS DNAT (underlay -> vxlan node_ip)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/fabric-https-dnat.sh
+
+[Install]
+WantedBy=multi-user.target
