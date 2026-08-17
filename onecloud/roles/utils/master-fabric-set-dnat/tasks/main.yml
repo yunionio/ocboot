@@ -1,0 +1,68 @@
+---
+- name: Check if node_ip is in fabric range 198.19.0.0/16
+  shell: |
+    python3 - <<'PY'
+    import ipaddress
+    import sys
+    try:
+        ip = ipaddress.ip_address("{{ node_ip }}")
+    except Exception:
+        print("no")
+        sys.exit(0)
+    print("yes" if ip in ipaddress.ip_network("198.19.0.0/16") else "no")
+    PY
+  register: node_ip_in_fabric_ret
+  changed_when: false
+  args:
+    executable: /bin/bash
+
+- name: Get default route underlay IP
+  shell: "ip route get 1 | head -n 1 | awk '{print $7}'"
+  register: default_interface_ip_ret
+  changed_when: false
+  when: node_ip_in_fabric_ret.stdout | trim == 'yes'
+
+- name: Set default_interface_ip fact
+  set_fact:
+    default_interface_ip: "{{ default_interface_ip_ret.stdout | trim }}"
+  when:
+  - node_ip_in_fabric_ret.stdout | trim == 'yes'
+  - default_interface_ip_ret is defined
+  - default_interface_ip_ret.stdout is defined
+
+- name: Deploy fabric HTTPS DNAT script
+  template:
+    src: fabric-https-dnat.sh.j2
+    dest: /usr/local/bin/fabric-https-dnat.sh
+    mode: '0755'
+  become: true
+  when:
+  - node_ip_in_fabric_ret.stdout | trim == 'yes'
+  - default_interface_ip is defined
+  - default_interface_ip | length > 0
+  - default_interface_ip != node_ip
+
+- name: Deploy fabric HTTPS DNAT systemd oneshot service
+  template:
+    src: fabric-https-dnat.service.j2
+    dest: /etc/systemd/system/fabric-https-dnat.service
+    mode: '0644'
+  become: true
+  when:
+  - node_ip_in_fabric_ret.stdout | trim == 'yes'
+  - default_interface_ip is defined
+  - default_interface_ip | length > 0
+  - default_interface_ip != node_ip
+
+- name: Enable and start fabric HTTPS DNAT service
+  ansible.builtin.systemd:
+    name: fabric-https-dnat
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+  when:
+  - node_ip_in_fabric_ret.stdout | trim == 'yes'
+  - default_interface_ip is defined
+  - default_interface_ip | length > 0
+  - default_interface_ip != node_ip

@@ -35,3 +35,7 @@
   when:
   - (onecloud_version is version('v4.0', '>=') and upgrade_onecloud_version is not defined) or (upgrade_onecloud_version is defined and upgrade_onecloud_version is version('v4.0', '>='))
   - enable_lbagent | default(false) | bool == false
+
+- name: add dnat rules if using fabric vxlan interface
+  include_role:
+    name: utils/master-fabric-set-dnat

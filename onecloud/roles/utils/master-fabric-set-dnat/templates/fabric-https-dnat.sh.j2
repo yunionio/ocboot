@@ -1,0 +1,24 @@
+#!/bin/bash
+# Add DNAT so HTTPS on underlay default IP is forwarded to fabric/vxlan node_ip.
+set -euo pipefail
+
+DEFAULT_IP="{{ default_interface_ip }}"
+NODE_IP="{{ node_ip }}"
+
+if [ -z "$DEFAULT_IP" ] || [ -z "$NODE_IP" ]; then
+  echo "default_interface_ip or node_ip is empty, skip DNAT" >&2
+  exit 0
+fi
+
+if [ "$DEFAULT_IP" = "$NODE_IP" ]; then
+  echo "default_interface_ip equals node_ip, skip DNAT"
+  exit 0
+fi
+
+if iptables -t nat -C PREROUTING -p tcp --dport 443 -d "$DEFAULT_IP" -j DNAT --to-destination "${NODE_IP}:443" 2>/dev/null; then
+  echo "DNAT rule already exists: ${DEFAULT_IP}:443 -> ${NODE_IP}:443"
+  exit 0
+fi
+
+iptables -t nat -A PREROUTING -p tcp --dport 443 -d "$DEFAULT_IP" -j DNAT --to-destination "${NODE_IP}:443"
+echo "Added DNAT rule: ${DEFAULT_IP}:443 -> ${NODE_IP}:443"
