@@ -185,12 +185,17 @@ def install_ansible(mirror):
         raise Exception("Install ansible failed. ")
 
 
+def ssh_login_probe_cmd(ipaddr, username, ssh_port):
+    # Use a shell builtin so probe succeeds on minimal images without hostname/uptime.
+    return (
+        f"ssh -p {ssh_port} -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' "
+        f"{username}@{ipaddr} true"
+    )
+
+
 def check_passless_ssh(ipaddr, ip_type, ssh_user=None, ssh_port=22):
     username = ssh_user or get_username()
-    cmd = (
-        f"ssh -p {ssh_port} -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' "
-        f"{username}@{ipaddr} uptime"
-    )
+    cmd = ssh_login_probe_cmd(ipaddr, username, ssh_port)
     print('cmd:', cmd)
     ret = os.system(cmd)
     if ret == 0:
@@ -218,9 +223,7 @@ def install_passless_ssh(ipaddr, ssh_user=None, ssh_port=22):
     ret = os.system("ssh-copy-id -i ~/.ssh/id_rsa.pub -p %s %s@%s" % (ssh_port, username, ipaddr))
     if ret != 0:
         raise Exception("ssh-copy-id")
-    ret = os.system(
-        "ssh -p %s -o 'StrictHostKeyChecking=no' -o 'PasswordAuthentication=no' %s@%s hostname"
-        % (ssh_port, username, ipaddr))
+    ret = os.system(ssh_login_probe_cmd(ipaddr, username, ssh_port))
     if ret != 0:
         raise Exception("check passwordless ssh login failed")
 
