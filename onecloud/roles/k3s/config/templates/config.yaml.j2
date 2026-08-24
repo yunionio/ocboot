@@ -97,8 +97,4 @@ kube-proxy-arg:
 {% elif ip_type == 'dual-stack' %}
   - "bind-address=0.0.0.0"
 {% endif %}
-{% if ip_type == 'ipv6' %}
-  - "nodeport-addresses={{ node_ip }}/128"
-{% else %}
-  - "nodeport-addresses={{ node_ip }}/32"
-{% endif %}
+
