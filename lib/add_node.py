@@ -56,7 +56,7 @@ class AddWorkerNodeService(AddNodeService):
             'ip_type': args.ip_type,
             'offline_data_path': args.offline_data_path,
             'enable_ai_env': getattr(args, 'enable_ai_env', False),
-            'gpu_device_virtual_number': getattr(args, 'gpu_device_virtual_number', 2),
+            'gpu_device_virtual_number': getattr(args, 'gpu_device_virtual_number', None),
             'nvidia_driver_installer_path': getattr(args, 'nvidia_driver_installer_path', None),
             'cuda_installer_path': getattr(args, 'cuda_installer_path', None),
         }

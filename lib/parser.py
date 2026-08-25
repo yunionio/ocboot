@@ -121,8 +121,8 @@ def inject_ai_nvidia_options(parser):
     parser.add_argument("--gpu-device-virtual-number",
                         dest="gpu_device_virtual_number",
                         type=int,
-                        default=2,
-                        help=help_d("Virtual number for NVIDIA GPU share device (default: 2)"))
+                        default=None,
+                        help=help_d("Virtual number for NVIDIA GPU share device. If omitted, GPUs use HAMi by default"))
 
 
 def inject_auto_backup_options(parser):
