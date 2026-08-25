@@ -39,7 +39,7 @@ ocboot.py setup-ai-env <target_host1> <target_host2> ... \
 
 - `--nvidia-driver-installer-path` (必需): NVIDIA 驱动安装包的完整路径，例如 `/root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run`
 - `--cuda-installer-path` (必需): CUDA 安装包的完整路径，例如 `/root/nvidia/cuda_12.8.1_570.124.06_linux.run`
-- `--gpu-device-virtual-number` (可选): NVIDIA GPU 共享设备的虚拟编号，默认为 2
+- `--gpu-device-virtual-number` (可选): NVIDIA GPU 共享设备的虚拟编号。未指定时默认使用 HAMi；指定后才会生成 `NVIDIA_GPU_SHARE` 虚拟设备
 - `--user`, `-u` (可选): SSH 用户名，默认为 root
 - `--key-file`, `-k` (可选): SSH 私钥文件路径
 - `--port`, `-p` (可选): SSH 端口，默认为 22
@@ -52,7 +52,7 @@ ocboot.py setup-ai-env 10.127.222.247 \
   --nvidia-driver-installer-path /root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run \
   --cuda-installer-path /root/nvidia/cuda_12.8.1_570.124.06_linux.run
 
-# 指定自定义路径
+# 指定 GPU 软共享虚拟设备数量（不指定则默认使用 HAMi）
 ocboot.py setup-ai-env 10.127.222.247 \
   --nvidia-driver-installer-path /opt/nvidia/NVIDIA-Linux-x86_64-570.172.08.run \
   --cuda-installer-path /opt/nvidia/cuda_12.8.1_570.172.08_linux.run \
@@ -71,6 +71,12 @@ ocboot.py setup-ai-env 10.127.222.247 \
 如果需要直接使用 ansible-playbook，可以通过 `-e` 参数传入变量：
 
 ```bash
+# 默认使用 HAMi
+ansible-playbook -i inventory setup-ai-env-services.yml \
+  -e nvidia_driver_installer_path=/root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run \
+  -e cuda_installer_path=/root/nvidia/cuda_12.8.1_570.124.06_linux.run
+
+# 指定 NVIDIA_GPU_SHARE 虚拟设备数量
 ansible-playbook -i inventory setup-ai-env-services.yml \
   -e nvidia_driver_installer_path=/root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run \
   -e cuda_installer_path=/root/nvidia/cuda_12.8.1_570.124.06_linux.run \
@@ -79,7 +85,7 @@ ansible-playbook -i inventory setup-ai-env-services.yml \
 
 ## 注意事项
 
-1. 安装过程中会自动重启系统（在安装内核包后和更新 GRUB 后）
+1. 安装完成后通常会自动重启一次以加载驱动和 GRUB；若 nouveau 仍占用 GPU，安装驱动前可能提前重启一次
 2. 确保目标主机有足够的磁盘空间
 3. 确保网络连接正常，能够下载 NVIDIA Container Toolkit
 4. 对于不同的操作系统，会自动加载相应的变量文件
@@ -111,12 +117,12 @@ scp /path/to/cuda/cuda_12.8.1_570.124.06_linux.run target_host:/root/nvidia/
 
 1. 检查操作系统支持
 2. 检查本地安装文件是否存在
-3. 安装内核头文件和开发包
-4. 清理 vfio 相关配置
-5. 安装 NVIDIA 驱动
-6. 安装 CUDA 环境
-7. 配置 GRUB（添加 nvidia-drm.modeset=1）
+3. 配置 GRUB（添加 nvidia-drm.modeset=1）
+4. 安装内核头文件和开发包
+5. 清理 vfio 相关配置
+6. 安装 NVIDIA 驱动
+7. 安装 CUDA 环境
 8. 安装 NVIDIA Container Toolkit
 9. 配置 containerd runtime
-10. 配置主机设备映射（lxcfs 由 `utils/containerd` 在本 role 之前完成）
-11. 验证安装结果
+10. 配置主机设备映射（仅在指定 `--gpu-device-virtual-number` 时生成 NVIDIA_GPU_SHARE；未指定则默认使用 HAMi。lxcfs 由 `utils/containerd` 在本 role 之前完成）
+11. 按需重启后验证安装结果

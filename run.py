@@ -1028,10 +1028,11 @@ def main():
     if is_ai_mode:
         extra_vars = {
             'enable_ai_env': True,
-            'gpu_device_virtual_number': args.gpu_device_virtual_number,
         }
         
         # 只有在提供了 NVIDIA 相关参数时才添加这些变量
+        if args.gpu_device_virtual_number is not None:
+            extra_vars['gpu_device_virtual_number'] = args.gpu_device_virtual_number
         if args.nvidia_driver_installer_path:
             extra_vars['nvidia_driver_installer_path'] = args.nvidia_driver_installer_path
         if args.cuda_installer_path:

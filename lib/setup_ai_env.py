@@ -28,8 +28,8 @@ class AIEnvService(BaseService):
         parser.add_argument("--gpu-device-virtual-number",
                            dest="gpu_device_virtual_number",
                            type=int,
-                           default=2,
-                           help=help_d("Virtual number for NVIDIA GPU share device (default: 2)"))
+                           default=None,
+                           help=help_d("Virtual number for NVIDIA GPU share device. If omitted, GPUs use HAMi by default"))
 
     def do_action(self, args):
         config = NodesConfig(args.target_node_hosts,
@@ -41,10 +41,11 @@ class AIEnvService(BaseService):
         vars = {
             'nvidia_driver_installer_path': args.nvidia_driver_installer_path,
             'cuda_installer_path': args.cuda_installer_path,
-            'gpu_device_virtual_number': args.gpu_device_virtual_number,
             # Add SSH configuration for rsync commands
             'ansible_ssh_private_key_file': args.ssh_private_file,
         }
+        if args.gpu_device_virtual_number is not None:
+            vars['gpu_device_virtual_number'] = args.gpu_device_virtual_number
         
         return config.run(self.action, vars=vars)
 
