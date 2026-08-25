@@ -50,6 +50,13 @@
   template:
     src: calico.yaml.j2
     dest: /var/lib/rancher/k3s/server/manifests/calico.yaml
+  when: cluster_cni | default('calico') == 'calico'
+
+- name: Remove the Calico manifest when Flannel is selected
+  ansible.builtin.file:
+    path: /var/lib/rancher/k3s/server/manifests/calico.yaml
+    state: absent
+  when: cluster_cni | default('calico') == 'flannel'
 
 - name: Update traefik component configuration
   copy:

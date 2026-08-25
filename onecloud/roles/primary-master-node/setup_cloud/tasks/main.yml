@@ -1,6 +1,11 @@
 - set_fact: disable_resource_management=false
 - set_fact: use_hyper_image=false
 
+- name: Use the validated hyper image on RISC-V
+  ansible.builtin.set_fact:
+    use_hyper_image: true
+  when: ansible_architecture == 'riscv64'
+
 - name: include k8s cloud if needed
   include_tasks: "k8s_cloud.yml"
   when:

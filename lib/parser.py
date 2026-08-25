@@ -69,6 +69,12 @@ def inject_add_nodes_options(parser):
                         default="",
                         help="offline rpm repo path for upgrade mode")
 
+    parser.add_argument(
+        "--riscv64-config",
+        dest="riscv64_config_file",
+        help="YAML file containing the same riscv64 mapping used by install; "
+             "required when adding a riscv64 node")
+
     parser.add_argument("--ip-type",
                         dest="ip_type",
                         default="",
