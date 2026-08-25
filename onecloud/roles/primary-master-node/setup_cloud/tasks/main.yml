@@ -2,6 +2,11 @@
 - set_fact: disable_resource_management=false
 - set_fact: use_hyper_image=false
 
+- name: Use the validated hyper image on RISC-V
+  ansible.builtin.set_fact:
+    use_hyper_image: true
+  when: ansible_architecture == 'riscv64'
+
 - name: Get default gateway for IPv6
   shell: "ip -6 route get 2001:4860:4860::8888 | head -n 1 | awk '{print $3}' 2>/dev/null || echo ''"
   register: default_gateway_ret
