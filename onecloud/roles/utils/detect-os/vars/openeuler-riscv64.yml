@@ -1,0 +1,52 @@
+---
+is_redhat_based: true
+is_openeuler_riscv64: true
+is_openeuler_based: true
+is_centos_based: true
+centos_version: 10
+
+common_packages:
+  - bash-completion
+  - bridge-utils
+  - cloudpods-executor
+  - cloudpods-riscv-firmware
+  - conntrack-tools
+  - curl
+  - fuse
+  - jq
+  - kmod
+  - multipath-tools
+  - nfs-utils
+  - openvswitch
+  - parallel
+  - pciutils
+  - python3-libselinux
+  - python3-pip
+  - qemu-riscv-cloudpods
+  - rsync
+  - tcpdump
+
+common_services:
+  - cloudpods-executor
+
+latest_packages: []
+qemu_10_packages: []
+ovs_packages: []
+ceph_packages: []
+executor_service: cloudpods-executor
+
+k3s_pause_image: "{{ riscv64.images.pause }}"
+k3s_helm_job_image: "{{ riscv64.images.helm_job }}"
+k3s_traefik_image: "{{ riscv64.images.traefik }}"
+openvswitch_image: "{{ riscv64.images.openvswitch }}"
+
+cloudpods_etcd_version: "{{ riscv64.cloudpods.etcd_version }}"
+cloudpods_busybox_image: "{{ riscv64.cloudpods.busybox_image }}"
+cloudpods_host_health_tag: "{{ riscv64.cloudpods.host_health_tag }}"
+cloudpods_host_image_tag: "{{ riscv64.cloudpods.host_image_tag }}"
+cloudpods_openvswitch_tag: "{{ riscv64.cloudpods.openvswitch_tag }}"
+cloudpods_victoria_metrics_tag: "{{ riscv64.cloudpods.victoria_metrics_tag }}"
+cloudpods_web_image_name: "{{ riscv64.cloudpods.web_image_name }}"
+cloudpods_web_tag: "{{ riscv64.cloudpods.web_tag }}"
+cloudpods_guacd_tag: "{{ riscv64.cloudpods.guacd_tag }}"
+cloudpods_kubeserver_tag: "{{ riscv64.cloudpods.kubeserver_tag }}"

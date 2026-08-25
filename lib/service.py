@@ -5,7 +5,24 @@ from __future__ import unicode_literals
 
 import os
 
-from .ocboot import KEY_DISK_PATHS, KEY_ENABLE_CONTAINERD, KEY_HOST_NETWORKS, KEY_IMAGE_REPOSITORY, KEY_K8S_CONTROLPLANE_HOST, GROUP_PRIMARY_MASTER_NODE, ClickhouseConfig, Node, NodeConfig, Config, get_ansible_global_vars_by_cluster, KEY_PRIMARY_MASTER_NODE_IP
+from .ocboot import (
+    GROUP_PRIMARY_MASTER_NODE,
+    KEY_DISK_PATHS,
+    KEY_ENABLE_CONTAINERD,
+    KEY_HOST_NETWORKS,
+    KEY_IMAGE_REPOSITORY,
+    KEY_K8S_CONTROLPLANE_HOST,
+    KEY_PRIMARY_MASTER_NODE_IP,
+    KEY_RISCV64,
+    KEY_TARGET_ARCHITECTURE,
+    KEY_TARGET_ARCHITECTURES,
+    ClickhouseConfig,
+    Config,
+    Node,
+    NodeConfig,
+    get_ansible_global_vars_by_cluster,
+    load_riscv64_config_file,
+)
 from .cmd import run_ansible_playbook
 from .ansible import get_inventory_config
 from .parser import help_d, inject_add_hostagent_options, inject_primary_node_options, inject_ssh_options
@@ -15,8 +32,9 @@ from .parser import inject_ssh_hosts_options
 from . import utils
 from . import ansible
 from . import consts
+from . import k3s
 from .cluster import construct_cluster, resolve_ssh_private_file
-from .ocboot import WorkerConfig, Config
+from .ocboot import WorkerConfig
 from .ocboot import get_ansible_global_vars
 from .ocboot import KEY_ONECLOUD_VERSION
 from .ssh import SSHClient
@@ -180,6 +198,7 @@ class AddLBAgentService(AddNodeBaseService):
             'ip_dual_conf': getattr(args, 'ip_dual_conf', None),
             'ip_type': args.ip_type,
             'offline_data_path': args.offline_data_path,
+            'riscv64_config_file': args.riscv64_config_file,
         }
 
         # 如果是双栈配置，需要处理IPv4和IPv6地址
@@ -212,9 +231,11 @@ class AddNodesConfig(object):
                  enable_lbagent=False,
                  **kwargs):
         ssh_private_file = resolve_ssh_private_file(ssh_private_file)
-        target_nodes = list(set(target_nodes))
+        target_nodes = list(dict.fromkeys(target_nodes))
         target_hostnames = [node.get_hostname() for node in cluster.k8s_nodes]
         self.enable_containerd = kwargs.get('runtime') == 'containerd'
+
+        detected_nodes = []
 
         for target_node in target_nodes:
             # check IP:
@@ -233,6 +254,27 @@ class AddNodesConfig(object):
             target_hostname = cli.get_hostname()
             if target_hostname in target_hostnames:
                 raise Exception(Red(f"Node {target_hostname}[{target_node}] already exists in cluster (By Hostname Check). "))
+            target_hostnames.append(target_hostname)
+            target_architecture = k3s.normalize_architecture(
+                cli.exec_command('uname -m').strip())
+            detected_nodes.append((target_node, target_architecture))
+
+        self.target_architectures = sorted({
+            architecture for _, architecture in detected_nodes
+        })
+        self.is_using_k3s = cluster.is_using_k3s()
+        self.riscv64_config = None
+        if KEY_RISCV64 in self.target_architectures:
+            if not self.is_using_k3s:
+                raise ValueError(
+                    'riscv64 nodes require K3s; native Kubernetes mode is not '
+                    'supported')
+            riscv64_config_file = kwargs.get('riscv64_config_file')
+            if not riscv64_config_file:
+                raise ValueError(
+                    '--riscv64-config is required when adding a riscv64 node')
+            self.riscv64_config = load_riscv64_config_file(
+                riscv64_config_file)
 
         self._check_target_nodes_cidr_conflicts(
             cluster, target_nodes,
@@ -243,8 +285,15 @@ class AddNodesConfig(object):
         self.current_version = cluster.get_current_version()
         controlplane_host = cluster.get_cluster_controlplane_host()
         primary_master_node_ip = cluster.get_primary_master_node_ip()
-        nodes_conf = [{'hostname': target_node, 'user': ssh_user,
-                       'port': ssh_port} for target_node in target_nodes]
+        nodes_conf = [
+            {
+                'hostname': target_node,
+                'user': ssh_user,
+                'port': ssh_port,
+                KEY_TARGET_ARCHITECTURE: architecture,
+            }
+            for target_node, architecture in detected_nodes
+        ]
         as_host = True
         if enable_lbagent:
             # can't enable lbagent and host at same time
@@ -269,8 +318,6 @@ class AddNodesConfig(object):
         self.worker_config = WorkerConfig(Config(woker_config_dict))
 
         self.image_repository = cluster.get_image_repository()
-        self.is_using_k3s = cluster.is_using_k3s()
-
         self.offline_data_path = kwargs.get('offline_data_path', None)
         self.ip_type = kwargs.get('ip_type', None)
 
@@ -316,6 +363,12 @@ class AddNodesConfig(object):
             raise Exception(Red("\n".join(errors)))
 
     def run(self):
+        if self.is_using_k3s:
+            k3s.init_airgap_assets(
+                k3s.GET_AIRGAP_DIR(),
+                k3s.VERSION_V1_28_5_K3S_1,
+                architectures=self.target_architectures,
+                riscv64_assets=(self.riscv64_config or {}).get('k3s'))
         inventory_content = ansible.get_inventory_config(self.worker_config)
         yaml_content = utils.to_yaml(inventory_content)
         filepath = './cluster_add_node_inventory.yml'
@@ -332,6 +385,10 @@ class AddNodesConfig(object):
     def get_vars(self):
         vars = get_ansible_global_vars(self.current_version, self.is_using_k3s)
         vars[KEY_IMAGE_REPOSITORY] = self.image_repository
+        vars[KEY_TARGET_ARCHITECTURES] = self.target_architectures
+        if self.riscv64_config:
+            vars[KEY_RISCV64] = self.riscv64_config
+            vars['cluster_cni'] = self.riscv64_config['cni']
 
         if self.offline_data_path:
             vars['offline_data_path'] = self.offline_data_path

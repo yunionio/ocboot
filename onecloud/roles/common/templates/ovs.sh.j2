@@ -2,7 +2,11 @@
 
 TAG=2.12.4-20260415
 TTY=""
+{% if ansible_architecture == 'riscv64' %}
+BIMG={{ openvswitch_image }}
+{% else %}
 BIMG={{ image_repository | default('registry.cn-beijing.aliyuncs.com/yunion') }}/openvswitch:${TAG}
+{% endif %}
 CACHEPATH=/opt/yunion/share/image-cache/ovs-${TAG}.tar
 
 {% if k8s_or_k3s | default('k3s') == 'k3s' %}
@@ -83,4 +87,3 @@ docker run --rm --network host $TTY \
     $IMG \
     /usr/bin/$(basename $0) $@
 {% endif %}
-

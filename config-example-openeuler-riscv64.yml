@@ -1,0 +1,63 @@
+riscv64:
+  # RISC-V release assets are external until the upstream projects publish
+  # official artifacts. Replace every example value before installation.
+  k3s:
+    url_prefix: https://artifacts.example.com/k3s/REPLACE_WITH_VERSION
+    binary_sha256: REPLACE_WITH_64_HEX_CHARACTERS
+    airgap_images_sha256: REPLACE_WITH_64_HEX_CHARACTERS
+  cni: flannel
+  rpm:
+    baseurl: https://artifacts.example.com/rpm/openEuler/24.03-LTS-SP3/riscv64
+    gpgcheck: true
+    repo_gpgcheck: true
+    gpgkey: https://artifacts.example.com/keys/RPM-GPG-KEY-cloudpods
+  images:
+    pause: registry.example.com/cloudpods-riscv64/pause:REPLACE_ME
+    helm_job: registry.example.com/cloudpods-riscv64/klipper-helm:REPLACE_ME
+    traefik: registry.example.com/cloudpods-riscv64/traefik:REPLACE_ME
+    openvswitch: registry.example.com/cloudpods-riscv64/openvswitch:REPLACE_ME
+  cloudpods:
+    qemu_version: REPLACE_ME
+    etcd_version: REPLACE_ME
+    busybox_image: registry.example.com/cloudpods-riscv64/busybox:REPLACE_ME
+    host_health_tag: REPLACE_ME
+    host_image_tag: REPLACE_ME
+    openvswitch_tag: REPLACE_ME
+    victoria_metrics_tag: REPLACE_ME
+    web_image_name: cloudpods-web
+    web_tag: REPLACE_ME
+    guacd_tag: REPLACE_ME
+    kubeserver_tag: REPLACE_ME
+    # Set true when the artifact provider does not publish the monitoring
+    # images required by this Cloudpods version.
+    monitor_disable: false
+
+mariadb_node:
+  hostname: 192.0.2.10
+  port: 22
+  user: root
+  db_user: root
+  db_password: REPLACE_ME
+
+primary_master_node:
+  hostname: 192.0.2.10
+  node_ip: 192.0.2.10
+  port: 22
+  user: root
+  db_host: 192.0.2.10
+  db_user: root
+  db_password: REPLACE_ME
+  onecloud_version: REPLACE_WITH_RISCV64_CLOUDPODS_TAG
+  operator_version: REPLACE_WITH_RISCV64_OPERATOR_TAG
+  target_architecture: riscv64
+  image_repository: registry.example.com/cloudpods-riscv64
+  onecloud_user: admin
+  onecloud_user_password: REPLACE_ME
+  controlplane_host: 192.0.2.10
+  controlplane_port: "6443"
+  pod_network_cidr: 10.40.0.0/16
+  service_cidr: 10.96.0.0/12
+  as_host: true
+  as_host_on_vm: false
+  region: region0
+  zone: zone0
