@@ -507,9 +507,8 @@ def patch_config_onecloud_version(yaml_conf, onecloud_version):
     return yaml_conf
 
 
-def patch_config_hostagent_options(yaml_conf, host_networks=None, disk_paths=None,
-                                   enable_host_on_vm=None):
-    if not host_networks and not disk_paths and enable_host_on_vm is None:
+def patch_config_hostagent_options(yaml_conf, host_networks=None, disk_paths=None):
+    if not host_networks and not disk_paths:
         return yaml_conf
 
     yaml_data = {}
@@ -521,23 +520,35 @@ def patch_config_hostagent_options(yaml_conf, host_networks=None, disk_paths=Non
         pr_red("paring %s error: %s" % (yaml_conf, exc))
         raise Exception("paring %s error: %s" % (yaml_conf, exc))
 
-    pri = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, {})
-    if not pri:
-        return yaml_conf
+    yaml_changed = False
+    pri = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, None)
+    if pri is not None and pri.get(ocboot.KEY_AS_HOST, False):
+        changed = False
+        if host_networks:
+            pri['host_networks'] = list(host_networks)
+            changed = True
+        if disk_paths:
+            pri['disk_paths'] = list(disk_paths)
+            changed = True
+        if changed:
+            yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE] = pri
+            yaml_changed = True
+    masters = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, [])
+    if len(masters) > 0:
+        changed = False
+        for master in masters:
+            if master.get(ocboot.KEY_AS_HOST, False):
+                if host_networks:
+                    master['host_networks'] = list(host_networks)
+                    changed = True
+                if disk_paths:
+                    master['disk_paths'] = list(disk_paths)
+                    changed = True
+        if changed:
+            yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE] = masters
+            yaml_changed = True
 
-    changed = False
-    if host_networks:
-        pri['host_networks'] = list(host_networks)
-        changed = True
-    if disk_paths:
-        pri['disk_paths'] = list(disk_paths)
-        changed = True
-    if enable_host_on_vm is not None:
-        pri[ocboot.KEY_AS_HOST_ON_VM] = enable_host_on_vm
-        changed = True
-
-    if changed:
-        yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE] = pri
+    if yaml_changed:
         with open(yaml_conf, 'w') as f:
             f.write(yaml.dump(yaml_data))
 
@@ -591,7 +602,6 @@ def generate_config(
     pod_network_cidr_v4=None, service_cidr_v4=None,
     onecloud_version=None,
     host_networks=None, disk_paths=None,
-    enable_host_on_vm=None,
     ssh_user=None, ssh_port=22):
     global conf
     import os.path
@@ -647,7 +657,6 @@ def generate_config(
             temp,
             host_networks=host_networks,
             disk_paths=disk_paths,
-            enable_host_on_vm=enable_host_on_vm,
         )
         username = ssh_user or get_username()
         temp = patch_config_ssh_options(temp, ssh_user=username, ssh_port=ssh_port)
@@ -736,8 +745,6 @@ def generate_config(
             extra_pri_dict['host_networks'] = f'{interface}'
     if disk_paths:
         extra_pri_dict['disk_paths'] = list(disk_paths)
-    if enable_host_on_vm is not None:
-        extra_pri_dict[ocboot.KEY_AS_HOST_ON_VM] = enable_host_on_vm
     extra_pri_dict['enable_ipip'] = enable_ipip
     extra_pri_dict['calico_backend'] = calico_backend
 
@@ -959,9 +966,6 @@ def main():
         # 普通模式：使用用户指定的 runtime
         runtime = args.runtime
 
-    if stack == 'virt' or stack == 'light-virt' or stack == 'ai':
-        args.enable_host_on_vm = True
-
     cidr_ip_type = ip_type
     if not match_ip and path.isfile(ip_conf):
         cidr_ip_type = get_config_ip_type(ip_conf) or ip_type
@@ -990,7 +994,6 @@ def main():
                                onecloud_version=args.onecloud_version,
                                host_networks=args.host_networks,
                                disk_paths=args.disk_paths,
-                               enable_host_on_vm=args.enable_host_on_vm,
                                ssh_user=args.ssh_user,
                                ssh_port=args.ssh_port)
     elif path.isfile(ip_conf) and path.getsize(ip_conf) > 0:
@@ -1008,7 +1011,6 @@ def main():
             conf,
             host_networks=args.host_networks,
             disk_paths=args.disk_paths,
-            enable_host_on_vm=args.enable_host_on_vm,
         )
     else:
         pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
