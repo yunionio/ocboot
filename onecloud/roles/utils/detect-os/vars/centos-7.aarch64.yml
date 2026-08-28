@@ -27,7 +27,7 @@ common_packages:
     - rsync
     - pciutils
     - tcpdump
-    - python3-libselinux
+    - libselinux-python3
     - python3-pip
     - "{{ yunion_qemu_package }}"
 
