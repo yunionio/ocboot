@@ -46,6 +46,7 @@
     label: "[{{ '%02d'|format(item_index + 1) }}/{{ common_packages|length }}] {{ package_item }}"
     loop_var: package_item
   become: yes
+  ignore_errors: "{{ upgrade_onecloud_version is defined }}"
   tags:
   - package
 
