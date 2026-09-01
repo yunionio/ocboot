@@ -20,6 +20,7 @@
     or (is_openeuler_x86 is defined and is_openeuler_x86 | default(false) | bool) == true
     or (is_ubuntu_based_x86 is defined and is_ubuntu_based_x86 | default(false) | bool) == true
     or (is_debian_based_x86 is defined and is_debian_based_x86 | default(false) | bool) == true
+    or (ansible_distribution == "Rocky")
   - onecloud_version is defined
   - onecloud_version is version('v3.10', '>=')
   - ansible_architecture == 'x86_64'
