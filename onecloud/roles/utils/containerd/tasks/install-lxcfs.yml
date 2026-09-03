@@ -1,8 +1,9 @@
 - name: Install lxcfs
-  package:
-    name: lxcfs
-    state: present
-  become: true
+  include_role:
+    name: utils/install_packages
+  vars:
+    packages_to_install:
+    - lxcfs
 
 - name: Enable and start lxcfs service
   systemd:

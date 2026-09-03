@@ -32,16 +32,10 @@
       skip: true
 
 - name: Install mariadb
-  package:
-    name: "{{ package_item }}"
-    state: "present"
-    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
-    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
-  become: true
-  with_items:
-    - "{{ packages }}"
-  loop_control:
-    loop_var: package_item
+  include_role:
+    name: utils/install_packages
+  vars:
+    packages_to_install: "{{ packages }}"
 
 - name: Get pip version
   shell: |

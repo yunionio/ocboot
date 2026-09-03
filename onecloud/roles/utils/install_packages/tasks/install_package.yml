@@ -1,0 +1,19 @@
+---
+- name: Install packages via package module
+  package:
+    name: "{{ package_item }}"
+    state: "{{ package_state }}"
+  retries: "{{ package_retries }}"
+  delay: "{{ package_delay }}"
+  with_items: "{{ packages_to_install }}"
+  loop_control:
+    index_var: item_index
+    label: "[{{ '%02d'|format(item_index + 1) }}/{{ packages_to_install|length }}] {{ package_item | regex_replace('\\[.*|[*]', '') }}"
+    loop_var: package_item
+  become: true
+  ignore_errors: "{{ package_ignore_errors }}"
+  register: install_packages_result
+  until: install_packages_result is succeeded
+  notify: "{{ package_notify }}"
+  tags:
+  - package
