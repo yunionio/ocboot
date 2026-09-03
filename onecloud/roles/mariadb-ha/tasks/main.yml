@@ -16,11 +16,10 @@
     - facts
 
 - name: Install mariadb
-  package:
-    name: "{{ item }}"
-    state: present
-  failed_when: false
-  loop: "{{ mariadb_package_info.pkgs }}"
+  include_role:
+    name: utils/install_packages
+  vars:
+    packages_to_install: "{{ mariadb_package_info.pkgs }}"
 
 - name: pips for mysql/mariadb
   pip:

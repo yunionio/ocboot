@@ -15,11 +15,12 @@
     msg: "node={{ fabric_local_node_ip }} index={{ fabric_node_index }} vxlan{{ vxlan_vni }} ip={{ fabric_node_ip_addr }}/{{ fabric_cidr_prefix_length }} mac={{ fabric_node_mac_addr }}"
 
 - name: Ensure systemd-networkd is installed
-  package:
-    name: systemd-networkd
-    state: present
-  become: true
-  failed_when: false
+  include_role:
+    name: utils/install_packages
+  vars:
+    packages_to_install:
+    - systemd-networkd
+    package_ignore_errors: true
 
 - name: Ensure /etc/systemd/network exists
   file:

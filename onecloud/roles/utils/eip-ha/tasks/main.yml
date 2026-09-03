@@ -6,12 +6,15 @@
   become: true
   block:
     - name: install sdnagent rpm
-      package:
-        name: yunion-sdnagent
-        state: latest
+      include_role:
+        name: utils/install_packages
+      vars:
+        packages_to_install:
+        - yunion-sdnagent
+        package_state: latest
+        package_notify: restart eipgw
       when:
       - is_centos_x86 is defined
-      notify: restart eipgw
 
     - name: get vars
       shell: |
@@ -64,9 +67,11 @@
       notify: restart eipgw
 
     - name: install keepalived
-      package:
-        name: keepalived
-        state: present
+      include_role:
+        name: utils/install_packages
+      vars:
+        packages_to_install:
+        - keepalived
 
     - name: mkdir /etc/keepalived
       file:
