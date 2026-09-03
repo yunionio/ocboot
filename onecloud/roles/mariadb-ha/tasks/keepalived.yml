@@ -10,9 +10,11 @@
       value: 1
     
 - name: install keepalived
-  package:
-    name: keepalived
-    state: present
+  include_role:
+    name: utils/install_packages
+  vars:
+    packages_to_install:
+    - keepalived
 
 - name: copy keepalived config
   template:

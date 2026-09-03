@@ -1,0 +1,46 @@
+---
+- name: Check if dnf binary exists
+  stat:
+    path: /usr/bin/dnf
+  register: install_packages_dnf_bin
+  when: install_packages_mgr is not defined
+
+- name: Detect dnf backend (dnf4 vs dnf5)
+  shell: |
+    if command -v dnf5 >/dev/null 2>&1 || dnf --version 2>/dev/null | head -n1 | grep -Eq 'dnf5|DNF version 5'; then
+      echo dnf5
+    else
+      echo dnf4
+    fi
+  register: install_packages_dnf_backend_ret
+  changed_when: false
+  when:
+  - install_packages_mgr is not defined
+  - install_packages_dnf_bin.stat.exists | default(false)
+
+- name: Use apt on Debian family
+  set_fact:
+    install_packages_mgr: apt
+  when:
+  - install_packages_mgr is not defined
+  - ansible_os_family | default('') == 'Debian'
+
+- name: Use dnf when /usr/bin/dnf exists
+  set_fact:
+    install_packages_mgr: dnf
+    install_packages_dnf_backend: "{{ install_packages_dnf_backend_ret.stdout | default('dnf4') }}"
+  when:
+  - install_packages_mgr is not defined
+  - install_packages_dnf_bin.stat.exists | default(false)
+
+- name: Use yum on RedHat without dnf
+  set_fact:
+    install_packages_mgr: yum
+  when:
+  - install_packages_mgr is not defined
+  - ansible_os_family | default('') == 'RedHat' or ansible_pkg_mgr | default('') == 'yum'
+
+- name: Fall back to package module
+  set_fact:
+    install_packages_mgr: package
+  when: install_packages_mgr is not defined

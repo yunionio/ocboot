@@ -54,25 +54,21 @@
   - onecloud_version is version('v4.0', '<')
   - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
-- name: Install Preinstall Packages Via Loop
-  package:
-    name: "{{ package_item }}"
-    disablerepo: ["*nfv*", "*ceph*"]
-    enablerepo: ["baseos"]
-  retries: 3
-  delay: 3
-  with_items:
-  - "{{ preinstall_packages }}"
-  loop_control:
-    index_var: item_index
-    label: "[{{ '%02d'|format(item_index + 1) }}/{{ preinstall_packages|length }}] {{ package_item }}"
-    loop_var: package_item
-  become: yes
-  tags:
-  - package
+- name: Install Preinstall Packages
+  include_role:
+    name: utils/install_packages
+    apply:
+      tags:
+      - package
+  vars:
+    packages_to_install: "{{ preinstall_packages }}"
+    package_disablerepo: ["*nfv*", "*ceph*"]
+    package_enablerepo: ["baseos"]
   when:
   - preinstall_packages is defined
   - online_status == 'online'
+  tags:
+  - package
 
 - name: Declare imported_repos fact if imported_repos is not defined
   set_fact:

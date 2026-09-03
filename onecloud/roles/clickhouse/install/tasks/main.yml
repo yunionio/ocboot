@@ -12,15 +12,13 @@
       paths:
         - os
 
-  - name: Ensure clickhouse-server installed
-    package:
-      name: clickhouse-server
-      state: present
-
-  - name: Ensure clickhouse-client installed
-    package:
-      name: clickhouse-client
-      state: present
+  - name: Ensure clickhouse packages installed
+    include_role:
+      name: utils/install_packages
+    vars:
+      packages_to_install:
+      - clickhouse-server
+      - clickhouse-client
 
   - name: Ensure group "clickhouse" exists
     ansible.builtin.group:
