@@ -1,0 +1,21 @@
+---
+# List of packages to install (required by caller).
+packages_to_install: []
+
+# present | latest | absent
+package_state: present
+
+package_ignore_errors: false
+package_retries: 3
+package_delay: 3
+
+# Optional RedHat repo toggles. Leave undefined to auto-derive from online_status.
+# Pass omit-style values from caller when needed, e.g.:
+#   package_disablerepo: ["*nfv*", "*ceph*"]
+#   package_enablerepo: ["baseos"]
+package_disablerepo: null
+package_enablerepo: null
+
+# Optional handler name(s) to notify when package install changes.
+# Example: package_notify: restart eipgw
+package_notify: []

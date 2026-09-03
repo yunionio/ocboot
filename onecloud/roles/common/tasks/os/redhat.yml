@@ -1,8 +1,18 @@
 ---
+- name: Check if dnf is available
+  stat:
+    path: /usr/bin/dnf
+  register: redhat_dnf_bin
+
 - name: Make Cache
   shell: |
+    {% if redhat_dnf_bin.stat.exists | default(false) %}
+    dnf clean all
+    dnf -y --disablerepo='*' --enablerepo='yunion*' makecache
+    {% else %}
     yum clean all
     yum -y --disablerepo='*' --enablerepo='yunion*' makecache
+    {% endif %}
   become: yes
   when:
   - is_centos_based is defined
@@ -32,44 +42,32 @@
   - onecloud_version is version('v4.0', '<')
   - upgrade_onecloud_version is not defined or upgrade_onecloud_version is version('v4.0', '<')
 
-- name: Install Common Packages Via Loop
-  package:
-    name: "{{ package_item }}"
-    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
-    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
-  retries: 3
-  delay: 3
-  with_items:
-  - "{{ common_packages }}"
-  loop_control:
-    index_var: item_index
-    label: "[{{ '%02d'|format(item_index + 1) }}/{{ common_packages|length }}] {{ package_item }}"
-    loop_var: package_item
-  become: yes
-  ignore_errors: "{{ upgrade_onecloud_version is defined }}"
+- name: Install Common Packages
+  include_role:
+    name: utils/install_packages
+    apply:
+      tags:
+      - package
+  vars:
+    packages_to_install: "{{ common_packages }}"
+    package_ignore_errors: "{{ upgrade_onecloud_version is defined }}"
+  when: common_packages is defined
   tags:
   - package
 
-- name: Install Latest Packages Via Loop {{ onecloud_version_abbr }}
-  package:
-    name: "{{ package_item }}"
-    state: latest
-    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
-    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
-  with_items:
-  - "{{ latest_packages }}"
-  become: yes
-  retries: 6
-  delay: 10
-  register: latest_pkg_result
-  until: latest_pkg_result.rc == 0
-  ignore_errors: yes
-  when:
-  - latest_packages is defined
-  loop_control:
-    index_var: item_index
-    label: "[{{ item_index + 1 }}/{{ latest_packages | length }}] {{ package_item | regex_replace('\\[.*|[*]', '') }}"
-    loop_var: package_item
+- name: Install Latest Packages {{ onecloud_version_abbr | default('') }}
+  include_role:
+    name: utils/install_packages
+    apply:
+      tags:
+      - package
+  vars:
+    packages_to_install: "{{ latest_packages }}"
+    package_state: latest
+    package_ignore_errors: true
+    package_retries: 6
+    package_delay: 10
+  when: latest_packages is defined
   tags:
   - package
 

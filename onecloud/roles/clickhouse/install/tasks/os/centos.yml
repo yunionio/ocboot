@@ -1,10 +1,7 @@
 - name: Install clickhouse services
-  package:
-    name: "{{ item }}"
-    state: "present"
-    disablerepo: "{{ (online_status != 'online') | ternary('*', omit) }}"
-    enablerepo: "{{ (online_status != 'online') | ternary('yunion-*', omit) }}"
-  become: yes
-  with_items:
+  include_role:
+    name: utils/install_packages
+  vars:
+    packages_to_install:
     - clickhouse-server
     - clickhouse-client

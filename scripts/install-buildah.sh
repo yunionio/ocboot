@@ -21,6 +21,8 @@ supported_os=(
     "AlmaLinux 9.* aarch64"
     "AlmaLinux 10.* x86_64"
     "AlmaLinux 10.* aarch64"
+    "Alibaba Cloud Linux 3 x86_64"
+    "Alibaba Cloud Linux 3 aarch64"
     "Anolis OS 8.* x86_64"
     "Anolis OS 8.* aarch64"
     "CentOS Linux 7 x86_64"

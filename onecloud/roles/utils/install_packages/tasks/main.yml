@@ -1,0 +1,35 @@
+---
+# Generic package installer for dnf / yum / apt / package.
+# Caller must pass:
+#   packages_to_install: ["pkg-a", "pkg-b"]
+# Optional:
+#   package_state, package_ignore_errors, package_retries, package_delay,
+#   package_disablerepo, package_enablerepo
+#
+# Example:
+#   - include_role:
+#       name: utils/install_packages
+#     vars:
+#       packages_to_install: "{{ common_packages }}"
+
+- name: Install packages
+  when: packages_to_install | default([]) | length > 0
+  block:
+  - name: Detect package manager
+    include_tasks: detect.yml
+
+  - name: Install with dnf
+    include_tasks: install_dnf.yml
+    when: install_packages_mgr == 'dnf'
+
+  - name: Install with yum
+    include_tasks: install_yum.yml
+    when: install_packages_mgr == 'yum'
+
+  - name: Install with apt
+    include_tasks: install_apt.yml
+    when: install_packages_mgr == 'apt'
+
+  - name: Install with package module
+    include_tasks: install_package.yml
+    when: install_packages_mgr == 'package'
