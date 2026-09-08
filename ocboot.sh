@@ -62,7 +62,9 @@ buildah_extra_args=()
 
 # buildah accepts --env since 1.23
 echo "buildah version: $buildah_version"
-if [[ $buildah_version_major -eq 1 ]] && [[ "$buildah_version_minor" -gt 23 ]]; then
+if [[ $buildah_version_major -gt 1 ]] || \
+    { [[ $buildah_version_major -eq 1 ]] && \
+      [[ "$buildah_version_minor" -ge 23 ]]; }; then
     buildah_extra_args+=(-e ANSIBLE_VERBOSITY="${ANSIBLE_VERBOSITY:-0}")
     buildah_extra_args+=(-e HOME="$HOME")
 fi
@@ -91,7 +93,7 @@ normalize_installer_path() {
 prev_arg=""
 for arg in "$@"; do
     case "$prev_arg" in
-        --nvidia-driver-installer-path|--cuda-installer-path)
+        --nvidia-driver-installer-path|--cuda-installer-path|--riscv64-config)
             origin_args+=("$(normalize_installer_path "$arg")")
             ;;
         *)
@@ -110,14 +112,13 @@ fi
 
 mkdir -p "$HOME/.kube"
 
-# Parse --nvidia-driver-installer-path and --cuda-installer-path from original args and
-# add bind-mounts so installer files outside $(pwd) are accessible in the container.
+# Bind input files outside $(pwd) so they remain accessible in the container.
 extra_installer_volumes=()
 prev_arg=""
 declare -A mounted_installer_dirs
 for arg in "$@"; do
     case "$prev_arg" in
-        --nvidia-driver-installer-path|--cuda-installer-path)
+        --nvidia-driver-installer-path|--cuda-installer-path|--riscv64-config)
             # Only handle absolute paths that are not already under $(pwd)
             if [[ "$arg" == /* ]] && [[ "${arg#$(pwd)/}" == "$arg" ]] && [[ "$arg" != "$(pwd)" ]]; then
                 _dir="$(dirname "$arg")"
