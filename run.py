@@ -533,7 +533,7 @@ def patch_config_hostagent_options(yaml_conf, host_networks=None, disk_paths=Non
         if changed:
             yaml_data[ocboot.GROUP_PRIMARY_MASTER_NODE] = pri
             yaml_changed = True
-    masters = yaml_data.get(ocboot.GROUP_PRIMARY_MASTER_NODE, [])
+    masters = yaml_data.get(ocboot.GROUP_MASTER_NODES, [])
     if len(masters) > 0:
         changed = False
         for master in masters:
