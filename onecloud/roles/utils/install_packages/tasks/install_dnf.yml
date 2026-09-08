@@ -1,9 +1,10 @@
 ---
+# use_backend exists only since ansible-core 2.15; older controllers reject it.
 - name: Install packages via dnf
   dnf:
     name: "{{ package_item }}"
     state: "{{ package_state }}"
-    use_backend: "{{ install_packages_dnf_backend | default('dnf4') }}"
+    use_backend: "{{ (install_packages_dnf_backend | default('dnf4')) if ansible_version.full is version('2.15', '>=') else omit }}"
     disablerepo: "{{ package_disablerepo if package_disablerepo is not none else ((online_status | default('online') != 'online') | ternary('*', omit)) }}"
     enablerepo: "{{ package_enablerepo if package_enablerepo is not none else ((online_status | default('online') != 'online') | ternary('yunion-*', omit)) }}"
   retries: "{{ package_retries }}"
