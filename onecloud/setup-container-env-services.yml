@@ -1,3 +1,4 @@
 - hosts: all
   roles:
     - { role: utils/containerd }
+    - { role: utils/ai-env, when: nvidia_runtime_only | default(false) }
