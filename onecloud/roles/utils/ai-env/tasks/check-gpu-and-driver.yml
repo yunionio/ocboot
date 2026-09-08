@@ -58,7 +58,7 @@
 
 - name: Fail when driver not installed and no installer path provided
   fail:
-    msg: "未检测到已安装的 NVIDIA 驱动，且未提供 --nvidia-driver-installer-path。请先安装驱动或通过参数指定安装包路径。"
+    msg: "{{ '未检测到已安装的 NVIDIA 驱动。--nvidia-runtime 要求目标机已安装驱动（nvidia-smi 可用），或改用 setup-ai-env 并指定安装包路径。' if (nvidia_runtime_only | default(false)) else '未检测到已安装的 NVIDIA 驱动，且未提供 --nvidia-driver-installer-path。请先安装驱动或通过参数指定安装包路径。' }}"
   when: not nvidia_driver_installed | default(false) and nvidia_driver_installer_path is not defined
 
 - name: Fail when CUDA not installed and no installer path provided
