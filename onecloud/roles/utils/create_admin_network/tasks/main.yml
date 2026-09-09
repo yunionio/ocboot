@@ -1,0 +1,188 @@
+---
+- name: "Check if admin network {{ network_name }} exists"
+  shell: |
+    source ~/.onecloud_rcadmin
+    /opt/yunion/bin/climc network-show {{ network_name }} > /dev/null 2>&1
+  become: yes
+  register: network_admin_exist
+  ignore_errors: yes
+  changed_when: false
+  failed_when: false
+  args:
+    executable: /bin/bash
+
+- name: "Check if network contains {{ admin_address }}"
+  shell: |
+    source ~/.onecloud_rcadmin
+    /opt/yunion/bin/climc network-list --ip {{ admin_address }} | grep -v Total | wc -l
+  become: yes
+  register: network_count_ret
+  ignore_errors: yes
+  args:
+    executable: /bin/bash
+  when:
+  - admin_address | default('') | length > 0
+  - admin_address6 | default('') | length == 0
+
+- name: "Check if network contains {{ admin_address6 }}"
+  shell: |
+    source ~/.onecloud_rcadmin
+    /opt/yunion/bin/climc network-list --ip {{ admin_address6 }} | grep -v Total | wc -l
+  become: yes
+  register: network_count_ret
+  ignore_errors: yes
+  args:
+    executable: /bin/bash
+  when:
+  - admin_address | default('') | length == 0
+  - admin_address6 | default('') | length > 0
+
+- name: "Check if network contains {{ admin_address }} and {{ admin_address6 }}"
+  shell: |
+    source ~/.onecloud_rcadmin
+    /opt/yunion/bin/climc network-list --ip {{ admin_address }} --ip {{ admin_address6 }} | grep -v Total | wc -l
+  become: yes
+  register: network_count_ret
+  ignore_errors: yes
+  args:
+    executable: /bin/bash
+  when:
+  - admin_address | default('') | length > 0
+  - admin_address6 | default('') | length > 0
+
+- name: set admin network count
+  set_fact:
+    admin_network_count: "{{ (network_count_ret.stdout if network_count_ret is not skipped else '0') | default('0') | int }}"
+
+- block:
+  - name: "Detect {{ admin_address }} masklen"
+    shell: |
+      masklen="$(ip route list | grep -w {{ admin_address }} | grep -E '/[0-9]+' | head -n 1 | awk '{print $1}' | cut -d '/' -f 2)"
+      if [[ "$masklen" =~ ^[0-9]+$ ]]; then
+        echo "$masklen"
+        exit 0
+      fi
+      # Fallback by IPv4 class
+      c=$(echo {{ admin_address }} | awk -F. '{print $1}')
+      if [[ "$c" -le 127 ]]; then
+        echo 8
+      elif [[ "$c" -ge 128 ]] && [[ "$c" -le 191 ]]; then
+        echo 16
+      else
+        echo 24
+      fi
+    register: network_masklen_ret
+    ignore_errors: yes
+    changed_when: false
+    args:
+      executable: /bin/bash
+    when:
+    - admin_address | default('') | length > 0
+    - admin_address is match('^([0-9]{1,3}\\.){3}[0-9]{1,3}$')
+
+  - name: "Detect {{ admin_address6 }} masklen"
+    shell: |
+      prefix_len="$(ip -6 route list | grep -w {{ admin_address6 }} | grep -E '/[0-9]+' | head -n 1 | awk '{print $1}' | cut -d '/' -f 2)"
+      if [[ "$prefix_len" =~ ^[0-9]+$ ]]; then
+        echo "$prefix_len"
+        exit 0
+      fi
+      # Default to /64 for IPv6 if not found
+      echo 64
+    register: network_masklen6_ret
+    ignore_errors: yes
+    changed_when: false
+    args:
+      executable: /bin/bash
+    when:
+    - admin_address6 | default('') | length > 0
+    - "':' in admin_address6"
+
+  - name: Set detected admin address masklens
+    set_fact:
+      admin_masklen: "{{ network_masklen_ret.stdout if (network_masklen_ret is defined and network_masklen_ret is not skipped and network_masklen_ret.stdout | default('') | length > 0) else (default_masklen | default('24')) }}"
+      admin_masklen6: "{{ network_masklen6_ret.stdout if (network_masklen6_ret is defined and network_masklen6_ret is not skipped and network_masklen6_ret.stdout | default('') | length > 0) else (default_masklen | default('64')) }}"
+
+  - name: "Detect {{ admin_address }} gateway"
+    shell: |
+      gw="$(ip route get 1 from {{ admin_address }} 2>/dev/null | grep -w {{ admin_interface }} | head -n 1 | awk '{for(i=1;i<=NF;i++) if($i=="via") {print $(i+1); exit}}')"
+      echo "$gw"
+    register: network_gateway_ret
+    ignore_errors: yes
+    changed_when: false
+    args:
+      executable: /bin/bash
+    when:
+    - admin_address | default('') | length > 0
+    - admin_address is match('^([0-9]{1,3}\\.){3}[0-9]{1,3}$')
+
+  - name: "Detect {{ admin_address6 }} gateway"
+    shell: |
+      gw="$(ip -6 route get 2001:4860:4860::8888 from {{ admin_address6 }} 2>/dev/null | grep -w {{ admin_interface }} | head -n 1 | awk '{for(i=1;i<=NF;i++) if($i=="via") {print $(i+1); exit}}')"
+      echo "$gw"
+    register: network_gateway6_ret
+    ignore_errors: yes
+    changed_when: false
+    args:
+      executable: /bin/bash
+    when:
+    - admin_address6 | default('') | length > 0
+    - "':' in admin_address6"
+
+  - name: Set detected admin address gateways
+    set_fact:
+      admin_gateway: "{{ network_gateway_ret.stdout | trim if (network_gateway_ret is defined and network_gateway_ret is not skipped and network_gateway_ret.stdout | default('') | trim | length > 0) else (default_gateway | default('')) }}"
+      admin_gateway6: "{{ network_gateway6_ret.stdout | trim if (network_gateway6_ret is defined and network_gateway6_ret is not skipped and network_gateway6_ret.stdout | default('') | trim | length > 0) else (default_gateway_v6 | default(default_gateway | default(''))) }}"
+
+  - name: "Set {{ network_name }} command for IPv4"
+    set_fact:
+      create_admin_network_cmd: "/opt/yunion/bin/climc network-create --server-type baremetal bcast0 {{ network_name }} {{ admin_address }} {{ admin_address }} {{ admin_masklen }} "
+    when:
+    - admin_address | default('') | length > 0
+    - admin_address6 | default('') | length == 0
+
+  - name: "Set {{ network_name }} command for IPv6"
+    set_fact:
+      create_admin_network_cmd: "/opt/yunion/bin/climc network-create3 --server-type baremetal bcast0 {{ network_name }} --start-ip6 {{ admin_address6 }} --end-ip6 {{ admin_address6 }} --net-mask6 {{ admin_masklen6 }} "
+    when:
+    - admin_address | default('') | length == 0
+    - admin_address6 | default('') | length > 0
+
+  - name: "Set {{ network_name }} command for Dual-Stack"
+    set_fact:
+      create_admin_network_cmd: "/opt/yunion/bin/climc network-create3 --server-type baremetal bcast0 {{ network_name }} --start-ip {{ admin_address }} --end-ip {{ admin_address }} --net-mask {{ admin_masklen }} --start-ip6 {{ admin_address6 }} --end-ip6 {{ admin_address6 }} --net-mask6 {{ admin_masklen6 }} "
+    when:
+    - admin_address | default('') | length > 0
+    - admin_address6 | default('') | length > 0
+
+  - name: "Update {{ network_name }} command for IPv4 with gateway"
+    set_fact:
+      create_admin_network_cmd: "{{ create_admin_network_cmd }} --gateway {{ admin_gateway }} "
+    when:
+    - admin_gateway | default('') | length > 0
+
+  - name: "Update {{ network_name }} command for IPv6 with gateway"
+    set_fact:
+      create_admin_network_cmd: "{{ create_admin_network_cmd }} --gateway6 {{ admin_gateway6 }} "
+    when:
+    - admin_gateway6 | default('') | length > 0
+
+  - debug: var=create_admin_network_cmd
+
+  - name: "Register {{ network_name }} network for {{ admin_address }}/{{ admin_address6 }}, gateway {{ admin_gateway | default('') }}/{{ admin_gateway6 | default('') }}"
+    shell: |
+      source ~/.onecloud_rcadmin
+      {{ create_admin_network_cmd }}
+      /opt/yunion/bin/climc network-private {{ network_name }}
+    become: yes
+    args:
+      executable: /bin/bash
+    register: run_create_admin_network
+    until: run_create_admin_network.rc == 0
+    retries: 3
+    delay: 15
+    failed_when: false
+
+  when:
+  - network_admin_exist.rc != 0 and admin_network_count|int == 0
+  - product_version | default("") in ['FullStack', 'Edge', 'LightEdge', 'AI']
