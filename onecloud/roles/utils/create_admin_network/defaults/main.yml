@@ -1,0 +1,9 @@
+---
+# Admin/baremetal network name to create (e.g. adm0).
+network_name: adm0
+
+# IPv4 address covered by this network (also used as fallback for IPv6-only).
+admin_address: ""
+
+# IPv6 address covered by this network (dual-stack / IPv6).
+admin_address6: ""
