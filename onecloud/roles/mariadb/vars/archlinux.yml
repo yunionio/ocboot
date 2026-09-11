@@ -1,8 +1,6 @@
 packages:
   - mariadb
-
-pips:
-  - PyMySQL
+  - python-pymysql
 
 login_unix_socket: /var/lib/mysql/mysql.sock
 
