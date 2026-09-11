@@ -948,7 +948,7 @@ def main():
     }
 
     # 设置共同环境
-    setup_common_environment(args)
+    offline_data_path = setup_common_environment(args)
 
     # 重新检测IP类型（因为上面的检测可能被覆盖）
     if args.ip_dual_conf:
@@ -1026,11 +1026,11 @@ def main():
             sys.exit(1)
 
     # 如果是 ai 模式，设置 enable_ai_env，并根据是否提供参数决定是否传递 NVIDIA 变量
-    extra_vars = None
+    extra_vars = {}
+    if offline_data_path:
+        extra_vars['offline_data_path'] = offline_data_path
     if is_ai_mode:
-        extra_vars = {
-            'enable_ai_env': True,
-        }
+        extra_vars['enable_ai_env'] = True
         
         # 只有在提供了 NVIDIA 相关参数时才添加这些变量
         if args.gpu_device_virtual_number is not None:
@@ -1084,17 +1084,24 @@ def setup_common_environment(args):
     else:
         os.environ[consts.ENV_K8S_V115] = consts.ENV_VAL_TRUE
     
-    # 处理离线数据路径
+    # 处理离线数据路径。CLI / 环境变量指定的路径即使本机目录不存在
+    # 也要传给 ansible（数据可能只在目标节点上）。
     offline_data_path = None
-    if args.offline_data_path and os.path.isdir(args.offline_data_path):
-        offline_data_path = os.path.realpath(args.offline_data_path)
-    elif os.environ.get('OFFLINE_DATA_PATH') and os.path.isdir(os.environ.get('OFFLINE_DATA_PATH')):
-        offline_data_path = os.path.realpath(os.environ.get('OFFLINE_DATA_PATH'))
-    
+    local_offline_dir = False
+    cli_or_env_path = args.offline_data_path or os.environ.get('OFFLINE_DATA_PATH') or None
+    if cli_or_env_path:
+        if os.path.isdir(cli_or_env_path):
+            offline_data_path = os.path.realpath(cli_or_env_path)
+            local_offline_dir = True
+        else:
+            offline_data_path = cli_or_env_path
+
     if offline_data_path:
         os.environ['OFFLINE_DATA_PATH'] = offline_data_path
     else:
         os.environ['OFFLINE_DATA_PATH'] = ''
+
+    if not local_offline_dir:
         if os.system('test -x /usr/bin/apt') == 0:
             install_packages(['python3-pip'])
             ensure_python3_yaml('debian')
@@ -1102,6 +1109,8 @@ def setup_common_environment(args):
             install_packages(['python3-pip'])
             os.system('python3 -m pip install pyyaml')
             ensure_python3_yaml('redhat')
+
+    return offline_data_path
 
 
 

@@ -5,14 +5,39 @@
     systemctl disable apt-daily.timer apt-daily-upgrade.timer
   become: true
 
+- name: remove left over apt sources
+  shell: |
+    rm -fr /etc/apt/sources.list.d/cloudpods-base.sources
+    rm -fr /etc/apt/sources.list.d/cloudpods-updates.sources
+    rm -fr /etc/apt/sources.list.d/cloudpods-main.sources
+    rm -fr /etc/apt/sources.list.d/cloudpods-ee.sources
+  become: true
+  when:
+    - online_status is defined
+    - online_status == "offline"
+
 - name: ensure gnupng installed
   shell: |
     apt-get update -y && apt-get install gnupg -y
   become: true
 
+- name: set gpg-key download url based on online status
+  set_fact:
+    gpg_key_url: "https://iso.yunion.cn/apt"
+  when:
+    - online_status is defined
+    - online_status == "online"
+
+- name: set gpg-key download url based on offline status
+  set_fact:
+    gpg_key_url: "http://private-registry.onecloud:5001"
+  when:
+    - online_status is defined
+    - online_status == "offline"
+
 - name: download SHA1 gpg public key for {{ansible_distribution}}
   get_url:
-    url: https://iso.yunion.cn/apt/yunion.gpg-key.asc
+    url: "{{ gpg_key_url }}/yunion.gpg-key.asc"
     dest: /tmp/yunion.gpg-key.asc
     validate_certs: no
   become: true
@@ -22,7 +47,7 @@
 
 - name: download SHA512 gpg public key for {{ansible_distribution}}
   get_url:
-    url: https://iso.yunion.cn/apt/yunion2.gpg-key.asc
+    url: "{{ gpg_key_url }}/yunion2.gpg-key.asc"
     dest: /tmp/yunion2.gpg-key.asc
     validate_certs: no
   become: true
@@ -52,14 +77,54 @@
     - ansible_distribution_major_version in ["13", "25"]
 
 # https://iso.yunion.cn/debian/10/3.9/x86_64/
-- name: apply {{ansible_distribution}} sig key
+- name: apply online {{ansible_distribution}} apt sources
   shell: |
-    curl "https://iso.yunion.cn/apt/{{ansible_distribution | lower}}-{{ ansible_distribution_major_version }}/base/cloudpods-base.sources" -o /etc/apt/sources.list.d/cloudpods-base.sources
-    curl "https://iso.yunion.cn/apt/{{ansible_distribution | lower}}-{{ ansible_distribution_major_version }}/updates/cloudpods-updates.sources" -o /etc/apt/sources.list.d/cloudpods-updates.sources
+    curl "{{ gpg_key_url }}/{{ansible_distribution | lower}}-{{ ansible_distribution_major_version }}/base/cloudpods-base.sources" -o /etc/apt/sources.list.d/cloudpods-base.sources
+    curl "{{ gpg_key_url }}/{{ansible_distribution | lower}}-{{ ansible_distribution_major_version }}/updates/cloudpods-updates.sources" -o /etc/apt/sources.list.d/cloudpods-updates.sources
     apt-get update -y
   become: true
   args:
     executable: /bin/bash
+  when:
+    - online_status is defined
+    - online_status == "online"
+
+- name: Find Ubuntu exact version
+  ansible.builtin.shell: |
+    grep -oP '^VERSION="\K[0-9.]+' /etc/os-release
+  register: ubuntu_exact_version_shell_output
+  changed_when: false
+  when: ansible_distribution == "Ubuntu"
+
+- name: Set Ubuntu exact version variable
+  ansible.builtin.set_fact:
+    ubuntu_exact_version: "{{ ubuntu_exact_version_shell_output.stdout | trim }}"
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ubuntu_exact_version_shell_output.stdout is defined
+
+- debug: var=ubuntu_exact_version
+
+- debug: var=ansible_distribution
+
+- name: apply offline {{ansible_distribution}} apt sources
+  shell: |
+    sed -i 's/^deb/# deb/g' /etc/apt/sources.list
+    curl "{{ gpg_key_url }}/main/{{ansible_distribution | lower}}-{{ ubuntu_exact_version }}/cloudpods-main.sources" -o /etc/apt/sources.list.d/cloudpods-main.sources
+    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/main/{{ansible_distribution | lower}}-{{ ubuntu_exact_version }}|" /etc/apt/sources.list.d/cloudpods-main.sources
+    curl "{{ gpg_key_url }}/updates/cloudpods-updates.sources" -o /etc/apt/sources.list.d/cloudpods-updates.sources
+    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/updates|" /etc/apt/sources.list.d/cloudpods-updates.sources
+    curl "{{ gpg_key_url }}/base/cloudpods-base.sources" -o /etc/apt/sources.list.d/cloudpods-base.sources
+    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/base|" /etc/apt/sources.list.d/cloudpods-base.sources
+    curl "{{ gpg_key_url }}/ee/cloudpods-ee.sources" -o /etc/apt/sources.list.d/cloudpods-ee.sources
+    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/ee|" /etc/apt/sources.list.d/cloudpods-ee.sources
+    apt-get update -y
+  become: true
+  args:
+    executable: /bin/bash
+  when:
+    - online_status is defined
+    - online_status == "offline"
 
 - name: Unified Cgroup Hierarchy
   include_tasks: utils/unified_cgroup_hierarchy.yml

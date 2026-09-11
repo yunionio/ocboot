@@ -16,7 +16,7 @@
     args:
       executable: /bin/bash
 
-  - name: construct create cluster use hyper image
+  - name: construct create offline cluster use ee edition and hyper image
     set_fact:
       use_hyper_image: true
       edition: ee
@@ -27,6 +27,28 @@
   - online_status | default("") == "offline"
   - offline_data_path | length > 0
   - use_ee|default(false)|bool == true
+
+- block:
+
+  - name: test if version file contains cloudpods image
+    shell: |
+      cat "{{ offline_data_path }}/versions.json" |jq  '.dockers |to_entries[]' |grep -wq cloudpods
+    register: has_cloudpack_image
+    failed_when: false
+    args:
+      executable: /bin/bash
+
+  - name: construct create offline cluster use ce edition and hyper image
+    set_fact:
+      use_hyper_image: true
+      edition: ce
+    when:
+    - has_cloudpack_image.rc == 0
+
+  when:
+  - online_status | default("") == "offline"
+  - offline_data_path | length > 0
+  - use_ee|default(false)|bool == false
 
 - name: construct create cluster args disable-resource-management
   set_fact:
