@@ -1,9 +1,6 @@
 packages:
   - mariadb-server
-  - python3-pip
-
-pips:
-  - PyMySQL
+  - python3-pymysql
 
 login_unix_socket: /var/run/mysqld/mysqld.sock
 
