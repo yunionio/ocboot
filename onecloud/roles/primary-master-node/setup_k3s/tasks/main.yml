@@ -28,52 +28,6 @@
   ansible.builtin.debug:
     msg: Online status is {{ online_status }} and offline_data_path is {{ offline_data_path }}
 
-- name: loading images
-  include_role:
-    name: utils/load-images
-  when:
-  - online_status == "offline"
-  - offline_data_path | length > 0
-
-- name: Copy push-images.sh to /tmp/push-images.sh
-  template:
-    src: push-images.sh.j2
-    dest: /tmp/push-images.sh
-  when:
-  - docker_insecure_registries is defined
-  - docker_insecure_registries | length > 0
-  - online_status == "offline"
-  - offline_data_path is defined
-  - offline_data_path | length > 0
-
-- name: Make push-images.sh executable
-  file:
-    path: /tmp/push-images.sh
-    mode: '0755'
-  when:
-  - docker_insecure_registries is defined
-  - docker_insecure_registries | length > 0
-  - online_status == "offline"
-  - offline_data_path is defined
-  - offline_data_path | length > 0
-
-- name: Push images to local registry. It might take a few minutes...
-  shell:
-    cmd: /tmp/push-images.sh
-  args:
-    executable: /bin/bash
-  when:
-  - docker_insecure_registries is defined
-  - docker_insecure_registries | length > 0
-  - online_status == "offline"
-  - offline_data_path is defined
-  - offline_data_path | length > 0
-  retries: 5
-  register: push_images_result
-  delay: 30
-  become: yes
-  until: push_images_result.rc == 0
-
 - name: Detect Hygon CPU for Calico compatibility
   ansible.builtin.shell: |
     grep -m 1 -qi 'HygonGenuine' /proc/cpuinfo

@@ -27,7 +27,7 @@ buildah_from_image() {
     fi
     local img="$1"
     echo "Using buildah pull $img"
-    buildah from --name $CONTAINER_NAME "$img"
+    buildah from --pull=false --name $CONTAINER_NAME "$img"
 }
 
 ensure_buildah
