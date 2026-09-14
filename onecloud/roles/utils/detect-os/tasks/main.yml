@@ -188,13 +188,11 @@
   when:
   - use_ee|default(false)|bool == false # false: CE
 
-- name: Lookup offline data path
+- name: Set offline data path
   ansible.builtin.set_fact:
-    offline_data_path: "{{ lookup('env', 'OFFLINE_DATA_PATH') }}"
+    offline_data_path: "{{ (offline_data_path | default('', true)) or (lookup('env', 'OFFLINE_DATA_PATH') | default('', true)) or (offline_data_path_var | default('', true)) }}"
 
-- name: Set offline data path var
-  ansible.builtin.set_fact:
-    offline_data_path: "{{ offline_data_path | default(offline_data_path_var) }}"
+- debug: var=offline_data_path
 
 - name: Set online status
   ansible.builtin.set_fact:
