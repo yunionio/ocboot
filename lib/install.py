@@ -89,7 +89,18 @@ def start(config_file, extra_vars=None):
     config = ocboot.load_config(config_file)
     config.check_network_cidr_conflicts()
 
-    k3s.init_airgap_assets(k3s.GET_AIRGAP_DIR(), k3s.VERSION_V1_28_5_K3S_1)
+    target_architectures = config.get_target_architectures()
+    riscv64_config = config.get_riscv64_config()
+    if riscv64_config and not k3s.is_using_k3s():
+        raise ValueError(
+            'riscv64 deployments require K3s; native Kubernetes mode is not '
+            'supported')
+
+    k3s.init_airgap_assets(
+        k3s.GET_AIRGAP_DIR(),
+        k3s.VERSION_V1_28_5_K3S_1,
+        architectures=target_architectures,
+        riscv64_assets=(riscv64_config or {}).get('k3s'))
 
     inventory_f = config.generate_inventory_file()
     ip = None

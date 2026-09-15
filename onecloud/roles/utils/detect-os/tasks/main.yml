@@ -1,5 +1,18 @@
 ---
 
+- name: Verify the declared target architecture
+  ansible.builtin.assert:
+    that:
+      - >-
+        target_architecture ==
+        {'x86_64': 'amd64', 'aarch64': 'arm64',
+         'riscv64': 'riscv64'}.get(ansible_architecture,
+                                   ansible_architecture)
+    fail_msg: >-
+      Inventory declares {{ target_architecture }}, but Ansible detected
+      {{ ansible_architecture }} on {{ inventory_hostname }}.
+  when: target_architecture is defined
+
 - name: set var
   set_fact:
     k8s_controlplane_host: "{{ hostvars[inventory_hostname]['groups']['primary_master_node'][0] }}"

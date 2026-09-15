@@ -4,6 +4,9 @@ ocboot 能够快速的在 CentOS 7 、Kylin V10、Debian 10等机器上搭建部
 
 ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使用 local 的方式部署，也可以在多个节点使用 ssh 的方式同时部署。
 
+实验性的 openEuler riscv64 部署（需显式提供第三方制品）请参阅
+[docs/riscv64.md](docs/riscv64.md)。
+
 ## 依赖说明
 
 - 操作系统: Centos 7.x 、Kylin V10、Debian 10

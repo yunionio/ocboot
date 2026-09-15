@@ -76,6 +76,95 @@ KEY_HOST_NETWORKS = "host_networks"
 KEY_DISK_PATHS = "disk_paths"
 
 KEY_PRIMARY_MASTER_NODE_IP = "primary_master_node_ip"
+KEY_TARGET_ARCHITECTURE = "target_architecture"
+KEY_TARGET_ARCHITECTURES = "target_architectures"
+KEY_RISCV64 = "riscv64"
+
+RISCV64_CNI_CHOICES = ('calico', 'flannel')
+RISCV64_IMAGE_KEYS = ('pause', 'helm_job', 'traefik', 'openvswitch')
+RISCV64_CLOUDPODS_KEYS = (
+    'qemu_version',
+    'etcd_version',
+    'busybox_image',
+    'host_health_tag',
+    'host_image_tag',
+    'openvswitch_tag',
+    'victoria_metrics_tag',
+    'web_image_name',
+    'web_tag',
+    'guacd_tag',
+    'kubeserver_tag',
+)
+
+
+def normalize_riscv64_config(config):
+    """Validate the external artifacts needed by an openEuler RISC-V run.
+
+    RISC-V release assets are not published by the upstream projects today,
+    so ocboot must not silently select a contributor-owned registry or mirror.
+    The caller supplies every non-upstream artifact explicitly instead.
+    """
+    if not isinstance(config, dict):
+        raise ValueError("riscv64 configuration must be a mapping")
+
+    normalized = dict(config)
+    normalized['k3s'] = k3s.normalize_riscv64_asset_config(
+        config.get('k3s'))
+
+    cni = str(config.get('cni', '')).strip().lower()
+    if cni not in RISCV64_CNI_CHOICES:
+        raise ValueError(
+            "riscv64.cni must be one of: %s" %
+            ', '.join(RISCV64_CNI_CHOICES))
+    normalized['cni'] = cni
+
+    rpm = config.get('rpm')
+    if not isinstance(rpm, dict) or not rpm.get('baseurl'):
+        raise ValueError("riscv64.rpm.baseurl is required")
+    normalized_rpm = dict(rpm)
+    normalized_rpm['baseurl'] = str(rpm['baseurl']).rstrip('/')
+    normalized_rpm['gpgcheck'] = rpm.get('gpgcheck', True)
+    normalized_rpm['repo_gpgcheck'] = rpm.get(
+        'repo_gpgcheck', normalized_rpm['gpgcheck'])
+    for field in ('gpgcheck', 'repo_gpgcheck'):
+        if not isinstance(normalized_rpm[field], bool):
+            raise ValueError("riscv64.rpm.%s must be a boolean" % field)
+    if (normalized_rpm['gpgcheck'] or normalized_rpm['repo_gpgcheck']) \
+            and not rpm.get('gpgkey'):
+        raise ValueError(
+            "riscv64.rpm.gpgkey is required when signature checks are enabled")
+    if rpm.get('gpgkey'):
+        normalized_rpm['gpgkey'] = str(rpm['gpgkey'])
+    normalized['rpm'] = normalized_rpm
+
+    for section, required in (
+            ('images', RISCV64_IMAGE_KEYS),
+            ('cloudpods', RISCV64_CLOUDPODS_KEYS)):
+        values = config.get(section)
+        if not isinstance(values, dict):
+            raise ValueError("riscv64.%s must be a mapping" % section)
+        missing = [key for key in required if not values.get(key)]
+        if missing:
+            raise ValueError(
+                "riscv64.%s misses: %s" %
+                (section, ', '.join(missing)))
+        normalized[section] = dict(values)
+
+    monitor_disable = normalized['cloudpods'].get('monitor_disable', False)
+    if not isinstance(monitor_disable, bool):
+        raise ValueError(
+            "riscv64.cloudpods.monitor_disable must be a boolean")
+    normalized['cloudpods']['monitor_disable'] = monitor_disable
+    return normalized
+
+
+def load_riscv64_config_file(config_file):
+    import yaml
+    with open(config_file, encoding='utf-8') as stream:
+        config = yaml.safe_load(stream)
+    if isinstance(config, dict) and KEY_RISCV64 in config:
+        config = config[KEY_RISCV64]
+    return normalize_riscv64_config(config)
 
 def load_config(config_file):
     import yaml
@@ -187,8 +276,36 @@ class OcbootConfig(object):
                 return version
         raise Exception("get attr onecloud_version error")
 
+    def get_target_architectures(self):
+        architectures = set()
+        for group in (self.primary_master_config, self.master_config,
+                      self.worker_config):
+            if not group:
+                continue
+            architecture = getattr(group, KEY_TARGET_ARCHITECTURE, None)
+            if architecture:
+                architectures.add(k3s.normalize_architecture(architecture))
+            for node in group.get_nodes():
+                if node.target_architecture:
+                    architectures.add(node.target_architecture)
+        return sorted(architectures)
+
+    def get_riscv64_config(self):
+        if KEY_RISCV64 not in self.get_target_architectures():
+            return None
+        return normalize_riscv64_config(
+            self.config.get(KEY_RISCV64, None))
+
     def ansible_global_vars(self):
-        return get_ansible_global_vars(self.get_onecloud_version())
+        vars = get_ansible_global_vars(self.get_onecloud_version())
+        architectures = self.get_target_architectures()
+        if architectures:
+            vars[KEY_TARGET_ARCHITECTURES] = architectures
+        riscv64_config = self.get_riscv64_config()
+        if riscv64_config:
+            vars[KEY_RISCV64] = riscv64_config
+            vars['cluster_cni'] = riscv64_config['cni']
+        return vars
 
     def get_ansible_inventory(self):
         return ansible.get_inventory_config(
@@ -344,6 +461,10 @@ class Node(object):
         self.host = '127.0.0.1' if self.use_local else config.ensure_get('host', 'hostname')
         self.user = config.get('user', 'root')
         self.port = config.get('port', 22)
+        architecture = config.get(KEY_TARGET_ARCHITECTURE, None)
+        self.target_architecture = (
+            k3s.normalize_architecture(architecture)
+            if architecture else None)
         self.host_networks = config.get(KEY_HOST_NETWORKS, None)
         if isinstance(self.host_networks, str):
             self.host_networks = [self.host_networks]
@@ -391,6 +512,8 @@ class Node(object):
             vars[KEY_DISK_PATHS] = self.disk_paths
         if self.enable_hugepage:
             vars['enable_hugepage'] = self.enable_hugepage
+        if self.target_architecture:
+            vars[KEY_TARGET_ARCHITECTURE] = self.target_architecture
         if self.vrrp_interface or self.vrrp_vip:
             vars['vrrp_vip'] = self.vrrp_vip
             vars['vrrp_interface'] = self.vrrp_interface
@@ -566,6 +689,10 @@ class OnecloudConfig(object):
         elif self.disk_paths is not None:
             self.disk_paths = list(self.disk_paths)
         self.primary_master_node_ip = config.get(KEY_PRIMARY_MASTER_NODE_IP, None)
+        architecture = config.get(KEY_TARGET_ARCHITECTURE, None)
+        self.target_architecture = (
+            k3s.normalize_architecture(architecture)
+            if architecture else None)
 
     def ansible_vars(self):
         vars = {
@@ -600,6 +727,8 @@ class OnecloudConfig(object):
             vars[KEY_DISK_PATHS] = self.disk_paths
         if self.primary_master_node_ip:
             vars[KEY_PRIMARY_MASTER_NODE_IP] = self.primary_master_node_ip
+        if self.target_architecture:
+            vars[KEY_TARGET_ARCHITECTURE] = self.target_architecture
         return vars
 
 

@@ -314,6 +314,10 @@ setup_verify_arch() {
             ARCH=arm64
             SUFFIX=-${ARCH}
             ;;
+        riscv64)
+            ARCH=riscv64
+            SUFFIX=-${ARCH}
+            ;;
         arm*)
             ARCH=arm
             SUFFIX=-${ARCH}hf
@@ -1062,4 +1066,3 @@ eval set -- $(escape "${INSTALL_K3S_EXEC}") $(quote "$@")
     create_service_file
     service_enable_and_start
 }
-
