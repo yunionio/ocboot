@@ -112,6 +112,18 @@ _generate_kernel_cmdline() {
     cat $OLD_KERNEL_PARAMS_FILE | tr '\n' ' '
 }
 
+apply_kernel_params_grubby() {
+    if ! command -v grubby >/dev/null 2>&1; then
+        return
+    fi
+    local args=""
+    local key
+    for key in "${!NEW_KERNEL_PARAMS[@]}"; do
+        args+="${key}=${NEW_KERNEL_PARAMS[$key]} "
+    done
+    grubby --update-kernel=ALL --args="$args"
+}
+
 mk_grub2(){
     if [ -d /sys/firmware/efi ]; then
         mkdir -p /boot/efi/EFI/centos
@@ -130,6 +142,17 @@ mk_grub2_openeuler(){
     fi
 }
 
+mk_grub2_rocky(){
+    local grub_out
+    grub_out=$(readlink -f /etc/grub2-efi.cfg 2>/dev/null || readlink -f /etc/grub2.cfg 2>/dev/null || echo /boot/grub2/grub.cfg)
+    mkdir -p "$(dirname "${grub_out}")"
+    if grub2-mkconfig --help 2>&1 | grep -q -- '--update-bls-cmdline'; then
+        grub2-mkconfig -o "${grub_out}" --update-bls-cmdline
+    else
+        grub2-mkconfig -o "${grub_out}"
+    fi
+}
+
 mk_grub_legacy(){
     update-grub
 }
@@ -142,6 +165,8 @@ mk_grub(){
         mk_grub_legacy
     elif [[ "${distro}" == "openeuler" ]]; then
         mk_grub2_openeuler
+    elif [[ "${distro}" == "rocky" ]]; then
+        mk_grub2_rocky
     else
         error_exit "unsupport distro ${distro}!"
     fi
@@ -167,6 +192,10 @@ grub_setup() {
     # 删掉 rd.lvm.lv(含)之后，空格之前的所有字符
     # 以便解决重启后因未加载 lvm 驱动而卡住的问题
     # sed -i -e 's#rd.lvm.lv=[^ ]*##gi' $grub_cfg
+
+    if [[ "${distro}" == "rocky" ]]; then
+        apply_kernel_params_grubby
+    fi
 
     # 替换成带有 yn 后缀的内核，只对 centos
     if [[ "${distro}" != "centos" ]]; then
@@ -265,6 +294,10 @@ EOF
 }
 
 get_distro() {
+    if [ -r /etc/os-release ]; then
+        awk -F= '/^ID=/{print tolower($2)}' /etc/os-release | tr -d '"'
+        return
+    fi
     distro=($(awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }' | tr -d \"))
     echo "${distro[@]}"
 }
@@ -286,7 +319,7 @@ env_check() {
         error_exit "You need sudo or root to run this script."
     fi
 
-    local supported_distros=("centos" "debian" "openeuler" "ubuntu")
+    local supported_distros=("centos" "debian" "openeuler" "ubuntu" "rocky")
     local distros=($(get_distro))
 
     local found_supported_distro=false
