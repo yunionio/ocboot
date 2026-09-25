@@ -8,7 +8,7 @@ ocboot 依赖 ansible-playbook 部署 cloudpods 服务，可以在单节点使�
 
 - 操作系统: Centos 7.x 、Kylin V10、Debian 10
 - 最低配置要求: 4 核 8G
-- 软件: ansible 4.0 ~ 9.0 (ansible-core: 2.11 ~ 2.16)
+- 软件: ansible（由 ocboot 容器镜像内置，不限定具体版本）
 - 能够 ssh 免密登录待部署机器
 
 ## 使用方法

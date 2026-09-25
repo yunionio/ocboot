@@ -69,6 +69,7 @@ supported_os=(
     "Ubuntu 25.04.* aarch64"
     "Ubuntu 26.04* x86_64"
     "Ubuntu 26.04* aarch64"
+    "Ubuntu 24.04.* riscv64"
     "ctyunos 2.*.* x86_64"
     "Arch Linux x86_64"
     "Arch Linux aarch64"
