@@ -1,6 +1,30 @@
-[yunion-repo-offline]
-name=Packages for Yunion Multi-Cloud Platform offline repo
-baseurl=file://{{offline_data_path}}
+[yunion-repo-offline-main]
+name=Packages for Yunion Multi-Cloud Platform offline repo - Main
+baseurl=http://private-registry.onecloud:5001/main/{{ ocboot_os_offline_id }}/$basearch
+sslverify=0
+failovermethod=priority
+enabled=1
+gpgcheck=0
+
+[yunion-repo-offline-base]
+name=Packages for Yunion Multi-Cloud Platform offline repo - Base
+baseurl=http://private-registry.onecloud:5001/base/{{ ocboot_os_offline_id }}/$basearch
+sslverify=0
+failovermethod=priority
+enabled=1
+gpgcheck=0
+
+[yunion-repo-offline-updates]
+name=Packages for Yunion Multi-Cloud Platform offline repo - Updates
+baseurl=http://private-registry.onecloud:5001/main/{{ ocboot_os_offline_id }}/$basearch
+sslverify=0
+failovermethod=priority
+enabled=1
+gpgcheck=0
+
+[yunion-repo-offline-ee]
+name=Packages for Yunion Multi-Cloud Platform offline repo - EE
+baseurl=http://private-registry.onecloud:5001/main/{{ ocboot_os_offline_id }}/$basearch
 sslverify=0
 failovermethod=priority
 enabled=1
