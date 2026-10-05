@@ -89,35 +89,17 @@
     - online_status is defined
     - online_status == "online"
 
-- name: Find Ubuntu exact version
-  ansible.builtin.shell: |
-    grep -oP '^VERSION="\K[0-9.]+' /etc/os-release
-  register: ubuntu_exact_version_shell_output
-  changed_when: false
-  when: ansible_distribution == "Ubuntu"
-
-- name: Set Ubuntu exact version variable
-  ansible.builtin.set_fact:
-    ubuntu_exact_version: "{{ ubuntu_exact_version_shell_output.stdout | trim }}"
-  when:
-    - ansible_distribution == "Ubuntu"
-    - ubuntu_exact_version_shell_output.stdout is defined
-
-- debug: var=ubuntu_exact_version
-
-- debug: var=ansible_distribution
-
 - name: apply offline {{ansible_distribution}} apt sources
   shell: |
     sed -i 's/^deb/# deb/g' /etc/apt/sources.list
-    curl "{{ gpg_key_url }}/main/{{ansible_distribution | lower}}-{{ ubuntu_exact_version }}/cloudpods-main.sources" -o /etc/apt/sources.list.d/cloudpods-main.sources
-    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/main/{{ansible_distribution | lower}}-{{ ubuntu_exact_version }}|" /etc/apt/sources.list.d/cloudpods-main.sources
-    curl "{{ gpg_key_url }}/updates/cloudpods-updates.sources" -o /etc/apt/sources.list.d/cloudpods-updates.sources
-    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/updates|" /etc/apt/sources.list.d/cloudpods-updates.sources
-    curl "{{ gpg_key_url }}/base/cloudpods-base.sources" -o /etc/apt/sources.list.d/cloudpods-base.sources
-    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/base|" /etc/apt/sources.list.d/cloudpods-base.sources
-    curl "{{ gpg_key_url }}/ee/cloudpods-ee.sources" -o /etc/apt/sources.list.d/cloudpods-ee.sources
-    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/ee|" /etc/apt/sources.list.d/cloudpods-ee.sources
+    curl "{{ gpg_key_url }}/main/{{ ocboot_os_offline_id }}/cloudpods-main.sources" -o /etc/apt/sources.list.d/cloudpods-main.sources
+    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/main/{{ ocboot_os_offline_id }}|" /etc/apt/sources.list.d/cloudpods-main.sources
+    curl "{{ gpg_key_url }}/updates/{{ ocboot_os_offline_id }}/cloudpods-updates.sources" -o /etc/apt/sources.list.d/cloudpods-updates.sources
+    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/updates/{{ ocboot_os_offline_id }}|" /etc/apt/sources.list.d/cloudpods-updates.sources
+    curl "{{ gpg_key_url }}/base/{{ ocboot_os_offline_id }}/cloudpods-base.sources" -o /etc/apt/sources.list.d/cloudpods-base.sources
+    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/base/{{ ocboot_os_offline_id }}|" /etc/apt/sources.list.d/cloudpods-base.sources
+    curl "{{ gpg_key_url }}/ee/{{ ocboot_os_offline_id }}/cloudpods-ee.sources" -o /etc/apt/sources.list.d/cloudpods-ee.sources
+    sed -i "s|^URIs:.*|URIs: {{ gpg_key_url }}/ee/{{ ocboot_os_offline_id }}|" /etc/apt/sources.list.d/cloudpods-ee.sources
     apt-get update -y
   become: true
   args:
