@@ -8,3 +8,27 @@
       - "ansible_architecture in ('x86_64', 'aarch64', 'riscv64')"
     success_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is supported. "
     fail_msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }} is not supported by {{ onecloud_version }}"
+
+- name: Find Ubuntu exact version
+  ansible.builtin.shell: |
+    grep -oP '^VERSION="\K[0-9.]+' /etc/os-release
+  register: ubuntu_exact_version_shell_output
+  changed_when: false
+
+- name: Set Ubuntu exact version variable
+  ansible.builtin.set_fact:
+    ubuntu_exact_version: "{{ ubuntu_exact_version_shell_output.stdout | trim }}"
+  when:
+    - ubuntu_exact_version_shell_output.stdout is defined
+
+- name: Set ocboot_os_offline_id variable for Ubuntu
+  ansible.builtin.set_fact:
+    ocboot_os_offline_id: "{{ansible_distribution | lower}}-{{ ubuntu_exact_version }}"
+  when:
+    - ubuntu_exact_version is defined
+
+- debug: var=ubuntu_exact_version
+
+- debug: var=ansible_distribution
+
+- debug: var=ocboot_os_offline_id
