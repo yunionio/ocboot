@@ -1013,7 +1013,7 @@ def main():
             disk_paths=args.disk_paths,
         )
     else:
-        pr_red(f'The configuration file <{ip_conf}> does not exist or is not valid!')
+        pr_red(f'The configuration file {ip_conf} does not exist or is not valid!')
         exit()
     
     check_env(ip_conf, pip_mirror=args.pip_mirror,

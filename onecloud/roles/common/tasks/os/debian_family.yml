@@ -52,8 +52,7 @@
     validate_certs: no
   become: true
   when:
-    - ansible_distribution in ["Debian", "Ubuntu"]
-    - ansible_distribution_major_version in ["13", "25"]
+    - (ansible_distribution == "Debian" and ansible_distribution_major_version is version('13', '>=')) or (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version('25', '>='))
 
 - name: import SHA1 {{ansible_distribution}} sig key
   shell: |
@@ -73,8 +72,7 @@
   args:
     executable: /bin/bash
   when:
-    - ansible_distribution in ["Debian", "Ubuntu"]
-    - ansible_distribution_major_version in ["13", "25"]
+    - (ansible_distribution == "Debian" and ansible_distribution_major_version is version('13', '>=')) or (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version('25', '>='))
 
 # https://iso.yunion.cn/debian/10/3.9/x86_64/
 - name: apply online {{ansible_distribution}} apt sources
