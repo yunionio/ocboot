@@ -11,9 +11,6 @@ common_packages:
   - conntrackd
   - cron
   - curl
-  - dkms
-  - gnupg-agent
-  - gnupg2
   - ipset
   - ipvsadm
   - jq

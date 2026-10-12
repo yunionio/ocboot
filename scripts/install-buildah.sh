@@ -40,6 +40,8 @@ supported_os=(
     "Debian GNU/Linux 12 aarch64"
     "Debian GNU/Linux 13 x86_64"
     "Debian GNU/Linux 13 aarch64"
+    "Debian GNU/Linux 14 x86_64"
+    "Debian GNU/Linux 14 aarch64"
     "openEuler 22.03 x86_64"
     "openEuler 22.03 aarch64"
     "openEuler 24.03 x86_64"
