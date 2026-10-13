@@ -20,7 +20,6 @@ common_packages:
   - rsync
   - pciutils
   - tcpdump
-  - python3-selinux
   - python3-setuptools
   - "{{ yunion_qemu_package }}"
   - yunion-executor
