@@ -1,0 +1,6 @@
+---
+- name: Configure systemd-resolved for legacy DNS
+  include_tasks: utils/configure_systemd_resolved.yml
+
+- name: Include Debian Family Common Tasks
+  include_tasks: debian_family.yml
