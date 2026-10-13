@@ -16,7 +16,7 @@ gpgcheck=0
 
 [yunion-repo-offline-updates]
 name=Packages for Yunion Multi-Cloud Platform offline repo - Updates
-baseurl=http://private-registry.onecloud:5001/main/{{ ocboot_os_offline_id }}/$basearch
+baseurl=http://private-registry.onecloud:5001/updates/{{ ocboot_os_offline_id }}/$basearch
 sslverify=0
 failovermethod=priority
 enabled=1
@@ -24,7 +24,7 @@ gpgcheck=0
 
 [yunion-repo-offline-ee]
 name=Packages for Yunion Multi-Cloud Platform offline repo - EE
-baseurl=http://private-registry.onecloud:5001/main/{{ ocboot_os_offline_id }}/$basearch
+baseurl=http://private-registry.onecloud:5001/ee/{{ ocboot_os_offline_id }}/$basearch
 sslverify=0
 failovermethod=priority
 enabled=1
