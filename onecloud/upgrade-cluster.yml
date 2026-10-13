@@ -1,6 +1,7 @@
 - hosts: all
   any_errors_fatal: true
   roles:
+    - { role: utils/misc-check }
     - { role: utils/detect-os }
     - { role: common }
     - { role: upgrade/common }

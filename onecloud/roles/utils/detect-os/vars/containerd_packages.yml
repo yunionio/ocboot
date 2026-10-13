@@ -5,3 +5,4 @@ containerd_packages:
     - yunion-ocnet-cni
     - yunion-containerd
     - yunion-hami
+    - yunion-nerdctl
