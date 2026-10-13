@@ -27,6 +27,7 @@ buildah_from_image() {
     fi
     local img="$1"
     echo "Using buildah pull $img"
+    buildah pull --policy missing "$img"
     buildah from --pull=false --name $CONTAINER_NAME "$img"
 }
 
@@ -62,8 +63,10 @@ buildah_extra_args=()
 
 # buildah accepts --env since 1.23
 echo "buildah version: $buildah_version"
+# Pass ANSIBLE_VERBOSITY with env(1) so it reaches ansible on every buildah version.
+ansible_verbosity="${ANSIBLE_VERBOSITY:-0}"
+echo "ansible verbosity: $ansible_verbosity"
 if [[ $buildah_version_major -eq 1 ]] && [[ "$buildah_version_minor" -gt 23 ]]; then
-    buildah_extra_args+=(-e ANSIBLE_VERBOSITY="${ANSIBLE_VERBOSITY:-0}")
     buildah_extra_args+=(-e HOME="$HOME")
 fi
 
@@ -131,6 +134,18 @@ for arg in "$@"; do
     prev_arg="$arg"
 done
 
+# Bind the config file after extra_installer_volumes is initialized.
+if [[ "${origin_args[0]:-}" == "$ROOT_DIR/run.py" ]]; then
+    if [ -n "${origin_args[2]}" ] && [ -f "${origin_args[2]}" ]; then
+        config_file_fullpath=$(readlink -f "${origin_args[2]}")
+        config_file_name=$(basename "$config_file_fullpath")
+        echo "Using config file: $config_file_fullpath -> /$config_file_name"
+        extra_installer_volumes+=(-v "$config_file_fullpath:/$config_file_name:ro")
+        origin_args[2]="/$config_file_name"
+        echo "extra_installer_volumes: ${extra_installer_volumes[@]}"
+    fi
+fi
+
 buildah run --isolation chroot --user $(id -u):$(id -g) \
     -t "${buildah_extra_args[@]}" \
     --net=host \
@@ -142,4 +157,4 @@ buildah run --isolation chroot --user $(id -u):$(id -g) \
     -v "$(pwd):$ROOT_DIR" \
     -v "$(pwd)/airgap_assets/k3s-install.sh:/airgap_assets/k3s-install.sh:ro" \
     "${extra_installer_volumes[@]}" \
-    "$CONTAINER_NAME" $CMD "${origin_args[@]}" $cmd_extra_args
+    "$CONTAINER_NAME" env "ANSIBLE_VERBOSITY=${ansible_verbosity}" $CMD "${origin_args[@]}" $cmd_extra_args

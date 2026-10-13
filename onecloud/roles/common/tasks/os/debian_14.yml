@@ -1,0 +1,10 @@
+---
+
+- name: use debian apt mirror
+  shell: |
+    sed -i 's|deb.debian.org|{{ debian_mirror | default('mirrors.aliyun.com') }}|g' /etc/apt/mirrors/debian.list
+    sed -i 's|deb.debian.org|{{ debian_mirror | default('mirrors.aliyun.com') }}|g' /etc/apt/mirrors/debian-security.list
+  become: true
+
+- name: Include Debian Family Common Tasks
+  include_tasks: debian_10.yml
