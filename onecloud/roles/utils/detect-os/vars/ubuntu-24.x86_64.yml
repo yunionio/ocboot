@@ -20,7 +20,6 @@ common_packages:
   - rsync
   - pciutils
   - tcpdump
-  - python3-selinux
   - software-properties-common
   - "{{ yunion_qemu_package }}"
   - yunion-ovmfrpm
