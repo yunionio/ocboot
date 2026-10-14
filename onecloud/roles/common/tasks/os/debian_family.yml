@@ -160,17 +160,5 @@
   - package
   - common_packages
 
-- name: Check that if selinux config exists
-  stat:
-    path: /etc/selinux/config
-  register: selinux_conf_exists
-
-- name: Turn off selinux
-  selinux:
-    state: disabled
-  become: true
-  when:
-    - selinux_conf_exists.stat.exists
-
 - name: Import task utils/config_iptables.yml
   include_tasks: utils/config_iptables.yml
