@@ -252,6 +252,11 @@
   become: yes
   args:
     executable: /bin/bash
+  register: run_create_host_local_network
+  until: run_create_host_local_network.rc == 0
+  retries: 3
+  delay: 15
+  failed_when: false
   when:
   - product_version | default("") in ['FullStack', 'Edge', 'LightEdge', 'AI']
   - onecloud_version is version('v4.0', '>=')
