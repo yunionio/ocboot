@@ -94,7 +94,7 @@ normalize_installer_path() {
 prev_arg=""
 for arg in "$@"; do
     case "$prev_arg" in
-        --nvidia-driver-installer-path|--cuda-installer-path)
+        --nvidia-driver-installer-path|--cuda-installer-path|--riscv64-config)
             origin_args+=("$(normalize_installer_path "$arg")")
             ;;
         *)
@@ -113,14 +113,13 @@ fi
 
 mkdir -p "$HOME/.kube"
 
-# Parse --nvidia-driver-installer-path and --cuda-installer-path from original args and
-# add bind-mounts so installer files outside $(pwd) are accessible in the container.
+# Bind input files outside $(pwd) so they remain accessible in the container.
 extra_installer_volumes=()
 prev_arg=""
 declare -A mounted_installer_dirs
 for arg in "$@"; do
     case "$prev_arg" in
-        --nvidia-driver-installer-path|--cuda-installer-path)
+        --nvidia-driver-installer-path|--cuda-installer-path|--riscv64-config)
             # Only handle absolute paths that are not already under $(pwd)
             if [[ "$arg" == /* ]] && [[ "${arg#$(pwd)/}" == "$arg" ]] && [[ "$arg" != "$(pwd)" ]]; then
                 _dir="$(dirname "$arg")"

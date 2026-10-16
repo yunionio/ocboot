@@ -1,0 +1,146 @@
+---
+- name: Verify openEuler 24.03 LTS SP3 release
+  ansible.builtin.command:
+    cmd: grep -Fq '24.03 (LTS-SP3)' /etc/os-release
+  changed_when: false
+
+- name: Check for a unified cgroup v2 hierarchy
+  ansible.builtin.stat:
+    path: /sys/fs/cgroup/cgroup.controllers
+  register: riscv64_cgroup_v2
+
+- name: Enable unified cgroup v2 for the openEuler RISC-V kernel
+  when: not riscv64_cgroup_v2.stat.exists
+  block:
+    - name: Check U-Boot configuration and update command
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/default/u-boot
+        - /usr/sbin/u-boot-update
+      register: riscv64_uboot_files
+
+    - name: Require the supported U-Boot configuration layout
+      ansible.builtin.assert:
+        that:
+          - riscv64_uboot_files.results | map(attribute='stat.exists') | min
+        fail_msg: >-
+          This kernel requires cgroup v2, but ocboot could not find
+          /etc/default/u-boot and /usr/sbin/u-boot-update.
+
+    - name: Add the unified cgroup v2 kernel parameter
+      ansible.builtin.replace:
+        path: /etc/default/u-boot
+        regexp: >-
+          ^(U_BOOT_PARAMETERS=")((?:(?!systemd\.unified_cgroup_hierarchy=1)[^"])*)"$
+        replace: '\1\2 systemd.unified_cgroup_hierarchy=1"'
+      register: riscv64_cgroup_boot_parameter
+
+    - name: Require a newly configured unified cgroup v2 parameter
+      ansible.builtin.assert:
+        that:
+          - riscv64_cgroup_boot_parameter.changed
+        fail_msg: >-
+          systemd.unified_cgroup_hierarchy=1 is configured, but the running
+          system still uses legacy cgroups. Verify the active U-Boot entry.
+
+    - name: Regenerate the extlinux configuration
+      ansible.builtin.command:
+        cmd: /usr/sbin/u-boot-update
+      changed_when: true
+
+    - name: Reboot into the unified cgroup v2 hierarchy
+      ansible.builtin.reboot:
+        msg: Reboot initiated by ocboot to enable cgroup v2 for K3s
+        reboot_timeout: 900
+
+- name: Read available cgroup v2 controllers
+  ansible.builtin.command:
+    cmd: cat /sys/fs/cgroup/cgroup.controllers
+  register: riscv64_cgroup_v2_controllers
+  changed_when: false
+
+- name: Require memory and cpuset cgroup v2 controllers
+  ansible.builtin.assert:
+    that:
+      - "'memory' in riscv64_cgroup_v2_controllers.stdout.split()"
+      - "'cpuset' in riscv64_cgroup_v2_controllers.stdout.split()"
+    fail_msg: >-
+      K3s requires the memory and cpuset cgroup v2 controllers, but the
+      running kernel does not expose both controllers.
+
+- name: Check for an existing native Kubernetes installation
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: native_kubernetes_kubelet_config
+
+- name: Reject native Kubernetes on a RISC-V target
+  ansible.builtin.assert:
+    that:
+      - not native_kubernetes_kubelet_config.stat.exists
+    fail_msg: >-
+      Native Kubernetes was detected. The openEuler RISC-V path currently
+      supports K3s only.
+
+- name: Check virtualization devices on a Cloudpods host
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /dev/kvm
+    - /dev/net/tun
+  register: riscv64_virtualization_devices
+  when: join_as_host | default(false) | bool
+
+- name: Require KVM and TUN on a Cloudpods host
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+    fail_msg: "Required virtualization device {{ item.item }} is missing"
+  loop: "{{ riscv64_virtualization_devices.results | default([]) }}"
+  when: join_as_host | default(false) | bool
+
+- name: Select the Cloudpods RISC-V RPM repository URL
+  ansible.builtin.set_fact:
+    riscv64_rpm_baseurl: >-
+      {{ ('file://' + offline_data_path)
+         if (online_status | default('online')) == 'offline'
+         else riscv64.rpm.baseurl }}
+
+- name: Check the offline Cloudpods RISC-V RPM repository
+  ansible.builtin.stat:
+    path: "{{ offline_data_path }}/repodata/repomd.xml"
+  register: riscv64_offline_rpm_metadata
+  when: (online_status | default('online')) == 'offline'
+
+- name: Require valid offline Cloudpods RISC-V RPM metadata
+  ansible.builtin.assert:
+    that:
+      - riscv64_offline_rpm_metadata.stat.exists
+      - riscv64_offline_rpm_metadata.stat.isreg
+    fail_msg: >-
+      --offline-data-path must point to a repository already present on the
+      target and containing repodata/repomd.xml.
+  when: (online_status | default('online')) == 'offline'
+
+- name: Configure the Cloudpods RISC-V RPM repository
+  ansible.builtin.yum_repository:
+    name: yunion-cloudpods-riscv64
+    description: Cloudpods RISC-V packages for openEuler 24.03 LTS SP3
+    baseurl: "{{ riscv64_rpm_baseurl }}"
+    enabled: true
+    gpgcheck: "{{ riscv64.rpm.gpgcheck }}"
+    repo_gpgcheck: "{{ riscv64.rpm.repo_gpgcheck }}"
+    gpgkey: "{{ riscv64.rpm.gpgkey | default(omit) }}"
+    state: present
+
+- name: Warn when the external RPM repository is unsigned
+  ansible.builtin.debug:
+    msg: >-
+      RPM signature verification is disabled explicitly by riscv64.rpm.
+      Use signed artifacts and configure gpgkey for production deployments.
+  when:
+    - not riscv64.rpm.gpgcheck
+    - not riscv64.rpm.repo_gpgcheck
+
+- name: Include RedHat family common tasks
+  ansible.builtin.include_tasks: redhat.yml

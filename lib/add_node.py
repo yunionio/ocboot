@@ -55,6 +55,7 @@ class AddWorkerNodeService(AddNodeService):
             'ip_dual_conf': getattr(args, 'ip_dual_conf', None),
             'ip_type': args.ip_type,
             'offline_data_path': args.offline_data_path,
+            'riscv64_config_file': args.riscv64_config_file,
             'enable_ai_env': getattr(args, 'enable_ai_env', False),
             'gpu_device_virtual_number': getattr(args, 'gpu_device_virtual_number', None),
             'nvidia_driver_installer_path': getattr(args, 'nvidia_driver_installer_path', None),
