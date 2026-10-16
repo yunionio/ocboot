@@ -1,5 +1,6 @@
 is_debian_based: true
 is_ubuntu_based: true
+is_ubuntu_based_riscv64: true
 debian_based_arch: riscv64
 
 common_packages:
@@ -11,9 +12,6 @@ common_packages:
   - conntrackd
   - cron
   - curl
-  - dkms
-  - gnupg-agent
-  - gnupg2
   - ipset
   - ipvsadm
   - jq
@@ -23,12 +21,8 @@ common_packages:
   - parallel
   - python3-selinux
   - software-properties-common
-  - yunion-qemu-10.0.7
   - yunion-ovmfrpm
 
 common_services:
     - chrony
     - yunion-executor
-
-k8s_packages:
-    - docker-ce

@@ -40,12 +40,14 @@ supported_os=(
     "Debian GNU/Linux 12 aarch64"
     "Debian GNU/Linux 13 x86_64"
     "Debian GNU/Linux 13 aarch64"
+    "Debian GNU/Linux 13 riscv64"
     "Debian GNU/Linux 14 x86_64"
     "Debian GNU/Linux 14 aarch64"
     "openEuler 22.03 x86_64"
     "openEuler 22.03 aarch64"
     "openEuler 24.03 x86_64"
     "openEuler 24.03 aarch64"
+    "openEuler 24.03 riscv64"
     "OpenCloudOS 8.* x86_64"
     "OpenCloudOS 8.* aarch64"
     "OpenCloudOS 9.* x86_64"
@@ -65,14 +67,18 @@ supported_os=(
     "Ubuntu 22.04 LTS aarch64"
     "Ubuntu 24.04.* LTS x86_64"
     "Ubuntu 24.04.* LTS aarch64"
+    "Ubuntu 24.04.* LTS riscv64"
     "Ubuntu 25.04 x86_64"
     "Ubuntu 25.04 aarch64"
     "Ubuntu 25.04.* x86_64"
     "Ubuntu 25.04.* aarch64"
     "Ubuntu 26.04* x86_64"
     "Ubuntu 26.04* aarch64"
-    "Ubuntu 24.04.* riscv64"
+    "Ubuntu 26.04.* LTS x86_64"
+    "Ubuntu 26.04.* LTS aarch64"
+    "Ubuntu 26.04.* LTS riscv64"
     "ctyunos 2.*.* x86_64"
+    "openRuyi riscv64"
     "Arch Linux x86_64"
     "Arch Linux aarch64"
 )
@@ -102,8 +108,8 @@ is_supported() {
     return 1
 }
 
-is_openeuler() {
-    grep -qw 'openEuler' /etc/os-release
+is_openeuler2203() {
+    grep -qw 'openEuler' /etc/os-release && grep -qw '22.03' /etc/os-release
 }
 
 is_ubuntu_20() {
@@ -149,6 +155,36 @@ ensure_buildah_on_openeuler() {
     dnf localinstall -y "$url"
 }
 
+# setenforce 0 把 SELinux 切到 Permissive，避免写入 config-allinone-current.yml 失败。
+# 配置或运行时已经是 disabled 时，setenforce 无法切换模式，会以非 0 退出
+# （部分系统为 130）。该失败不能中断安装。
+ensure_selinux_permissive() {
+    if ! command -v setenforce >/dev/null 2>&1; then
+        return 0
+    fi
+
+    local runtime=""
+    if command -v getenforce >/dev/null 2>&1; then
+        runtime="$(getenforce 2>/dev/null || true)"
+    fi
+    case "$runtime" in
+        Disabled|disabled)
+            return 0
+            ;;
+        Enforcing|Permissive|enforcing|permissive)
+            setenforce 0 || true
+            return 0
+            ;;
+    esac
+
+    # getenforce 不可用时，以配置文件为准。SELINUX=disabled 表示内核未加载策略。
+    if [ -f /etc/selinux/config ] && grep -Eq '^[[:space:]]*SELINUX[[:space:]]*=[[:space:]]*disabled[[:space:]]*(#.*)?$' /etc/selinux/config; then
+        return 0
+    fi
+
+    setenforce 0 || true
+}
+
 ensure_buildah() {
     local installer
     hash yum &>/dev/null && installer=yum
@@ -162,7 +198,7 @@ ensure_buildah() {
 		return
 	fi
 
-    if is_openeuler; then
+    if is_openeuler2203; then
         ensure_buildah_on_openeuler
         return
     fi
@@ -193,8 +229,7 @@ main() {
         echo "Not supported OS [$os_string]!"
         exit 1
     fi
-    # 禁用selinux，否则安装配置文件 config-allinone-current.yml 会写入失败
-    hash setenforce &>/dev/null && setenforce 0
+    ensure_selinux_permissive
 
     ensure_buildah
 

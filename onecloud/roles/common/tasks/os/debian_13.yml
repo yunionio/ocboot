@@ -6,5 +6,8 @@
     sed -i 's|deb.debian.org|{{ debian_mirror | default('mirrors.aliyun.com') }}|g' /etc/apt/mirrors/debian-security.list
   become: true
 
+- name: Configure systemd-resolved for legacy DNS
+  include_tasks: utils/configure_systemd_resolved.yml
+
 - name: Include Debian Family Common Tasks
   include_tasks: debian_10.yml
