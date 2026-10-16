@@ -1,0 +1,27 @@
+---
+
+is_redhat_based: true
+is_openeuler_riscv64: true
+is_openeuler_based: true
+is_centos_based: true
+centos_version: 10
+
+common_packages:
+    - bash-completion
+    - bridge-utils
+    - conntrack-tools
+    - curl
+    - fuse
+    - jq
+    - kmod
+    - nfs-utils
+    - parallel
+    - rsync
+    - pciutils
+    - tcpdump
+    - libaio
+    - python3-libselinux
+
+common_services:
+  #  - ntpd # openeuler seems using different ntp
+  - yunion-executor

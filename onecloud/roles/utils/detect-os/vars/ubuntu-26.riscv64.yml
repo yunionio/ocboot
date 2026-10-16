@@ -1,0 +1,28 @@
+is_debian_based: true
+is_ubuntu_based: true
+is_ubuntu_based_riscv64: true
+debian_based_arch: riscv64
+
+common_packages:
+  - apt-transport-https
+  - bash-completion
+  - bridge-utils
+  - conntrack
+  - conntrackd
+  - cron
+  - curl
+  - ipset
+  - ipvsadm
+  - jq
+  - nfs-common
+  - chrony
+  - parallel
+  - rsync
+  - pciutils
+  - tcpdump
+  - software-properties-common
+  - yunion-ovmfrpm
+
+common_services:
+    - chrony
+    - yunion-executor
