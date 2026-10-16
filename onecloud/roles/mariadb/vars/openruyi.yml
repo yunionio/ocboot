@@ -1,0 +1,6 @@
+packages:
+  - mariadb
+  - libaio
+  - python-pymysql
+
+login_unix_socket: /var/lib/mysql/mysql.sock

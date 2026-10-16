@@ -150,19 +150,24 @@
     name: apparmor
     state: present
 
-- name: Gather the package facts
-  ansible.builtin.package_facts:
-    manager: auto
+- name: Read iptables version
+  ansible.builtin.command: iptables --version
+  register: iptables_version_cmd
+  changed_when: false
+  failed_when: false
 
 # Iptables v1.8.0-1.8.4 have a specific bug with K3s. https://github.com/k3s-io/k3s/issues/3117
 - name: If iptables v1.8.0-1.8.4, warn user  # noqa ignore-errors
   when:
-    - ansible_facts.packages['iptables'] is defined
-    - ansible_facts.packages['iptables'][0]['version'] is version('1.8.5', '<')
-    - ansible_facts.packages['iptables'][0]['version'] is version('1.7.9', '>')
+    - iptables_version_cmd.rc == 0
+    - iptables_version | default('') | length > 0
+    - iptables_version is version('1.8.5', '<')
+    - iptables_version is version('1.7.9', '>')
+  vars:
+    iptables_version: "{{ iptables_version_cmd.stdout | regex_search('v([0-9.]+)', '\\1') }}"
   ansible.builtin.fail:
     msg:
-      - "Warning: Iptables {{ ansible_facts.packages['iptables'][0]['version'] }} found."
+      - "Warning: Iptables {{ iptables_version }} found."
       - "Add '--prefer-bundled-bin' to extra_server_args variable to use the bundled iptables binary."
   ignore_errors: true
 

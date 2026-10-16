@@ -7,6 +7,7 @@
 
 - name: remove left over apt sources
   shell: |
+    sed -i 's/^deb/# deb/g' /etc/apt/sources.list
     rm -fr /etc/apt/sources.list.d/cloudpods-base.sources
     rm -fr /etc/apt/sources.list.d/cloudpods-updates.sources
     rm -fr /etc/apt/sources.list.d/cloudpods-main.sources
@@ -18,7 +19,7 @@
 
 - name: ensure gnupng installed
   shell: |
-    apt-get update -y && apt-get install gnupg -y
+    apt-get install gnupg -y
   become: true
 
 - name: set gpg-key download url based on online status
