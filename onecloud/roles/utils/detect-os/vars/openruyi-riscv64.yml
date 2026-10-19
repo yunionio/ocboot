@@ -1,0 +1,30 @@
+---
+is_redhat_based: true
+is_centos_based: true
+is_centos_riscv64: true
+centos_version: 10
+
+common_packages:
+    - bash-completion
+    - chrony
+    - cronie
+    - conntrack-tools
+    - curl
+    - fuse3
+    - jq
+    - kmod
+    - lvm2
+    - nfs-utils
+    - parallel
+    - rsync
+    - pciutils
+    - tcpdump
+    - python3-libselinux
+    - python3-pip
+    - procps-ng
+    - iputils
+    - which
+
+common_services:
+    - chronyd
+    - yunion-executor
