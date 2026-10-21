@@ -22,41 +22,49 @@ source_auth_env() {
 
 check_svc() {
 	local svc="$1"
-	local status=$($KUBECTL get pods | grep "$svc" | grep -v Terminating | awk '{print $3}' | sort -u | xargs)
+	local status
+	status=$($KUBECTL get pods | grep "$svc" | grep -v Terminating | awk '{print $3}' | sort -u | xargs)
 	if [[ "$status" == "Running" ]]; then
 		echo "true"
 	else
-		echo "service pod $svc status is $status"
-		echo "false"
+		echo "$status"
 	fi
 }
 
 wait_svc() {
 	local svc="$1"
-	local is_running=$(check_svc "$svc")
+	local status
 	sleep 1
 	while true; do
-		if [[ "$is_running" == "true" ]]; then
+		status=$(check_svc "$svc")
+		if [[ "$status" == "true" ]]; then
 			echo "service pod $svc is running"
 			return
-		else
-			echo "continue waiting service pod $svc, sleep 30s"
-			is_running=$(check_svc "$svc")
-			sleep 30
 		fi
+		# These kubectl STATUS values do not become Running by waiting,
+		# including the Init: prefixed forms. Any one pod in such a state fails the switch.
+		case "$status" in
+		*ImagePullBackOff*|*ErrImagePull*|*ImageInspectError*|*InvalidImageName*|*ErrImageNeverPull*|*CrashLoopBackOff*|*CreateContainerConfigError*|*CreateContainerError*|*RunContainerError*|*PostStartHookError*|*Evicted*)
+			echo "service pod $svc status is ${status}"
+			exit 1
+			;;
+		esac
+		echo "service pod $svc status is ${status:-not found}"
+		echo "continue waiting service pod $svc, sleep 30s"
+		sleep 30
 	done
 }
 
 clean_service_endpoint() {
     source_auth_env
     local service="$1"
-    for ep in `$CLIMC endpoint-list --service "$service" | egrep "$SVC_UUID_REG" | awk '{print $2}'`; do
+    for ep in `$CLIMC endpoint-list --service "$service" | grep -E "$SVC_UUID_REG" | awk '{print $2}'`; do
         echo "delete endpoint $ep of service $service"
         $CLIMC endpoint-update --disabled $ep
         $CLIMC endpoint-delete $ep
     done
 
-    for svc in `$CLIMC service-list --name "$service" | egrep "$SVC_UUID_REG" | awk '{print $2}'`; do
+    for svc in `$CLIMC service-list --name "$service" | grep -E "$SVC_UUID_REG" | awk '{print $2}'`; do
         echo "delete service $service"
         $CLIMC service-update --disabled $svc
         $CLIMC service-delete $svc
