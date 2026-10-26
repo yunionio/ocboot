@@ -76,8 +76,9 @@ class NodesConfig(object):
         filepath = '/tmp/cluster_%s_node_services_inventory.yml' % action
         with open(filepath, 'w') as f:
             f.write(yaml_content)
-        # start run upgrade playbook
-        run_ansible_playbook(
+        # Return the inner playbook's exit code. Dropping it makes
+        # ocboot.py exit 0 (sys.exit(None)) even when the switch failed.
+        return run_ansible_playbook(
             filepath,
             './onecloud/%s-services.yml' % action,
             vars=vars,
