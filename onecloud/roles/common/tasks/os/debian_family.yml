@@ -78,6 +78,7 @@
 # https://iso.yunion.cn/debian/10/3.9/x86_64/
 - name: apply online {{ansible_distribution}} apt sources
   shell: |
+    mkdir -p /etc/apt/sources.list.d
     curl "{{ gpg_key_url }}/{{ansible_distribution | lower}}-{{ ansible_distribution_major_version }}/base/cloudpods-base.sources" -o /etc/apt/sources.list.d/cloudpods-base.sources
     curl "{{ gpg_key_url }}/{{ansible_distribution | lower}}-{{ ansible_distribution_major_version }}/updates/cloudpods-updates.sources" -o /etc/apt/sources.list.d/cloudpods-updates.sources
     apt-get update -y
