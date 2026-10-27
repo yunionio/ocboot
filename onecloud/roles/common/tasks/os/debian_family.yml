@@ -88,6 +88,14 @@
     - online_status is defined
     - online_status == "online"
 
+- name: Ensure ocboot_os_offline_id is set for offline Ubuntu apt sources
+  include_tasks: ubuntu_offline_id.yml
+  when:
+    - ansible_distribution == "Ubuntu"
+    - online_status is defined
+    - online_status == "offline"
+    - ocboot_os_offline_id is not defined
+
 - name: apply offline {{ansible_distribution}} apt sources
   shell: |
     sed -i 's/^deb/# deb/g' /etc/apt/sources.list
