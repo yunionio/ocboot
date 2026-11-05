@@ -63,9 +63,15 @@ buildah_extra_args=()
 
 # buildah accepts --env since 1.23
 echo "buildah version: $buildah_version"
-# Pass ANSIBLE_VERBOSITY with env(1) so it reaches ansible on every buildah version.
+# Pass selected host env vars with env(1). buildah run does not inherit the
+# caller environment, and --env is unavailable on buildah <= 1.23.
 ansible_verbosity="${ANSIBLE_VERBOSITY:-0}"
 echo "ansible verbosity: $ansible_verbosity"
+container_env=("ANSIBLE_VERBOSITY=${ansible_verbosity}")
+if [[ -n "${IGNORE_ALL_CHECKS:-}" ]]; then
+    echo "IGNORE_ALL_CHECKS: ${IGNORE_ALL_CHECKS}"
+    container_env+=("IGNORE_ALL_CHECKS=${IGNORE_ALL_CHECKS}")
+fi
 if [[ $buildah_version_major -eq 1 ]] && [[ "$buildah_version_minor" -gt 23 ]]; then
     buildah_extra_args+=(-e HOME="$HOME")
 fi
@@ -157,4 +163,4 @@ buildah run --isolation chroot --user $(id -u):$(id -g) \
     -v "$(pwd):$ROOT_DIR" \
     -v "$(pwd)/airgap_assets/k3s-install.sh:/airgap_assets/k3s-install.sh:ro" \
     "${extra_installer_volumes[@]}" \
-    "$CONTAINER_NAME" env "ANSIBLE_VERBOSITY=${ansible_verbosity}" $CMD "${origin_args[@]}" $cmd_extra_args
+    "$CONTAINER_NAME" env "${container_env[@]}" $CMD "${origin_args[@]}" $cmd_extra_args
