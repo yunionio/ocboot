@@ -10,6 +10,9 @@
 
     # GPU 设备虚拟编号（仅在显式传入时生效；未指定则默认使用 HAMi）
     # gpu_device_virtual_number: 2
+
+    # 跳过 NVIDIA 驱动和 CUDA 安装，仅执行其余步骤（要求目标机已安装驱动）
+    # skip_driver_and_cuda: true
   
   roles:
     - { role: utils/containerd }
