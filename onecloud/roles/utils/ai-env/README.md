@@ -37,8 +37,9 @@ ocboot.py setup-ai-env <target_host1> <target_host2> ... \
 
 #### 命令行参数说明：
 
-- `--nvidia-driver-installer-path` (必需): NVIDIA 驱动安装包的完整路径，例如 `/root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run`
-- `--cuda-installer-path` (必需): CUDA 安装包的完整路径，例如 `/root/nvidia/cuda_12.8.1_570.124.06_linux.run`
+- `--nvidia-driver-installer-path` (默认必需): NVIDIA 驱动安装包的完整路径，例如 `/root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run`
+- `--cuda-installer-path` (默认必需): CUDA 安装包的完整路径，例如 `/root/nvidia/cuda_12.8.1_570.124.06_linux.run`
+- `--skip-driver-and-cuda` (可选): 跳过 NVIDIA 驱动和 CUDA 的安装，只执行其余步骤（NVIDIA Container Toolkit 安装、containerd runtime 配置、主机设备映射等）。目标机必须已安装 NVIDIA 驱动（`nvidia-smi` 可用）；指定该选项后无需提供上面两个安装包路径
 - `--gpu-device-virtual-number` (可选): NVIDIA GPU 共享设备的虚拟编号。未指定时默认使用 HAMi；指定后才会生成 `NVIDIA_GPU_SHARE` 虚拟设备
 - `--user`, `-u` (可选): SSH 用户名，默认为 root
 - `--key-file`, `-k` (可选): SSH 私钥文件路径
@@ -64,6 +65,10 @@ ocboot.py setup-ai-env 10.127.222.247 \
   --cuda-installer-path /root/nvidia/cuda_12.8.1_570.124.06_linux.run \
   --user admin \
   --port 2222
+
+# 目标机已安装驱动和 CUDA，跳过二者安装，只配置容器运行时等
+ocboot.py setup-ai-env 10.127.222.247 \
+  --skip-driver-and-cuda
 ```
 
 ### 3. 直接使用 ansible-playbook（高级用法）
@@ -81,6 +86,10 @@ ansible-playbook -i inventory setup-ai-env-services.yml \
   -e nvidia_driver_installer_path=/root/nvidia/NVIDIA-Linux-x86_64-570.133.07.run \
   -e cuda_installer_path=/root/nvidia/cuda_12.8.1_570.124.06_linux.run \
   -e gpu_device_virtual_number=2
+
+# 跳过驱动和 CUDA 安装，只执行其余步骤
+ansible-playbook -i inventory setup-ai-env-services.yml \
+  -e skip_driver_and_cuda=true
 ```
 
 ## 注意事项
@@ -116,13 +125,14 @@ scp /path/to/cuda/cuda_12.8.1_570.124.06_linux.run target_host:/root/nvidia/
 ## 安装流程
 
 1. 检查操作系统支持
-2. 检查本地安装文件是否存在
-3. 配置 GRUB（添加 nvidia-drm.modeset=1）
-4. 安装内核头文件和开发包
-5. 清理 vfio 相关配置
-6. 安装 NVIDIA 驱动
-7. 安装 CUDA 环境
-8. 安装 NVIDIA Container Toolkit
-9. 配置 containerd runtime
-10. 配置主机设备映射（仅在指定 `--gpu-device-virtual-number` 时生成 NVIDIA_GPU_SHARE；未指定则默认使用 HAMi。lxcfs 由 `utils/containerd` 在本 role 之前完成）
-11. 按需重启后验证安装结果
+2. 检查目标机 GPU 及驱动/CUDA 状态
+3. 检查本地安装文件是否存在（使用 `--skip-driver-and-cuda` 时跳过）
+4. 配置 GRUB（添加 nvidia-drm.modeset=1，使用 `--skip-driver-and-cuda` 时跳过）
+5. 安装内核头文件和开发包（使用 `--skip-driver-and-cuda` 时跳过）
+6. 清理 vfio 相关配置（使用 `--skip-driver-and-cuda` 时跳过）
+7. 安装 NVIDIA 驱动（使用 `--skip-driver-and-cuda` 时跳过）
+8. 安装 CUDA 环境（使用 `--skip-driver-and-cuda` 时跳过）
+9. 安装 NVIDIA Container Toolkit
+10. 配置 containerd runtime
+11. 配置主机设备映射（仅在指定 `--gpu-device-virtual-number` 时生成 NVIDIA_GPU_SHARE；未指定则默认使用 HAMi。lxcfs 由 `utils/containerd` 在本 role 之前完成）
+12. 按需重启后验证安装结果
