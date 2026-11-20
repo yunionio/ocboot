@@ -1,29 +1,39 @@
 - name: Gather OS specific variables
   include_vars: "{{ ansible_os_family }}.yml"
 
+- name: Set AI environment install mode flags
+  set_fact:
+    ai_env_skip_driver_cuda: "{{ skip_driver_and_cuda | default(false) | bool }}"
+
 - name: Check NVIDIA GPU and driver/CUDA status on target host
   include_tasks: check-gpu-and-driver.yml
-  when: nvidia_driver_installer_path is defined or (nvidia_runtime_only | default(false))
+  when: >
+    nvidia_driver_installer_path is defined or
+    (nvidia_runtime_only | default(false)) or
+    ai_env_skip_driver_cuda
 
 - name: Check local installation files
   include_tasks: check-local-files.yml
   when: >
     nvidia_driver_installer_path is defined and
     cuda_installer_path is defined and
-    not (nvidia_runtime_only | default(false))
+    not (nvidia_runtime_only | default(false)) and
+    not ai_env_skip_driver_cuda
 
 - name: Configure GRUB
   include_tasks: configure-grub.yml
   when: >
     nvidia_driver_installer_path is defined and
     cuda_installer_path is defined and
-    not (nvidia_runtime_only | default(false))
+    not (nvidia_runtime_only | default(false)) and
+    not ai_env_skip_driver_cuda
 
 - name: Install NVIDIA driver (if installer path provided)
   include_tasks: install-nvidia-driver.yml
   when: >
     nvidia_driver_installer_path is defined and
     not (nvidia_runtime_only | default(false)) and
+    not ai_env_skip_driver_cuda and
     not (ai_env_fully_ready | default(false))
 
 - name: Install CUDA (if installer path provided)
@@ -31,19 +41,22 @@
   when: >
     nvidia_driver_installer_path is defined and
     cuda_installer_path is defined and
-    not (nvidia_runtime_only | default(false))
+    not (nvidia_runtime_only | default(false)) and
+    not ai_env_skip_driver_cuda
 
 - name: Install Container Toolkit
   include_tasks: install-container-toolkit.yml
   when: >
     (nvidia_driver_installer_path is defined and cuda_installer_path is defined) or
-    (nvidia_runtime_only | default(false))
+    (nvidia_runtime_only | default(false)) or
+    ai_env_skip_driver_cuda
 
 - name: Configure containerd
   include_tasks: configure-containerd.yml
   when: >
     (nvidia_driver_installer_path is defined and cuda_installer_path is defined) or
-    (nvidia_runtime_only | default(false))
+    (nvidia_runtime_only | default(false)) or
+    ai_env_skip_driver_cuda
 
 - name: Configure host
   include_tasks: configure-host.yml
@@ -60,10 +73,12 @@
   when: >
     (ai_env_reboot_required | default(false)) and
     not (ai_env_rebooted | default(false)) and
-    not (nvidia_runtime_only | default(false))
+    not (nvidia_runtime_only | default(false)) and
+    not ai_env_skip_driver_cuda
 
 - name: Run post-tasks
   include_tasks: post-tasks.yml
   when: >
     (nvidia_driver_installer_path is defined and cuda_installer_path is defined) or
-    (nvidia_runtime_only | default(false))
+    (nvidia_runtime_only | default(false)) or
+    ai_env_skip_driver_cuda
